@@ -1,6 +1,10 @@
 package config
 
 const (
-	FONT_SIZE                 = 20
-	PERLIN_NOISE_SCALE_FACTOR = 10 // Must be dividable by 5
+	PERLIN_NOISE_SCALE_FACTOR float64 = 128
+	PLAYER_SPEED              float64 = 0.05
+)
+
+var (
+	FONT_SIZE int = 32
 )

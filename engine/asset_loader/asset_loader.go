@@ -20,7 +20,11 @@ import (
 type AssetList struct {
 	Fonts    map[string]*ttf.Font
 	Textures map[string]*sdl.Texture
+
+	defaultFont *ttf.Font
 }
+
+var Assets *AssetList
 
 // removes file extension, and other parts from the filename
 // Example: assets/pictures/picture.png -> picture
@@ -52,11 +56,20 @@ func LoadAssets(engine *engine.Engine, dir string) *AssetList {
 				if err != nil {
 					return err
 				}
-				assetList.Fonts[cleanPath(path)] = font
+				assetList.Fonts[strings.Replace(cleanPath(path), "_default", "", 1)] = font
+
+				// if filename (without extension) ends in _default, then set this font as default
+				if strings.HasSuffix(cleanPath(path), "_default") {
+					assetList.defaultFont = font
+				}
 			}
 		}
 		return nil
 	})
 
 	return assetList
+}
+
+func (assets *AssetList) DefaultFont() *ttf.Font {
+	return assets.defaultFont
 }

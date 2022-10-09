@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/3elDU/bamboo/engine"
+	"github.com/3elDU/bamboo/engine/asset_loader"
 	"github.com/3elDU/bamboo/game"
 
 	"github.com/veandco/go-sdl2/sdl"
@@ -16,18 +17,19 @@ func init() {
 
 func main() {
 	eng, err := engine.Create(engine.WindowParams{
-		Title: "Hello, SDL2!",
-		Width: 640, Height: 480,
+		Title: "bamboo devtest",
+		Width: 960, Height: 640,
 		Flags: sdl.WINDOW_RESIZABLE,
 	})
-	eng.Ren.RenderSetVSync(true)
-
 	if err != nil {
 		panic(err)
 	}
+	engine.GlobalEngine = eng
 
+	eng.Ren.RenderSetVSync(true)
 	defer engine.Quit(eng)
 
 	game := game.Create(eng, "./assets/")
+	asset_loader.Assets = game.Assets
 	game.Run()
 }

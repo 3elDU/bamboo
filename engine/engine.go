@@ -1,8 +1,9 @@
+// Provides useful abstractions over base SDL2
+
 package engine
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
@@ -12,21 +13,12 @@ import (
 type Engine struct {
 	Win     *sdl.Window
 	Ren     *sdl.Renderer
-	Surface *sdl.Surface // Surface of the screen
-
-	fps int
+	Surface *sdl.Surface // Main surface of the window
 }
 
-// Render() and Update() functions will be called each frame
-// It is up to user, what to include in these functions
-// Note that Update is called before Render
-type Game interface {
-	Render()
-	Update()
-
-	// Engine calls this function each frame, to know if it should execute further
-	Running() bool
-}
+var (
+	GlobalEngine *Engine = nil
+)
 
 type WindowParams struct {
 	Title         string
@@ -68,26 +60,10 @@ func Create(wp WindowParams) (*Engine, error) {
 	}
 
 	return &Engine{
-		window, renderer, surface, 0,
+		Win:     window,
+		Ren:     renderer,
+		Surface: surface,
 	}, nil
-}
-
-func (e *Engine) FPS() int {
-	return e.fps
-}
-
-// The main loop! Runs the game until something calls engine.Quit()
-func (e *Engine) Run(g Game) {
-	for g.Running() {
-		frameStart := time.Now()
-
-		g.Update()
-		g.Render()
-
-		frameEnd := time.Now()
-
-		e.fps = int(1 / frameEnd.Sub(frameStart).Seconds())
-	}
 }
 
 // Quits the engine completely, destroying and closing everything
@@ -96,4 +72,5 @@ func Quit(engine *Engine) {
 	engine.Win.Destroy()
 	sdl.Quit()
 	img.Quit()
+	ttf.Quit()
 }

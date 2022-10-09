@@ -1,4 +1,4 @@
-package widgets
+package widget
 
 import (
 	"github.com/3elDU/bamboo/engine"
@@ -27,11 +27,11 @@ type Widget interface {
 	Render() *sdl.Texture
 }
 
-func RenderSingle(eng *engine.Engine, widget Widget) {
+func RenderSingle(engine *engine.Engine, widget Widget) {
 	tex := widget.Render()
 
 	width, height := texture.Dimensions(tex)
-	windowWidth, windowHeight := eng.Win.GetSize()
+	windowWidth, windowHeight := engine.Win.GetSize()
 
 	var rect sdl.Rect
 	switch widget.Anchor() {
@@ -84,11 +84,11 @@ func RenderSingle(eng *engine.Engine, widget Widget) {
 		}
 	}
 
-	eng.Ren.Copy(tex, nil, &rect)
+	engine.Ren.Copy(tex, nil, &rect)
 }
 
-func RenderMultiple(eng *engine.Engine, widgets []Widget) {
+func RenderMultiple(engine *engine.Engine, widgets []Widget) {
 	for _, widget := range widgets {
-		RenderSingle(eng, widget)
+		RenderSingle(engine, widget)
 	}
 }
