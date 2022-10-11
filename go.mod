@@ -5,9 +5,7 @@ go 1.18
 require (
 	github.com/aquilax/go-perlin v1.1.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
-	github.com/hajimehoshi/ebiten v1.12.12
 	github.com/hajimehoshi/ebiten/v2 v2.4.7
-	github.com/veandco/go-sdl2 v0.4.25
 	golang.org/x/exp v0.0.0-20221006183845-316c7553db56
 	golang.org/x/image v0.0.0-20220722155232-062f8c9fd539
 )
