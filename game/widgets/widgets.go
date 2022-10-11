@@ -45,6 +45,7 @@ func (w *FPSWidget) Render() *sdl.Texture {
 	}
 
 	surf, _ := w.Font.RenderUTF8Solid(fmt.Sprint(int(*w.FPS)), w.Color)
+	defer surf.Free()
 	tex, _ := w.Renderer.CreateTextureFromSurface(surf)
 	return tex
 }

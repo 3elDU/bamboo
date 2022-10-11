@@ -7,3 +7,6 @@
 *.out
 go.work
 bamboo
+*cpu.prof
+*mem.prof
+.idea

@@ -25,15 +25,10 @@ func (e *Engine) ClearColor(r, g, b, a uint8) error {
 	return nil
 }
 
-// Clears the texture with given color, preserving previous color and render target
+// Clears the texture with given color, preserving previous rendering target
 // Updates texture after rendering
 func (e *Engine) ClearTexture(texture *sdl.Texture, r, g, b, a uint8) error {
-	// saving previous color
-	pr, pg, pb, pa, _ := e.Ren.GetDrawColor()
-	defer e.Ren.SetDrawColor(pr, pg, pb, pa)
-
-	prevRenderingTarget := e.Ren.GetRenderTarget()
-	defer e.Ren.SetRenderTarget(prevRenderingTarget)
+	defer e.Ren.SetRenderTarget(e.Ren.GetRenderTarget())
 
 	e.Ren.SetRenderTarget(texture)
 	e.Ren.SetDrawColor(r, g, b, a)
@@ -43,10 +38,8 @@ func (e *Engine) ClearTexture(texture *sdl.Texture, r, g, b, a uint8) error {
 	return nil
 }
 
+// Note that FillRectF does NOT preserve previous rendering color
 func (e *Engine) FillRectF(x, y, w, h float32, clr sdl.Color) {
-	pr, pg, pb, pa, _ := e.Ren.GetDrawColor()
-	defer e.Ren.SetDrawColor(pr, pg, pb, pa)
-
 	e.Ren.SetDrawColor(clr.R, clr.G, clr.B, clr.A)
 	e.Ren.FillRectF(&sdl.FRect{
 		X: x, Y: y, W: w, H: h,
@@ -70,6 +63,7 @@ func (e *Engine) RenderSurface(surf *sdl.Surface, x, y int32) error {
 	if err != nil {
 		return err
 	}
+	defer tex.Destroy()
 
 	e.RenderTexture(tex, x, y)
 	return nil
@@ -85,6 +79,7 @@ func (e *Engine) RenderFont(font *ttf.Font, x, y int32, text string, color sdl.C
 		if err != nil {
 			return err
 		}
+		defer surf.Free()
 
 		err = e.RenderSurface(surf, x, y+int32(i*font.Height()))
 		if err != nil {

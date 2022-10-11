@@ -14,10 +14,7 @@ type chunk struct {
 
 // Creates new empty chunk with specified coordinates
 func NewChunk(x, y int64) *chunk {
-	c := new(chunk)
-	c.x, c.y = x, y
-
-	return c
+	return &chunk{x: x, y: y}
 }
 
 func (c *chunk) BlockCoords() util.Coords2i {

@@ -21,7 +21,7 @@ type World struct {
 
 func NewWorld(seed int64) *World {
 	return &World{
-		generator: perlin.NewPerlin(2, 2, 16, 12345),
+		generator: perlin.NewPerlin(2, 2, 16, seed),
 		seed:      seed,
 		data:      make(map[util.Coords2i]*chunk),
 	}

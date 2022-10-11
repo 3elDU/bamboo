@@ -24,7 +24,9 @@ type AssetList struct {
 	defaultFont *ttf.Font
 }
 
-var Assets *AssetList
+var (
+	Assets *AssetList = nil
+)
 
 // removes file extension, and other parts from the filename
 // Example: assets/pictures/picture.png -> picture
@@ -46,6 +48,8 @@ func LoadAssets(engine *engine.Engine, dir string) *AssetList {
 				if err != nil {
 					return err
 				}
+				defer surf.Free()
+
 				tex, err := engine.Ren.CreateTextureFromSurface(surf)
 				if err != nil {
 					return err

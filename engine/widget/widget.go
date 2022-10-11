@@ -29,6 +29,8 @@ type Widget interface {
 
 func RenderSingle(engine *engine.Engine, widget Widget) {
 	tex := widget.Render()
+	// HACK: A temporary workaround. WIll break a lot of widgets in future
+	defer tex.Destroy()
 
 	width, height := texture.Dimensions(tex)
 	windowWidth, windowHeight := engine.Win.GetSize()
