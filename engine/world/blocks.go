@@ -5,9 +5,11 @@
 package world
 
 import (
-	"github.com/3elDU/bamboo/engine"
+	"image/color"
+
 	"github.com/3elDU/bamboo/util"
-	"github.com/veandco/go-sdl2/sdl"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type BaseBlock struct {
@@ -37,10 +39,10 @@ func (b *BaseBlock) SetParentChunk(c *chunk) {
 type coloredBlock struct {
 	BaseBlock
 
-	color sdl.Color
+	color color.RGBA
 }
 
-func NewColoredBlock(color sdl.Color) *coloredBlock {
+func NewColoredBlock(color color.RGBA) *coloredBlock {
 	block := coloredBlock{
 		color: color,
 	}
@@ -52,6 +54,7 @@ func (b *coloredBlock) Update() {
 
 }
 
-func (b *coloredBlock) Render(target util.Coords2f) {
-	engine.GlobalEngine.FillRectF(float32(target.X), float32(target.Y), 16, 16, b.color)
+func (b *coloredBlock) Render(screen *ebiten.Image, pos util.Coords2f) {
+	// engine.GlobalEngine.FillRectF(float32(target.X), float32(target.Y), 16, 16, b.color)
+	ebitenutil.DrawRect(screen, pos.X, pos.Y, 16, 16, b.color)
 }

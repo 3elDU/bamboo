@@ -4,11 +4,8 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/3elDU/bamboo/engine"
-	"github.com/3elDU/bamboo/engine/asset_loader"
 	"github.com/3elDU/bamboo/game"
-
-	"github.com/veandco/go-sdl2/sdl"
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 func init() {
@@ -16,20 +13,12 @@ func init() {
 }
 
 func main() {
-	eng, err := engine.Create(engine.WindowParams{
-		Title: "bamboo devtest",
-		Width: 960, Height: 640,
-		Flags: sdl.WINDOW_RESIZABLE,
-	})
-	if err != nil {
+	ebiten.SetWindowSize(640, 480)
+	ebiten.SetWindowTitle("bamboo devtest")
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
+
+	game := game.Create("./assets/")
+	if err := ebiten.RunGame(game); err != nil {
 		panic(err)
 	}
-	engine.GlobalEngine = eng
-
-	eng.Ren.RenderSetVSync(true)
-	defer engine.Quit(eng)
-
-	game := game.Create(eng, "./assets/")
-	asset_loader.Assets = game.Assets
-	game.Run()
 }

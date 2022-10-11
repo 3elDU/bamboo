@@ -1,9 +1,12 @@
 package widget
 
 import (
+	"image/color"
+
 	"github.com/3elDU/bamboo/engine"
-	"github.com/3elDU/bamboo/engine/texture"
-	"github.com/veandco/go-sdl2/sdl"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/text"
+	"golang.org/x/image/font"
 )
 
 type Anchor int
@@ -22,75 +25,86 @@ const (
 	BottomRight
 )
 
+type Text struct {
+	Text   string
+	Face   font.Face
+	Color  color.Color
+	Anchor Anchor
+}
+
+/*
+Widget simply returns an image, which then will be rendered onto the screen
+*/
 type Widget interface {
 	Anchor() Anchor
-	Render() *sdl.Texture
+	Update()
+	Render() *ebiten.Image
 }
 
-func RenderSingle(engine *engine.Engine, widget Widget) {
-	tex := widget.Render()
-	// HACK: A temporary workaround. WIll break a lot of widgets in future
-	defer tex.Destroy()
+/*
+When we want to render the text,
+tt is much more convenient for the widget to return just the text, and RenderTextWidget() method
+will do the text rendering itself.
+Why? Imagine this scenario:
+We want to render a single line of text.
+Yes, we still could do this the 'hard' way.
+But this comes at the expense of re-creating the texture every time  we want to render the widget.
+Remember, we can't know the size beforehand.
+Instead of that, we would simply return the desired text,
+and RenderTextWidget will render this text directly onto the screen, making our lives a lot easier.
+*/
+type TextWidget interface {
+	Anchor() Anchor
+	Update()
+	Render() Text
+}
 
-	width, height := texture.Dimensions(tex)
-	windowWidth, windowHeight := engine.Win.GetSize()
-
-	var rect sdl.Rect
-	switch widget.Anchor() {
-	case TopLeft:
-		rect = sdl.Rect{
-			X: 0, Y: 0,
-			W: width, H: height,
-		}
+// iw, ih are widget width and height
+// sw, sh are destination image width and height
+func widgetPosition(iw, ih, ww, wh int, anchor Anchor) (int, int) {
+	switch anchor {
+	default:
+		return 0, 0
 	case Top:
-		rect = sdl.Rect{
-			X: windowWidth/2 - width/2, Y: 0,
-			W: width, H: height,
-		}
+		return ww/2 - iw/2, 0
 	case TopRight:
-		rect = sdl.Rect{
-			X: windowWidth - width, Y: 0,
-			W: width, H: height,
-		}
-
+		return ww - iw, 0
 	case Left:
-		rect = sdl.Rect{
-			X: 0, Y: windowHeight/2 - height/2,
-			W: width, H: height,
-		}
+		return 0, wh/2 - ih/2
 	case Center:
-		rect = sdl.Rect{
-			X: windowWidth/2 - width/2, Y: windowHeight/2 - height/2,
-			W: width, H: height,
-		}
+		return ww/2 - iw/2, wh/2 - ih/2
 	case Right:
-		rect = sdl.Rect{
-			X: windowWidth - width, Y: windowHeight/2 - height/2,
-			W: width, H: height,
-		}
-
+		return ww - iw, wh/2 - ih/2
 	case BottomLeft:
-		rect = sdl.Rect{
-			X: 0, Y: windowHeight - height,
-			W: width, H: height,
-		}
+		return 0, wh - ih
 	case Bottom:
-		rect = sdl.Rect{
-			X: windowWidth/2 - width/2, Y: windowHeight - height,
-			W: width, H: height,
-		}
+		return ww/2 - iw/2, wh - ih
 	case BottomRight:
-		rect = sdl.Rect{
-			X: windowWidth - width, Y: windowHeight - height,
-			W: width, H: height,
-		}
+		return ww - iw, wh - ih
 	}
-
-	engine.Ren.Copy(tex, nil, &rect)
 }
 
-func RenderMultiple(engine *engine.Engine, widgets []Widget) {
-	for _, widget := range widgets {
-		RenderSingle(engine, widget)
-	}
+// interface{} is a hack, because generics don't accept interfaces as type parameters
+func RenderWidget(screen *ebiten.Image, widget Widget) {
+	ww, wh := screen.Size()
+	img := widget.Render()
+
+	iw, ih := img.Size()
+
+	x, y := widgetPosition(iw, ih, ww, wh, widget.Anchor())
+
+	op := ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64(x), float64(y))
+
+	screen.DrawImage(img, &op)
+}
+
+func RenderTextWidget(screen *ebiten.Image, widget TextWidget) {
+	ww, wh := screen.Size()
+	t := widget.Render()
+	bounds := text.BoundString(t.Face, t.Text)
+
+	x, y := widgetPosition(bounds.Dx(), bounds.Dy(), ww, wh, t.Anchor)
+
+	engine.RenderFont(screen, t.Face, t.Text, x, y, t.Color)
 }

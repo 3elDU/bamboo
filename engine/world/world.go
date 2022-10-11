@@ -2,12 +2,12 @@ package world
 
 import (
 	"fmt"
+	"image/color"
 
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/engine/colors"
 	"github.com/3elDU/bamboo/util"
 	"github.com/aquilax/go-perlin"
-	"github.com/veandco/go-sdl2/sdl"
 )
 
 type World struct {
@@ -27,7 +27,7 @@ func NewWorld(seed int64) *World {
 	}
 }
 
-func (w *World) gen(x, y float64) sdl.Color {
+func (w *World) gen(x, y float64) color.RGBA {
 	h := w.generator.Noise2D(x/config.PERLIN_NOISE_SCALE_FACTOR, y/config.PERLIN_NOISE_SCALE_FACTOR) + 1
 
 	switch {
