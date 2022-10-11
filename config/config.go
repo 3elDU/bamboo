@@ -6,5 +6,5 @@ const (
 )
 
 var (
-	FONT_SIZE int = 32
+	FONT_SIZE float64 = 32
 )

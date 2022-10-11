@@ -2,6 +2,7 @@ package world
 
 import (
 	"github.com/3elDU/bamboo/util"
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Block interface {
@@ -11,5 +12,5 @@ type Block interface {
 	SetParentChunk(chunk *chunk)
 
 	Update()
-	Render(target util.Coords2f)
+	Render(screen *ebiten.Image, pos util.Coords2f)
 }

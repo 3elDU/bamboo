@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"math/rand"
-	"time"
 
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/engine"
@@ -12,112 +11,110 @@ import (
 	"github.com/3elDU/bamboo/engine/widget"
 	"github.com/3elDU/bamboo/engine/world"
 	"github.com/3elDU/bamboo/game/widgets"
-	"github.com/veandco/go-sdl2/sdl"
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Game struct {
-	// SDL-related
-	Engine  *engine.Engine
-	Assets  *asset_loader.AssetList
-	Widgets []widget.Widget
+	Assets      *asset_loader.AssetList
+	Widgets     []widget.Widget
+	TextWidgets []widget.TextWidget
 
 	World  *world.World
 	Player *Player
-
-	// Misc. variables
-	running bool
-	FPS     float64
 }
 
-func Create(engine *engine.Engine, assetsDirectory string) *Game {
+func Create(assetsDirectory string) *Game {
 	game := &Game{
-		Engine:  engine,
-		Assets:  asset_loader.LoadAssets(engine, assetsDirectory),
-		Widgets: make([]widget.Widget, 0),
+		Assets:      asset_loader.LoadAssets(assetsDirectory),
+		Widgets:     make([]widget.Widget, 0),
+		TextWidgets: make([]widget.TextWidget, 0),
 
 		World:  world.NewWorld(rand.Int63()),
 		Player: &Player{0, 0, 0, 0},
-
-		running: true,
 	}
 
-	game.Widgets = append(game.Widgets,
+	game.TextWidgets = append(game.TextWidgets,
 		// &widgets.TextureWidget{Texture: game.assets.Textures["test"]},
-		&widgets.FPSWidget{
-			Renderer: engine.Ren,
-			Color:    colors.Red,
-			Font:     game.Assets.DefaultFont(),
-			FPS:      &game.FPS,
+		&widgets.PerfWidget{
+			Face:  game.Assets.DefaultFont(),
+			Color: colors.Black,
 		},
 	)
 
 	return game
 }
 
-func (game *Game) Update() {
-	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
-		switch t := event.(type) {
-		case *sdl.QuitEvent:
-			game.running = false
-		case *sdl.KeyboardEvent:
-			if t.State == sdl.RELEASED || t.Repeat > 0 {
-				break
-			}
+func (game *Game) Update() error {
+	/*
+		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
+			switch t := event.(type) {
+			case *sdl.QuitEvent:
+				game.running = false
+			case *sdl.KeyboardEvent:
+				if t.State == sdl.RELEASED || t.Repeat > 0 {
+					break
+				}
 
-			switch t.Keysym.Sym {
-			/*
+				switch t.Keysym.Sym {
 				case sdl.K_0:
 					config.PERLIN_NOISE_SCALE_FACTOR += 5
 				case sdl.K_9:
 					config.PERLIN_NOISE_SCALE_FACTOR -= 5
-			*/
+				}
 			}
 		}
-	}
 
-	keysPressed := sdl.GetKeyboardState()
+		keysPressed := sdl.GetKeyboardState()
+		game.Player.Update(MovementVector{
+			Left:  keysPressed[sdl.SCANCODE_A] == 1,
+			Right: keysPressed[sdl.SCANCODE_D] == 1,
+			Up:    keysPressed[sdl.SCANCODE_W] == 1,
+			Down:  keysPressed[sdl.SCANCODE_S] == 1,
+		})
+	*/
+
 	game.Player.Update(MovementVector{
-		Left:  keysPressed[sdl.SCANCODE_A] == 1,
-		Right: keysPressed[sdl.SCANCODE_D] == 1,
-		Up:    keysPressed[sdl.SCANCODE_W] == 1,
-		Down:  keysPressed[sdl.SCANCODE_S] == 1,
+		Left:  ebiten.IsKeyPressed(ebiten.KeyA),
+		Right: ebiten.IsKeyPressed(ebiten.KeyD),
+		Up:    ebiten.IsKeyPressed(ebiten.KeyW),
+		Down:  ebiten.IsKeyPressed(ebiten.KeyS),
 	})
 
 	game.World.Update(game.Player.X, game.Player.Y)
-}
 
-func (game *Game) Render() {
-	game.Engine.Ren.Clear()
-
-	game.World.Render(game.Player.X, game.Player.Y)
-	widget.RenderMultiple(game.Engine, game.Widgets)
-	game.Engine.RenderFont(
-		game.Assets.DefaultFont(), 0, 0,
-		fmt.Sprintf("%v, %v", game.Player.X, game.Player.Y),
-		colors.Black,
-	)
-	game.Engine.RenderFont(
-		game.Assets.DefaultFont(), 0, 32,
-		fmt.Sprint(config.PERLIN_NOISE_SCALE_FACTOR),
-		colors.Black,
-	)
-
-	game.Engine.Ren.Present()
-}
-
-func (game *Game) Running() bool {
-	return game.running
-}
-
-func (game *Game) Run() {
-	for game.Running() {
-		frameStart := time.Now()
-
-		game.Update()
-		game.Render()
-
-		frameEnd := time.Now()
-
-		game.FPS = 1 / frameEnd.Sub(frameStart).Seconds()
+	for _, w := range game.Widgets {
+		w.Update()
 	}
+
+	for _, w := range game.TextWidgets {
+		w.Update()
+	}
+
+	return nil
+}
+
+func (game *Game) Draw(screen *ebiten.Image) {
+
+	game.World.Render(screen, game.Player.X, game.Player.Y)
+
+	for _, w := range game.Widgets {
+		widget.RenderWidget(screen, w)
+	}
+
+	for _, w := range game.TextWidgets {
+		widget.RenderTextWidget(screen, w)
+	}
+
+	engine.RenderFont(screen, game.Assets.DefaultFont(),
+		fmt.Sprintf("%v, %v", game.Player.X, game.Player.Y),
+		0, 0, colors.Black)
+
+	engine.RenderFont(screen, game.Assets.DefaultFont(),
+		fmt.Sprint(config.PERLIN_NOISE_SCALE_FACTOR),
+		0, 32, colors.Black,
+	)
+}
+
+func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+	return outsideWidth, outsideHeight
 }
