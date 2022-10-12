@@ -2,6 +2,7 @@ package world
 
 import (
 	"fmt"
+	"image/color"
 	"math"
 
 	"github.com/3elDU/bamboo/engine"
@@ -9,9 +10,10 @@ import (
 	"github.com/3elDU/bamboo/engine/colors"
 	"github.com/3elDU/bamboo/util"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-func (c *chunk) Render(screen *ebiten.Image, target util.Coords2f) {
+func (c *Chunk) Render(screen *ebiten.Image, target util.Coords2f) {
 	for x := 0; x < 16; x++ {
 		for y := 0; y < 16; y++ {
 			block, _ := c.At(x, y)
@@ -28,24 +30,28 @@ func (world *World) Render(screen *ebiten.Image, playerX, playerY float64) {
 
 	for x := 0; x <= w+256; x += 16 * 16 {
 		for y := 0; y <= h+256; y += 16 * 16 {
-			// calculate chunk coordinates from screen coordinates
+			// calculate Chunk coordinates from screen coordinates
 			chunkX := int64((playerX + (float64(x) / 16)) / 16)
 			chunkY := int64((playerY + (float64(y) / 16)) / 16)
-			chunk := world.At(chunkX, chunkY)
+			chunk, err := world.At(chunkX, chunkY)
 
-			var screenX float64 = float64(x) - math.Mod(playerX, 16)*16
-			var screenY float64 = float64(y) - math.Mod(playerY, 16)*16
+			screenX := float64(x) - math.Mod(playerX, 16)*16
+			screenY := float64(y) - math.Mod(playerY, 16)*16
 
-			chunk.Render(screen, util.Coords2f{
-				X: screenX,
-				Y: screenY,
-			})
+			if err != nil {
+				ebitenutil.DrawRect(screen, screenX, screenY, 256, 256, color.RGBA{R: 255, G: 0, B: 255, A: 255})
+			} else {
+				chunk.Render(screen, util.Coords2f{
+					X: screenX,
+					Y: screenY,
+				})
+			}
 
 			// write some debug info
-			engine.RenderFont(screen, asset_loader.GlobalAssets.DefaultFont(),
-				fmt.Sprintf("coords: %v, %v\nx, y: %v, %v",
-					chunkX, chunkY, x, y),
-				int(screenX), int(screenY), colors.Red,
+			engine.RenderFont(screen, asset_loader.DefaultFont(),
+				fmt.Sprintf("coords: %v, %v\nx, y: %v, %v\nerr: %v",
+					chunkX, chunkY, x, y, err),
+				int(screenX), int(screenY), colors.Black,
 			)
 		}
 	}

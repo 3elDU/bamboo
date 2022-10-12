@@ -42,8 +42,8 @@ type Widget interface {
 }
 
 /*
-When we want to render the text,
-tt is much more convenient for the widget to return just the text, and RenderTextWidget() method
+TextWidget is made for rendering simple text
+it is much more convenient for the widget to return just the text, and RenderTextWidget() method
 will do the text rendering itself.
 Why? Imagine this scenario:
 We want to render a single line of text.
@@ -84,7 +84,6 @@ func widgetPosition(iw, ih, ww, wh int, anchor Anchor) (int, int) {
 	}
 }
 
-// interface{} is a hack, because generics don't accept interfaces as type parameters
 func RenderWidget(screen *ebiten.Image, widget Widget) {
 	ww, wh := screen.Size()
 	img := widget.Render()

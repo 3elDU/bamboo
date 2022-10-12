@@ -8,8 +8,8 @@ import (
 type Block interface {
 	Coords() util.Coords2i
 	SetCoords(coords util.Coords2i)
-	ParentChunk() *chunk
-	SetParentChunk(chunk *chunk)
+	ParentChunk() *Chunk
+	SetParentChunk(chunk *Chunk)
 
 	Update()
 	Render(screen *ebiten.Image, pos util.Coords2f)

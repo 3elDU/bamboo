@@ -33,8 +33,8 @@ func (p *Player) Update(movement MovementVector) {
 		deltaY += 1
 	}
 
-	p.xVelocity += deltaX * config.PLAYER_SPEED
-	p.yVelocity += deltaY * config.PLAYER_SPEED
+	p.xVelocity += deltaX * config.PlayerSpeed
+	p.yVelocity += deltaY * config.PlayerSpeed
 
 	p.X += p.xVelocity
 	p.Y += p.yVelocity

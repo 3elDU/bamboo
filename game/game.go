@@ -15,7 +15,6 @@ import (
 )
 
 type Game struct {
-	Assets      *asset_loader.AssetList
 	Widgets     []widget.Widget
 	TextWidgets []widget.TextWidget
 
@@ -23,9 +22,8 @@ type Game struct {
 	Player *Player
 }
 
-func Create(assetsDirectory string) *Game {
+func Create() *Game {
 	game := &Game{
-		Assets:      asset_loader.LoadAssets(assetsDirectory),
 		Widgets:     make([]widget.Widget, 0),
 		TextWidgets: make([]widget.TextWidget, 0),
 
@@ -33,10 +31,15 @@ func Create(assetsDirectory string) *Game {
 		Player: &Player{0, 0, 0, 0},
 	}
 
+	/*
+		game.Widgets = append(game.Widgets,
+			&widgets.TextureWidget{Image: asset_loader.Texture("test")},
+		)
+	*/
+
 	game.TextWidgets = append(game.TextWidgets,
-		// &widgets.TextureWidget{Texture: game.assets.Textures["test"]},
 		&widgets.PerfWidget{
-			Face:  game.Assets.DefaultFont(),
+			Face:  asset_loader.DefaultFont(),
 			Color: colors.Black,
 		},
 	)
@@ -45,34 +48,6 @@ func Create(assetsDirectory string) *Game {
 }
 
 func (game *Game) Update() error {
-	/*
-		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
-			switch t := event.(type) {
-			case *sdl.QuitEvent:
-				game.running = false
-			case *sdl.KeyboardEvent:
-				if t.State == sdl.RELEASED || t.Repeat > 0 {
-					break
-				}
-
-				switch t.Keysym.Sym {
-				case sdl.K_0:
-					config.PERLIN_NOISE_SCALE_FACTOR += 5
-				case sdl.K_9:
-					config.PERLIN_NOISE_SCALE_FACTOR -= 5
-				}
-			}
-		}
-
-		keysPressed := sdl.GetKeyboardState()
-		game.Player.Update(MovementVector{
-			Left:  keysPressed[sdl.SCANCODE_A] == 1,
-			Right: keysPressed[sdl.SCANCODE_D] == 1,
-			Up:    keysPressed[sdl.SCANCODE_W] == 1,
-			Down:  keysPressed[sdl.SCANCODE_S] == 1,
-		})
-	*/
-
 	game.Player.Update(MovementVector{
 		Left:  ebiten.IsKeyPressed(ebiten.KeyA),
 		Right: ebiten.IsKeyPressed(ebiten.KeyD),
@@ -94,7 +69,6 @@ func (game *Game) Update() error {
 }
 
 func (game *Game) Draw(screen *ebiten.Image) {
-
 	game.World.Render(screen, game.Player.X, game.Player.Y)
 
 	for _, w := range game.Widgets {
@@ -105,16 +79,16 @@ func (game *Game) Draw(screen *ebiten.Image) {
 		widget.RenderTextWidget(screen, w)
 	}
 
-	engine.RenderFont(screen, game.Assets.DefaultFont(),
+	engine.RenderFont(screen, asset_loader.DefaultFont(),
 		fmt.Sprintf("%v, %v", game.Player.X, game.Player.Y),
 		0, 0, colors.Black)
 
-	engine.RenderFont(screen, game.Assets.DefaultFont(),
-		fmt.Sprint(config.PERLIN_NOISE_SCALE_FACTOR),
+	engine.RenderFont(screen, asset_loader.DefaultFont(),
+		fmt.Sprint(config.PerlinNoiseScaleFactor),
 		0, 32, colors.Black,
 	)
 }
 
-func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+func (game *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return outsideWidth, outsideHeight
 }

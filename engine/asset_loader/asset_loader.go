@@ -6,6 +6,7 @@ package asset_loader
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	"io/fs"
 	"os"
@@ -35,13 +36,18 @@ func cleanPath(path string) string {
 	return strings.Replace(filepath.Base(path), filepath.Ext(path), "", 1)
 }
 
-func LoadAssets(dir string) *AssetList {
+// LoadAssets loads assets from directory dir to global variable GlobalAssets
+func LoadAssets(dir string) error {
 	assetList := &AssetList{
 		Fonts:    make(map[string]font.Face),
 		Textures: make(map[string]*ebiten.Image),
 	}
 
-	filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
 		if !d.IsDir() {
 			data, err := os.ReadFile(path)
 			if err != nil {
@@ -63,7 +69,7 @@ func LoadAssets(dir string) *AssetList {
 				}
 
 				fFace := truetype.NewFace(f, &truetype.Options{
-					Size:    config.FONT_SIZE,
+					Size:    config.FontSize,
 					Hinting: font.HintingFull,
 				})
 
@@ -77,11 +83,32 @@ func LoadAssets(dir string) *AssetList {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	GlobalAssets = assetList
-	return assetList
+	return nil
 }
 
-func (assets *AssetList) DefaultFont() font.Face {
-	return assets.defaultFont
+func DefaultFont() font.Face {
+	return GlobalAssets.defaultFont
+}
+
+// Texture panicks when a specified texture doesn't exist
+func Texture(name string) *ebiten.Image {
+	tex, exists := GlobalAssets.Textures[name]
+	if !exists {
+		panic(fmt.Sprintf("texture %v doesn't exist", name))
+	}
+	return tex
+}
+
+// Font panicks when a specified font doesn't exist
+func Font(name string) font.Face {
+	face, exists := GlobalAssets.Fonts[name]
+	if !exists {
+		panic(fmt.Sprintf("font %v doesn't exist", name))
+	}
+	return face
 }

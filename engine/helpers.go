@@ -13,7 +13,9 @@ import (
 	"golang.org/x/image/font"
 )
 
-// x and y are top-left coordinates, because RenderFont calculates text position correctly
+// RenderFont
+// arguments x and y are top-left coordinates, because RenderFont calculates text position
+// correctly
 func RenderFont(dest *ebiten.Image, face font.Face, s string, x, y int, color color.Color) {
 	// TODO: Splitting by bare '\n' may not work on Windows platforms
 	lines := strings.Split(s, "\n")

@@ -13,7 +13,7 @@ import (
 )
 
 type BaseBlock struct {
-	parentChunk *chunk
+	parentChunk *Chunk
 	x, y        int
 }
 
@@ -28,11 +28,11 @@ func (b *BaseBlock) SetCoords(coords util.Coords2i) {
 
 }
 
-func (b *BaseBlock) ParentChunk() *chunk {
+func (b *BaseBlock) ParentChunk() *Chunk {
 	return b.parentChunk
 }
 
-func (b *BaseBlock) SetParentChunk(c *chunk) {
+func (b *BaseBlock) SetParentChunk(c *Chunk) {
 	b.parentChunk = c
 }
 
