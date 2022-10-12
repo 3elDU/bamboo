@@ -25,7 +25,7 @@ func (c *Chunk) Render(screen *ebiten.Image, target util.Coords2f) {
 	}
 }
 
-func (world *World) Render(screen *ebiten.Image, playerX, playerY float64) {
+func (world *World) Render(screen *ebiten.Image, playerX, playerY float64, showDebugInfo bool) {
 	w, h := ebiten.WindowSize()
 
 	for x := 0; x <= w+256; x += 16 * 16 {
@@ -47,12 +47,13 @@ func (world *World) Render(screen *ebiten.Image, playerX, playerY float64) {
 				})
 			}
 
-			// write some debug info
-			engine.RenderFont(screen, asset_loader.DefaultFont(),
-				fmt.Sprintf("coords: %v, %v\nx, y: %v, %v\nerr: %v",
-					chunkX, chunkY, x, y, err),
-				int(screenX), int(screenY), colors.Black,
-			)
+			if showDebugInfo {
+				engine.RenderFont(screen, asset_loader.DefaultFont(),
+					fmt.Sprintf("coords: %v, %v\nx, y: %v, %v\nerr: %v",
+						chunkX, chunkY, x, y, err),
+					int(screenX), int(screenY), colors.Black,
+				)
+			}
 		}
 	}
 }

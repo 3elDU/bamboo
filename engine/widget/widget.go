@@ -1,6 +1,7 @@
 package widget
 
 import (
+	"fmt"
 	"image/color"
 
 	"github.com/3elDU/bamboo/engine"
@@ -106,4 +107,59 @@ func RenderTextWidget(screen *ebiten.Image, widget TextWidget) {
 	x, y := widgetPosition(bounds.Dx(), bounds.Dy(), ww, wh, t.Anchor)
 
 	engine.RenderFont(screen, t.Face, t.Text, x, y, t.Color)
+}
+
+// Universal container for both types of widgets, with useful methods
+type WidgetContainer struct {
+	Widgets     map[string]Widget
+	TextWidgets map[string]TextWidget
+}
+
+func NewWidgetContainer() *WidgetContainer {
+	return &WidgetContainer{
+		Widgets:     make(map[string]Widget),
+		TextWidgets: make(map[string]TextWidget),
+	}
+}
+
+func (container *WidgetContainer) AddWidget(name string, widget Widget) {
+	container.Widgets[name] = widget
+}
+
+func (container *WidgetContainer) GetWidget(name string) Widget {
+	w, exists := container.Widgets[name]
+	if !exists {
+		panic(fmt.Sprintf("widget with name %v doesn't exist", name))
+	}
+	return w
+}
+
+func (container *WidgetContainer) AddTextWidget(name string, widget TextWidget) {
+	container.TextWidgets[name] = widget
+}
+
+func (container *WidgetContainer) GetTextWidget(name string) TextWidget {
+	w, exists := container.TextWidgets[name]
+	if !exists {
+		panic(fmt.Sprintf("text widget with name %v doesn't exist", name))
+	}
+	return w
+}
+
+func (container *WidgetContainer) Update() {
+	for _, w := range container.Widgets {
+		w.Update()
+	}
+	for _, w := range container.TextWidgets {
+		w.Update()
+	}
+}
+
+func (container *WidgetContainer) Render(screen *ebiten.Image) {
+	for _, w := range container.Widgets {
+		RenderWidget(screen, w)
+	}
+	for _, w := range container.TextWidgets {
+		RenderTextWidget(screen, w)
+	}
 }

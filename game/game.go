@@ -12,81 +12,97 @@ import (
 	"github.com/3elDU/bamboo/engine/world"
 	"github.com/3elDU/bamboo/game/widgets"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 type Game struct {
-	Widgets     []widget.Widget
-	TextWidgets []widget.TextWidget
+	widgets      *widget.WidgetContainer
+	debugWidgets *widget.WidgetContainer
 
-	World  *world.World
-	Player *Player
+	world  *world.World
+	player *Player
+
+	debugInfoVisible bool
 }
 
 func Create() *Game {
 	game := &Game{
-		Widgets:     make([]widget.Widget, 0),
-		TextWidgets: make([]widget.TextWidget, 0),
+		widgets:      widget.NewWidgetContainer(),
+		debugWidgets: widget.NewWidgetContainer(),
 
-		World:  world.NewWorld(rand.Int63()),
-		Player: &Player{0, 0, 0, 0},
+		world:  world.NewWorld(rand.Int63()),
+		player: &Player{0, 0, 0, 0},
+
+		debugInfoVisible: true,
 	}
 
 	/*
 		game.Widgets = append(game.Widgets,
-			&widgets.TextureWidget{Image: asset_loader.Texture("test")},
+			&widgets.TextureWidget{image: asset_loader.Texture("test")},
 		)
 	*/
 
-	game.TextWidgets = append(game.TextWidgets,
-		&widgets.PerfWidget{
-			Face:  asset_loader.DefaultFont(),
-			Color: colors.Black,
-		},
+	game.debugWidgets.AddTextWidget(
+		"debug",
+		&widgets.PerfWidget{Color: colors.Black, Face: asset_loader.DefaultFont()},
 	)
 
 	return game
 }
 
 func (game *Game) Update() error {
-	game.Player.Update(MovementVector{
+	// Check for key presses
+	switch {
+	// F3 toggles visibility of debug widgets
+	case inpututil.IsKeyJustPressed(ebiten.KeyF3):
+		game.debugInfoVisible = !game.debugInfoVisible
+
+	}
+
+	game.player.Update(MovementVector{
 		Left:  ebiten.IsKeyPressed(ebiten.KeyA),
 		Right: ebiten.IsKeyPressed(ebiten.KeyD),
 		Up:    ebiten.IsKeyPressed(ebiten.KeyW),
 		Down:  ebiten.IsKeyPressed(ebiten.KeyS),
 	})
 
-	game.World.Update(game.Player.X, game.Player.Y)
+	game.world.Update(game.player.X, game.player.Y)
 
-	for _, w := range game.Widgets {
-		w.Update()
-	}
+	game.widgets.Update()
 
-	for _, w := range game.TextWidgets {
-		w.Update()
+	if game.debugInfoVisible {
+		game.debugWidgets.Update()
 	}
 
 	return nil
 }
 
 func (game *Game) Draw(screen *ebiten.Image) {
-	game.World.Render(screen, game.Player.X, game.Player.Y)
+	game.world.Render(screen, game.player.X, game.player.Y, game.debugInfoVisible)
 
-	for _, w := range game.Widgets {
-		widget.RenderWidget(screen, w)
+	game.widgets.Render(screen)
+	if game.debugInfoVisible {
+		game.debugWidgets.Render(screen)
 	}
 
-	for _, w := range game.TextWidgets {
-		widget.RenderTextWidget(screen, w)
+	if game.debugInfoVisible {
+		// TODO: extract this to separate widgets
+		// But that would require lots of architecture changed
+		// Because currently, there is no way to pass custom data to a widget
+
+		engine.RenderFont(screen, asset_loader.DefaultFont(),
+			fmt.Sprintf("player pos %.2f, %.2f", game.player.X, game.player.Y),
+			0, 0, colors.Black)
+
+		engine.RenderFont(screen, asset_loader.DefaultFont(),
+			fmt.Sprint(config.PerlinNoiseScaleFactor),
+			0, 16, colors.Black,
+		)
+
+		engine.RenderFont(screen, asset_loader.DefaultFont(),
+			fmt.Sprint(game.debugInfoVisible),
+			0, 32, colors.Black)
 	}
-
-	engine.RenderFont(screen, asset_loader.DefaultFont(),
-		fmt.Sprintf("%v, %v", game.Player.X, game.Player.Y),
-		0, 0, colors.Black)
-
-	engine.RenderFont(screen, asset_loader.DefaultFont(),
-		fmt.Sprint(config.PerlinNoiseScaleFactor),
-		0, 32, colors.Black,
-	)
 }
 
 func (game *Game) Layout(outsideWidth, outsideHeight int) (int, int) {

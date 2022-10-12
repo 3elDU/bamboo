@@ -1,0 +1,13 @@
+{
+    "configurations": [
+        {
+          "type": "go",
+          "name": "bamboo",
+          "goExecPath": "/usr/bin/go",
+          "buildTargets": [
+            "$PROJECT_DIR$/main.go"
+          ]
+        },
+
+    ]
+}
