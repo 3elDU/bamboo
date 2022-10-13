@@ -11,6 +11,9 @@ type Block interface {
 	ParentChunk() *Chunk
 	SetParentChunk(chunk *Chunk)
 
+	// Whether the player should collide with the block
+	Collidable() bool
+
 	Update()
 	Render(screen *ebiten.Image, pos util.Coords2f)
 }

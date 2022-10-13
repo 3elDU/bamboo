@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/engine"
 	"github.com/3elDU/bamboo/engine/asset_loader"
 	"github.com/3elDU/bamboo/engine/colors"
@@ -95,13 +94,13 @@ func (game *Game) Draw(screen *ebiten.Image) {
 			0, 0, colors.Black)
 
 		engine.RenderFont(screen, asset_loader.DefaultFont(),
-			fmt.Sprint(config.PerlinNoiseScaleFactor),
-			0, 16, colors.Black,
+			fmt.Sprint(game.world.Seed()),
+			0, 24, colors.Black,
 		)
 
 		engine.RenderFont(screen, asset_loader.DefaultFont(),
 			fmt.Sprint(game.debugInfoVisible),
-			0, 32, colors.Black)
+			0, 48, colors.Black)
 	}
 }
 

@@ -2,6 +2,7 @@ package util
 
 import (
 	"math"
+	"math/rand"
 
 	"golang.org/x/exp/constraints"
 )
@@ -27,4 +28,11 @@ func Clamp[T constraints.Integer | constraints.Float](val, min, max T) T {
 	} else {
 		return val
 	}
+}
+
+func RandomChoice[T any](objects []T) T {
+	if len(objects) == 0 {
+		panic("objects with zero length")
+	}
+	return objects[rand.Intn(len(objects))]
 }
