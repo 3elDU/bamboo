@@ -16,11 +16,14 @@ import (
 func (c *Chunk) Render(screen *ebiten.Image, target util.Coords2f) {
 	for x := 0; x < 16; x++ {
 		for y := 0; y < 16; y++ {
-			block, _ := c.At(x, y)
-			block.Render(screen, util.Coords2f{
-				X: target.X + float64(x)*16,
-				Y: target.Y + float64(y)*16,
-			})
+			stack, _ := c.At(x, y)
+
+			for _, block := range []Block{stack.bottom, stack.ground, stack.top} {
+				block.Render(screen, util.Coords2f{
+					X: target.X + float64(x)*16,
+					Y: target.Y + float64(y)*16,
+				})
+			}
 		}
 	}
 }

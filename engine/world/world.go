@@ -1,16 +1,19 @@
 package world
 
 import (
-	"fmt"
+	"math/rand"
 
-	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/util"
 	"github.com/aquilax/go-perlin"
 )
 
 type World struct {
-	generator *perlin.Perlin
-	seed      int64
+	// Separate perlin noise generators for each layer
+	bottomGenerator *perlin.Perlin
+	groundGenerator *perlin.Perlin
+	topGenerator    *perlin.Perlin
+
+	mapSeed int64
 
 	// keys there are Chunk coordinates.
 	// so, actual Chunk coordinates are x*16 and y*16
@@ -18,48 +21,25 @@ type World struct {
 }
 
 func NewWorld(seed int64) *World {
+	// make a random generator using global world seed
+	world := rand.New(rand.NewSource(seed))
+
+	// and generate perlin noise seeds, using it
+	var (
+		bottomSeed = world.Int63()
+		groundSeed = world.Int63()
+		topSeed    = world.Int63()
+	)
+
 	return &World{
-		generator: perlin.NewPerlin(2, 2, 16, seed),
-		seed:      seed,
-		data:      make(map[util.Coords2i]*Chunk),
+		bottomGenerator: perlin.NewPerlin(2, 2, 16, bottomSeed),
+		groundGenerator: perlin.NewPerlin(2, 2, 16, groundSeed),
+		topGenerator:    perlin.NewPerlin(2, 2, 16, topSeed),
+
+		mapSeed: seed,
+
+		data: make(map[util.Coords2i]*Chunk),
 	}
-}
-
-func (world *World) gen(x, y float64) Block {
-	// returns a value from 0 to 2
-	h := world.generator.Noise2D(x/config.PerlinNoiseScaleFactor, y/config.PerlinNoiseScaleFactor) + 1
-
-	switch {
-	case h <= 1: // Water
-		return NewWaterBlock()
-	case h <= 1.1: // Sand
-		return NewSandBlock()
-	case h <= 1.45: // Grass
-		return NewGrassBlock()
-	case h <= 1.65: // Stone
-		return NewStoneBlock(h)
-	default: // Snow
-		return NewSnowBlock()
-	}
-}
-
-func (world *World) GenerateChunk(cx, cy int64) error {
-	fmt.Printf("Generating Chunk %v, %v\n", cx, cy)
-
-	chunk := NewChunk(cx, cy)
-	world.data[util.Coords2i{X: cx, Y: cy}] = chunk
-
-	for x := 0; x < 16; x++ {
-		for y := 0; y < 16; y++ {
-			b := world.gen(float64(int(cx)*16+x), float64(int(cy)*16+y))
-			err := chunk.SetBlock(x, y, b)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }
 
 // Update - x and y are player coordinates
@@ -74,15 +54,17 @@ func (world *World) At(x, y int64) (*Chunk, error) {
 
 	// generate Chunk, if it doesn't exist yet
 	if !exists {
-		err := world.GenerateChunk(x, y)
+		chunk := NewChunk(x, y)
+		err := chunk.Generate(world.bottomGenerator, world.groundGenerator, world.topGenerator)
 		if err != nil {
 			return nil, err
 		}
+		world.data[util.Coords2i{X: x, Y: y}] = chunk
 	}
 
 	return world.data[util.Coords2i{X: x, Y: y}], nil
 }
 
 func (world *World) Seed() int64 {
-	return world.seed
+	return world.mapSeed
 }

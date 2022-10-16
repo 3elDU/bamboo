@@ -1,162 +1,131 @@
 /*
-	Various block types, used in the game
+	Implementations for various block types
 */
 
 package world
 
 import (
-	"image/color"
-	"math"
+	"fmt"
 
 	"github.com/3elDU/bamboo/engine/asset_loader"
 	"github.com/3elDU/bamboo/util"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-// Base structure inherited by all blocks
-// Contains some basic parameters, so we don't have to implemt them for ourselves
-type baseBlock struct {
-	// Usually you don't have to set this for youself,
-	// Since world.Gen() sets them automatically
-	parentChunk *Chunk
-	x, y        int
+const (
+	Empty BlockType = iota
+	Stone
+	Water
+	Sand
+	Grass
+	Snow
 
-	// Whether collision will work with this block
-	collidable bool
+	// Top-layer blocks
+	Sand_Stone
+	Grass_Plants_Small
+	Grass_Flowers
+	Grass_Plants
+)
 
-	// How fast player could move through this block
-	// Calculated by basePlayerSpeed * playerSpeed
-	// Applicable only if collidable is false
-	playerSpeed float64
-}
-
-func (b *baseBlock) Coords() util.Coords2i {
-	return util.Coords2i{X: int64(b.x), Y: int64(b.y)}
-}
-
-func (b *baseBlock) SetCoords(coords util.Coords2i) {
-	if coords.X > 15 || coords.Y > 15 {
-		return
-	}
-
-}
-
-func (b *baseBlock) ParentChunk() *Chunk {
-	return b.parentChunk
-}
-
-func (b *baseBlock) SetParentChunk(c *Chunk) {
-	b.parentChunk = c
-}
-
-func (b *baseBlock) Collidable() bool {
-	return b.collidable
-}
-
-// Another base structure, to simplify things
-type texturedBlock struct {
-	tex      *ebiten.Image
-	rotation float64 // in degrees
-}
-
-func (b *texturedBlock) Render(screen *ebiten.Image, pos util.Coords2f) {
-	opts := &ebiten.DrawImageOptions{}
-
-	if b.rotation != 0 {
-		w, h := b.tex.Size()
-		// Move image half a texture size, so that rotation origin will be in the center
-		opts.GeoM.Translate(float64(-w/2), float64(-h/2))
-		opts.GeoM.Rotate(b.rotation * (math.Pi / 180))
-		pos.X += float64(w / 2)
-		pos.Y += float64(h / 2)
-	}
-
-	opts.GeoM.Translate(pos.X, pos.Y)
-
-	screen.DrawImage(b.tex, opts)
-}
-
-type coloredBlock struct {
+type emptyBlock struct {
 	baseBlock
-
-	color color.Color
 }
 
-func NewColoredBlock(color color.Color) *coloredBlock {
-	block := coloredBlock{
-		baseBlock: baseBlock{},
-		color:     color,
+func (e *emptyBlock) Update() {
+
+}
+
+func (e *emptyBlock) Render(_ *ebiten.Image, _ util.Coords2f) {
+
+}
+
+func NewEmptyBlock() *emptyBlock {
+	return &emptyBlock{
+		baseBlock: baseBlock{
+			collidable:  false,
+			playerSpeed: 1.0,
+			blockType:   Empty,
+		},
 	}
-
-	return &block
 }
 
-func (b *coloredBlock) Update() {
-
-}
-
-func (b *coloredBlock) Render(screen *ebiten.Image, pos util.Coords2f) {
-	// engine.GlobalEngine.FillRectF(float32(target.X), float32(target.Y), 16, 16, b.color)
-	ebitenutil.DrawRect(screen, pos.X, pos.Y, 16, 16, b.color)
-}
-
-type grassBlock struct {
-	*baseBlock
-	*texturedBlock
-}
-
-func NewGrassBlock() *grassBlock {
-	return &grassBlock{
-		baseBlock: &baseBlock{
+func NewGrassBlock() *compositeBlock {
+	return &compositeBlock{
+		baseBlock: baseBlock{
 			collidable:  false,
 			playerSpeed: 1,
+			blockType:   Grass,
 		},
-		texturedBlock: &texturedBlock{
-			tex:      asset_loader.Texture("grass"),
+		texturedBlock: texturedBlock{
+			tex:      asset_loader.Texture("grass1"),
 			rotation: float64(util.RandomChoice([]int{0, 90, 180, 270})),
 		},
 	}
 }
 
-func (b *grassBlock) Update() {
+func NewGrassVegetationBlock(variant BlockType) *compositeBlock {
+	var texture string
 
+	switch variant {
+	case Grass_Plants_Small:
+		texture = "grass2"
+	case Grass_Plants:
+		texture = "grass4"
+	case Grass_Flowers:
+		texture = "grass3"
+	default:
+		panic(fmt.Sprintf("invalid grass vegetation variant - %v", variant))
+	}
+
+	return &compositeBlock{
+		baseBlock: baseBlock{
+			collidable:  false,
+			playerSpeed: 1.0,
+			blockType:   variant,
+		},
+		texturedBlock: texturedBlock{
+			tex:      asset_loader.Texture(texture),
+			rotation: 0,
+		},
+	}
 }
 
-type sandBlock struct {
-	*baseBlock
-	*texturedBlock
-}
-
-func NewSandBlock() *sandBlock {
-	return &sandBlock{
-		baseBlock: &baseBlock{
+func NewSandBlock() *compositeBlock {
+	return &compositeBlock{
+		baseBlock: baseBlock{
 			collidable:  false,
 			playerSpeed: 0.8,
+			blockType:   Sand,
 		},
-		texturedBlock: &texturedBlock{
+		texturedBlock: texturedBlock{
 			tex:      asset_loader.Texture("sand"),
 			rotation: float64(util.RandomChoice([]int{0, 90, 180, 270})),
 		},
 	}
 }
 
-func (b *sandBlock) Update() {
-
+func NewSandStoneBlock() *compositeBlock {
+	return &compositeBlock{
+		baseBlock: baseBlock{
+			collidable:  false,
+			playerSpeed: 0.8,
+			blockType:   Sand_Stone,
+		},
+		texturedBlock: texturedBlock{
+			tex:      asset_loader.Texture("sand-stones"),
+			rotation: float64(util.RandomChoice([]int{0, 90, 180, 270})),
+		},
+	}
 }
 
-type waterBlock struct {
-	*baseBlock
-	*texturedBlock
-}
-
-func NewWaterBlock() *waterBlock {
-	return &waterBlock{
-		baseBlock: &baseBlock{
+func NewWaterBlock() *compositeBlock {
+	return &compositeBlock{
+		baseBlock: baseBlock{
 			collidable:  false,
 			playerSpeed: 0.4,
+			blockType:   Water,
 		},
-		texturedBlock: &texturedBlock{
+		texturedBlock: texturedBlock{
 			tex: util.RandomChoice([]*ebiten.Image{
 				asset_loader.Texture("water1"),
 				asset_loader.Texture("water2"),
@@ -166,38 +135,21 @@ func NewWaterBlock() *waterBlock {
 	}
 }
 
-func (b *waterBlock) Update() {
-
-}
-
-type snowBlock struct {
-	*baseBlock
-	*texturedBlock
-}
-
-func NewSnowBlock() *snowBlock {
-	return &snowBlock{
-		baseBlock: &baseBlock{
+func NewSnowBlock() *compositeBlock {
+	return &compositeBlock{
+		baseBlock: baseBlock{
 			collidable:  false,
 			playerSpeed: 0.7,
+			blockType:   Snow,
 		},
-		texturedBlock: &texturedBlock{
+		texturedBlock: texturedBlock{
 			tex:      asset_loader.Texture("snow"),
 			rotation: 0,
 		},
 	}
 }
 
-func (b *snowBlock) Update() {
-
-}
-
-type stoneBlock struct {
-	*baseBlock
-	*texturedBlock
-}
-
-func NewStoneBlock(height float64) *stoneBlock {
+func NewStoneBlock(height float64) *compositeBlock {
 	var texVariant string
 	// use different texture depending on mountain height
 	switch {
@@ -209,18 +161,15 @@ func NewStoneBlock(height float64) *stoneBlock {
 		texVariant = "stone3"
 	}
 
-	return &stoneBlock{
-		baseBlock: &baseBlock{
+	return &compositeBlock{
+		baseBlock: baseBlock{
 			collidable:  false,
 			playerSpeed: 0.3,
+			blockType:   Stone,
 		},
-		texturedBlock: &texturedBlock{
+		texturedBlock: texturedBlock{
 			tex:      asset_loader.Texture(texVariant),
 			rotation: 0,
 		},
 	}
-}
-
-func (b *stoneBlock) Update() {
-
 }
