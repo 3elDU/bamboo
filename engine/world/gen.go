@@ -109,16 +109,26 @@ func (c *Chunk) Generate(bottom, ground, top *perlin.Perlin) error {
 	// FIXME: move to normal logging methods
 	fmt.Printf("Generating Chunk %v, %v\n", c.x, c.y)
 
+	// check if the chunk is out of the world borders
+	// if it is, don't generate a world, instead return a chunk filled with stone blocks
+	chunkOutOfBorders := c.x < 0 || c.y < 0 || c.x >= config.WorldWidth || c.y >= config.WorldHeight
+
 	for x := 0; x < 16; x++ {
 		for y := 0; y < 16; y++ {
 			bx := c.x*16 + int64(x)
 			by := c.y*16 + int64(y)
 
-			var (
+			var bottomBlock, groundBlock, topBlock Block
+
+			if chunkOutOfBorders {
+				bottomBlock = NewStoneBlock(0)
+				groundBlock = NewEmptyBlock()
+				topBlock = NewEmptyBlock()
+			} else {
 				bottomBlock = genBottom(bottom, makeFeatures(bottom, bx, by), float64(bx), float64(by))
 				groundBlock = genGround(ground, bottomBlock, makeFeatures(bottom, bx, by), float64(bx), float64(by))
-				topBlock    = genTop(top, groundBlock, makeFeatures(bottom, bx, by), float64(bx), float64(by))
-			)
+				topBlock = genTop(top, groundBlock, makeFeatures(bottom, bx, by), float64(bx), float64(by))
+			}
 
 			err := c.SetStack(x, y, BlockStack{
 				bottom: bottomBlock,

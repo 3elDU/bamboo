@@ -1,6 +1,10 @@
 package colors
 
-import "image/color"
+import (
+	"image/color"
+
+	"github.com/teacat/noire"
+)
 
 var (
 	Black = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}
@@ -24,3 +28,44 @@ var (
 	DarkGray2 = color.RGBA{R: 0x5A, G: 0x69, B: 0x88, A: 0xFF}
 	DarkGray3 = color.RGBA{R: 0x3A, G: 0x44, B: 0x66, A: 0xFF}
 )
+
+func Complementary(clr color.Color) color.Color {
+	switch clr {
+	case Black:
+		return Gray
+	case White:
+		return Black
+
+	case Red:
+		return Black
+	case Yellow:
+		return DarkOrange
+	case DarkOrange:
+		return Yellow
+
+	case Green, DarkGreen1:
+		return DarkGreen3
+	case DarkGreen2, DarkGreen3:
+		return Green
+
+	case Cyan, Blue:
+		return DarkBlue
+	case DarkBlue:
+		return Cyan
+
+	default:
+		r, g, b, _ := clr.RGBA()
+		origColor := noire.NewRGB(float64(r)/256, float64(g)/256, float64(b)/256)
+
+		var newColor noire.Color
+		if origColor.IsDark() {
+			newColor = origColor.Lighten(0.4)
+		} else {
+			newColor = origColor.Darken(0.4)
+		}
+
+		nr, ng, nb := newColor.RGB()
+
+		return color.RGBA{uint8(nr * 255), uint8(ng * 255), uint8(nb * 255), 255}
+	}
+}

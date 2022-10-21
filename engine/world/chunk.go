@@ -4,18 +4,22 @@ import (
 	"fmt"
 
 	"github.com/3elDU/bamboo/util"
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Chunk struct {
 	// those are coordinates, not block coordinates
 	x, y   int64
 	blocks [16][16]BlockStack
+
+	Texture *ebiten.Image
 }
 
 // NewChunk creates new empty Chunk at specified chunk coordinates
 func NewChunk(cx, cy int64) *Chunk {
 	return &Chunk{
 		x: cx, y: cy,
+		Texture: ebiten.NewImage(256, 256),
 	}
 }
 

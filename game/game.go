@@ -10,6 +10,7 @@ import (
 	"github.com/3elDU/bamboo/engine/widget"
 	"github.com/3elDU/bamboo/engine/world"
 	"github.com/3elDU/bamboo/game/widgets"
+	"github.com/3elDU/bamboo/util"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
@@ -18,8 +19,12 @@ type Game struct {
 	widgets      *widget.WidgetContainer
 	debugWidgets *widget.WidgetContainer
 
-	world  *world.World
-	player *Player
+	world                  *world.World
+	player                 *Player
+	playerRenderingOptions *ebiten.DrawImageOptions
+
+	scaling         float64
+	scalingVelocity float64 // for smooth scaling animation
 
 	debugInfoVisible bool
 }
@@ -29,8 +34,11 @@ func Create() *Game {
 		widgets:      widget.NewWidgetContainer(),
 		debugWidgets: widget.NewWidgetContainer(),
 
-		world:  world.NewWorld(rand.Int63()),
-		player: &Player{0, 0, 0, 0},
+		world:                  world.NewWorld(rand.Int63()),
+		player:                 &Player{0, 0, 0, 0},
+		playerRenderingOptions: &ebiten.DrawImageOptions{},
+
+		scaling: 1.0,
 
 		debugInfoVisible: true,
 	}
@@ -58,6 +66,10 @@ func (game *Game) Update() error {
 
 	}
 
+	// scale the map, using scroll wheel
+	_, yvel := ebiten.Wheel()
+	game.scalingVelocity += yvel * 0.001
+
 	game.player.Update(MovementVector{
 		Left:  ebiten.IsKeyPressed(ebiten.KeyA),
 		Right: ebiten.IsKeyPressed(ebiten.KeyD),
@@ -73,11 +85,26 @@ func (game *Game) Update() error {
 		game.debugWidgets.Update()
 	}
 
+	game.scaling += game.scalingVelocity
+	game.scaling = util.Clamp(game.scaling, 1.00, 4.00)
+	game.scalingVelocity *= 0.95
+
 	return nil
 }
 
 func (game *Game) Draw(screen *ebiten.Image) {
-	game.world.Render(screen, game.player.X, game.player.Y, game.debugInfoVisible)
+	sw, sh := screen.Size()
+
+	game.world.Render(screen, game.player.X, game.player.Y, game.scaling)
+
+	// Render the player
+	game.playerRenderingOptions.GeoM.Reset()
+	game.playerRenderingOptions.GeoM.Scale(game.scaling, game.scaling)
+	game.playerRenderingOptions.GeoM.Translate(
+		float64(sw)/2-8*game.scaling,
+		float64(sh)/2-8*game.scaling,
+	)
+	screen.DrawImage(asset_loader.Texture("person"), game.playerRenderingOptions)
 
 	game.widgets.Render(screen)
 	if game.debugInfoVisible {
@@ -94,12 +121,12 @@ func (game *Game) Draw(screen *ebiten.Image) {
 			0, 0, colors.Black)
 
 		engine.RenderFont(screen, asset_loader.DefaultFont(),
-			fmt.Sprint(game.world.Seed()),
+			fmt.Sprintf("world seed %v", game.world.Seed()),
 			0, 24, colors.Black,
 		)
 
 		engine.RenderFont(screen, asset_loader.DefaultFont(),
-			fmt.Sprint(game.debugInfoVisible),
+			fmt.Sprintf("scaling %v", util.LimitFloatPrecision(game.scaling, 2)),
 			0, 48, colors.Black)
 	}
 }

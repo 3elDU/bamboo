@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	_ "image/png"
 	"io/fs"
 	"os"
 	"path/filepath"

@@ -39,9 +39,8 @@ func (p *Player) Update(movement MovementVector) {
 	p.X += p.xVelocity
 	p.Y += p.yVelocity
 
-	// TODO: Make proper world borders
-	p.X = util.Clamp(p.X, 0, 1024)
-	p.Y = util.Clamp(p.Y, 0, 1024)
+	p.X = util.Clamp(p.X, 0, float64(config.WorldWidth))
+	p.Y = util.Clamp(p.Y, 0, float64(config.WorldHeight))
 
 	p.xVelocity *= 0.90
 	p.yVelocity *= 0.90

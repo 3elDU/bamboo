@@ -1,62 +1,57 @@
 package world
 
 import (
-	"fmt"
-	"image/color"
 	"math"
 
-	"github.com/3elDU/bamboo/engine"
-	"github.com/3elDU/bamboo/engine/asset_loader"
-	"github.com/3elDU/bamboo/engine/colors"
 	"github.com/3elDU/bamboo/util"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-func (c *Chunk) Render(screen *ebiten.Image, target util.Coords2f) {
+func (c *Chunk) Render() {
 	for x := 0; x < 16; x++ {
 		for y := 0; y < 16; y++ {
 			stack, _ := c.At(x, y)
 
 			for _, block := range []Block{stack.bottom, stack.ground, stack.top} {
-				block.Render(screen, util.Coords2f{
-					X: target.X + float64(x)*16,
-					Y: target.Y + float64(y)*16,
+				block.Render(c.Texture, util.Coords2f{
+					X: float64(x) * 16,
+					Y: float64(y) * 16,
 				})
 			}
 		}
 	}
 }
 
-func (world *World) Render(screen *ebiten.Image, playerX, playerY float64, showDebugInfo bool) {
-	w, h := ebiten.WindowSize()
+func (world *World) Render(screen *ebiten.Image, px, py, scaling float64) {
+	var (
+		screenWidth, screenHeight = screen.Size()
+		screenWidthInChunks       = float64(screenWidth) / 256 / scaling
+		screenHeightInChunks      = float64(screenHeight) / 256 / scaling
+		opts                      = &ebiten.DrawImageOptions{}
+	)
 
-	for x := 0; x <= w+256; x += 16 * 16 {
-		for y := 0; y <= h+256; y += 16 * 16 {
-			// calculate Chunk coordinates from screen coordinates
-			chunkX := int64((playerX + (float64(x) / 16)) / 16)
-			chunkY := int64((playerY + (float64(y) / 16)) / 16)
-			chunk, err := world.At(chunkX, chunkY)
-
-			screenX := float64(x) - math.Mod(playerX, 16)*16
-			screenY := float64(y) - math.Mod(playerY, 16)*16
-
+	// player is displayed in center of the screen
+	// but internally, player coordinates actually represent upper-left corner of the screen
+	// so, we need to adjust camera position a bit, so that the camera will be showing the right area
+	// hence, we subtract half of screen size, converted to blocks.
+	for x := px - screenWidthInChunks/2*16 - 16; x < px+screenWidthInChunks/2*16+16; x += 16 {
+		for y := py - screenHeightInChunks/2*16 - 16; y < py+screenHeightInChunks/2*16+16; y += 16 {
+			chunk, err := world.At(x, y)
 			if err != nil {
-				ebitenutil.DrawRect(screen, screenX, screenY, 256, 256, color.RGBA{R: 255, G: 0, B: 255, A: 255})
-			} else {
-				chunk.Render(screen, util.Coords2f{
-					X: screenX,
-					Y: screenY,
-				})
+				panic(err)
 			}
 
-			if showDebugInfo {
-				engine.RenderFont(screen, asset_loader.DefaultFont(),
-					fmt.Sprintf("coords: %v, %v\nx, y: %v, %v\nerr: %v",
-						chunkX, chunkY, x, y, err),
-					int(screenX), int(screenY), colors.Black,
-				)
-			}
+			chunk.Render()
+
+			var (
+				sx = (x-px-math.Mod(x, 16))*16 + float64(screenWidth)/2 - (float64(screenWidth)/scaling*(scaling-1))/2
+				sy = (y-py-math.Mod(y, 16))*16 + float64(screenHeight)/2 - (float64(screenHeight)/scaling*(scaling-1))/2
+			)
+
+			opts.GeoM.Reset()
+			opts.GeoM.Translate(sx, sy)
+			opts.GeoM.Scale(scaling, scaling)
+			screen.DrawImage(chunk.Texture, opts)
 		}
 	}
 }

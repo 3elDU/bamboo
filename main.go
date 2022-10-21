@@ -7,7 +7,6 @@ import (
 
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/engine/asset_loader"
-
 	"github.com/3elDU/bamboo/game"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -17,9 +16,8 @@ func init() {
 }
 
 func main() {
-	err := asset_loader.LoadAssets(config.AssetDirectory)
-	if err != nil {
-		panic(fmt.Sprintf("LoadAssets() failed with error %v", err))
+	if err := asset_loader.LoadAssets(config.AssetDirectory); err != nil {
+		panic(fmt.Sprintf("LoadAssets() failed with: %v", err))
 	}
 
 	ebiten.SetWindowSize(640, 480)
