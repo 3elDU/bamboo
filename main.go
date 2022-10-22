@@ -19,7 +19,7 @@ import (
 
 func init() {
 	// init logging
-	logFilename := "Log " + time.Now().Format(time.RFC1123) + ".txt"
+	logFilename := "Log-" + time.Now().Format("02-Jan-2006_15-04-05-MST") + ".txt"
 	file, err := os.OpenFile(filepath.Join("logs", logFilename), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create log file: %v", err))
