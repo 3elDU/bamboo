@@ -6,7 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/3elDU/bamboo/config"
@@ -19,8 +19,8 @@ import (
 
 func init() {
 	// init logging
-	logFilename := "Log " + time.Now().Format(time.RFC3339) + ".txt"
-	file, err := os.OpenFile(path.Join("logs", logFilename), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	logFilename := "Log " + time.Now().Format(time.RFC1123) + ".txt"
+	file, err := os.OpenFile(filepath.Join("logs", logFilename), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create log file: %v", err))
 	}
