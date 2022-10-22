@@ -6,10 +6,10 @@ package asset_loader
 
 import (
 	"bytes"
-	"fmt"
 	"image"
 	_ "image/png"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -100,7 +100,7 @@ func DefaultFont() font.Face {
 func Texture(name string) *ebiten.Image {
 	tex, exists := GlobalAssets.Textures[name]
 	if !exists {
-		panic(fmt.Sprintf("texture %v doesn't exist", name))
+		log.Panicf("texture %v doesn't exist", name)
 	}
 	return tex
 }
@@ -109,7 +109,7 @@ func Texture(name string) *ebiten.Image {
 func Font(name string) font.Face {
 	face, exists := GlobalAssets.Fonts[name]
 	if !exists {
-		panic(fmt.Sprintf("font %v doesn't exist", name))
+		log.Panicf("font %v doesn't exist", name)
 	}
 	return face
 }

@@ -32,7 +32,7 @@ func (w *TextureWidget) Render() *ebiten.Image {
 }
 
 type PerfWidget struct {
-	Color color.RGBA
+	Color color.Color
 	Face  font.Face
 }
 
@@ -51,5 +51,29 @@ func (w *PerfWidget) Render() widget.Text {
 		Face:   w.Face,
 		Color:  w.Color,
 		Anchor: w.Anchor(),
+	}
+}
+
+type SimpleTextWidget struct {
+	Text  string
+	Anc   widget.Anchor
+	Color color.Color
+	Face  font.Face
+}
+
+func (w *SimpleTextWidget) Update() {
+
+}
+
+func (w *SimpleTextWidget) Anchor() widget.Anchor {
+	return w.Anc
+}
+
+func (w *SimpleTextWidget) Render() widget.Text {
+	return widget.Text{
+		Text:   w.Text,
+		Face:   w.Face,
+		Color:  w.Color,
+		Anchor: w.Anc,
 	}
 }

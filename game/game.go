@@ -2,11 +2,13 @@ package game
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 
 	"github.com/3elDU/bamboo/engine"
 	"github.com/3elDU/bamboo/engine/asset_loader"
 	"github.com/3elDU/bamboo/engine/colors"
+	"github.com/3elDU/bamboo/engine/scene"
 	"github.com/3elDU/bamboo/engine/widget"
 	"github.com/3elDU/bamboo/engine/world"
 	"github.com/3elDU/bamboo/game/widgets"
@@ -15,7 +17,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-type Game struct {
+type GameScene struct {
 	widgets      *widget.WidgetContainer
 	debugWidgets *widget.WidgetContainer
 
@@ -29,8 +31,8 @@ type Game struct {
 	debugInfoVisible bool
 }
 
-func Create() *Game {
-	game := &Game{
+func New() *GameScene {
+	game := &GameScene{
 		widgets:      widget.NewWidgetContainer(),
 		debugWidgets: widget.NewWidgetContainer(),
 
@@ -57,7 +59,7 @@ func Create() *Game {
 	return game
 }
 
-func (game *Game) Update() error {
+func (game *GameScene) Update(manager *scene.SceneManager) error {
 	// Check for key presses
 	switch {
 	// F3 toggles visibility of debug widgets
@@ -92,7 +94,7 @@ func (game *Game) Update() error {
 	return nil
 }
 
-func (game *Game) Draw(screen *ebiten.Image) {
+func (game *GameScene) Draw(screen *ebiten.Image) {
 	sw, sh := screen.Size()
 
 	game.world.Render(screen, game.player.X, game.player.Y, game.scaling)
@@ -131,6 +133,6 @@ func (game *Game) Draw(screen *ebiten.Image) {
 	}
 }
 
-func (game *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return outsideWidth, outsideHeight
+func (g *GameScene) Destroy() {
+	log.Println("GameScene.Destroy() called")
 }

@@ -4,7 +4,7 @@ Functions related to world generation
 package world
 
 import (
-	"fmt"
+	"log"
 	"math/rand"
 
 	"github.com/3elDU/bamboo/config"
@@ -107,7 +107,7 @@ func genTop(p *perlin.Perlin, prevBlock Block, features BlockFeatures, x, y floa
 
 func (c *Chunk) Generate(bottom, ground, top *perlin.Perlin) error {
 	// FIXME: move to normal logging methods
-	fmt.Printf("Generating Chunk %v, %v\n", c.x, c.y)
+	log.Printf("Chunk.Generate() - Generating chunk at %v, %v", c.x, c.y)
 
 	// check if the chunk is out of the world borders
 	// if it is, don't generate a world, instead return a chunk filled with stone blocks

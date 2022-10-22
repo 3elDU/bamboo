@@ -1,8 +1,8 @@
 package widget
 
 import (
-	"fmt"
 	"image/color"
+	"log"
 
 	"github.com/3elDU/bamboo/engine"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -129,7 +129,7 @@ func (container *WidgetContainer) AddWidget(name string, widget Widget) {
 func (container *WidgetContainer) GetWidget(name string) Widget {
 	w, exists := container.Widgets[name]
 	if !exists {
-		panic(fmt.Sprintf("widget with name %v doesn't exist", name))
+		log.Panicf("widget with name %v doesn't exist", name)
 	}
 	return w
 }
@@ -141,7 +141,7 @@ func (container *WidgetContainer) AddTextWidget(name string, widget TextWidget) 
 func (container *WidgetContainer) GetTextWidget(name string) TextWidget {
 	w, exists := container.TextWidgets[name]
 	if !exists {
-		panic(fmt.Sprintf("text widget with name %v doesn't exist", name))
+		log.Panicf("text widget with name %v doesn't exist", name)
 	}
 	return w
 }

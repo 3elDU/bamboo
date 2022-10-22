@@ -5,7 +5,6 @@
 package world
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/3elDU/bamboo/util"
@@ -138,5 +137,5 @@ type compositeBlock struct {
 }
 
 func (b *compositeBlock) Update() {
-	fmt.Println("hello")
+
 }

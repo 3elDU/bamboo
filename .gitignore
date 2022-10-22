@@ -10,3 +10,4 @@ bamboo
 *cpu.prof
 *mem.prof
 .idea
+logs/*

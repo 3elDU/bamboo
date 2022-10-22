@@ -2,30 +2,58 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"math/rand"
+	"os"
+	"path"
 	"time"
 
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/engine/asset_loader"
+	"github.com/3elDU/bamboo/engine/scene"
+	"github.com/3elDU/bamboo/engine/scenes"
 	"github.com/3elDU/bamboo/game"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 func init() {
-	rand.Seed(int64(time.Now().Nanosecond()))
-}
+	// init logging
+	logFilename := "Log " + time.Now().Format(time.RFC3339) + ".txt"
+	file, err := os.OpenFile(path.Join("logs", logFilename), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create log file: %v", err))
+	}
+	w := io.MultiWriter(file, os.Stdout)
+	log.SetOutput(w)
 
-func main() {
+	// init RNG
+	rand.Seed(int64(time.Now().Nanosecond()))
+
+	// load assets
 	if err := asset_loader.LoadAssets(config.AssetDirectory); err != nil {
-		panic(fmt.Sprintf("LoadAssets() failed with: %v", err))
+		log.Panicf("LoadAssets() failed with %v", err)
 	}
 
+	// set window options
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowTitle("bamboo devtest")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
+}
 
-	g := game.Create()
-	if err := ebiten.RunGame(g); err != nil {
-		panic(err)
+func main() {
+	// init scene manager, and scenes
+	manager := scene.InitSceneManager()
+	manager.Push(scenes.NewMainMenuScene())
+	manager.Push(game.New())
+
+	// run main loop!
+	if err := ebiten.RunGame(manager); err != nil {
+		switch err.Error() {
+		case "exit":
+			break
+		default:
+			log.Panicln(err)
+		}
 	}
 }
