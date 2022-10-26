@@ -21,6 +21,9 @@ type GameScene struct {
 	widgets      *widget.WidgetContainer
 	debugWidgets *widget.WidgetContainer
 
+	paused    bool
+	pauseMenu *pauseMenu
+
 	world                  *world.World
 	player                 *Player
 	playerRenderingOptions *ebiten.DrawImageOptions
@@ -35,6 +38,8 @@ func New() *GameScene {
 	game := &GameScene{
 		widgets:      widget.NewWidgetContainer(),
 		debugWidgets: widget.NewWidgetContainer(),
+
+		pauseMenu: newPauseMenu(),
 
 		world:                  world.NewWorld(rand.Int63()),
 		player:                 &Player{0, 0, 0, 0},
@@ -60,36 +65,50 @@ func New() *GameScene {
 }
 
 func (game *GameScene) Update(manager *scene.SceneManager) error {
-	// Check for key presses
-	switch {
-	// F3 toggles visibility of debug widgets
-	case inpututil.IsKeyJustPressed(ebiten.KeyF3):
-		game.debugInfoVisible = !game.debugInfoVisible
-
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		game.paused = !game.paused
+		log.Printf("Escape pressed. Toggled pause menu. (%v)", game.paused)
 	}
 
-	// scale the map, using scroll wheel
-	_, yvel := ebiten.Wheel()
-	game.scalingVelocity += yvel * 0.001
+	if !game.paused {
+		// Check for key presses
+		switch {
+		// F3 toggles visibility of debug widgets
+		case inpututil.IsKeyJustPressed(ebiten.KeyF3):
+			game.debugInfoVisible = !game.debugInfoVisible
+			log.Printf("Toggled visibility of debug info. (%v)", game.debugInfoVisible)
+		}
 
-	game.player.Update(MovementVector{
-		Left:  ebiten.IsKeyPressed(ebiten.KeyA),
-		Right: ebiten.IsKeyPressed(ebiten.KeyD),
-		Up:    ebiten.IsKeyPressed(ebiten.KeyW),
-		Down:  ebiten.IsKeyPressed(ebiten.KeyS),
-	})
+		// scale the map, using scroll wheel
+		_, yvel := ebiten.Wheel()
+		game.scalingVelocity += yvel * 0.001
 
-	game.world.Update(game.player.X, game.player.Y)
+		game.player.Update(MovementVector{
+			Left:  ebiten.IsKeyPressed(ebiten.KeyA),
+			Right: ebiten.IsKeyPressed(ebiten.KeyD),
+			Up:    ebiten.IsKeyPressed(ebiten.KeyW),
+			Down:  ebiten.IsKeyPressed(ebiten.KeyS),
+		})
 
-	game.widgets.Update()
+		game.world.Update(game.player.X, game.player.Y)
 
-	if game.debugInfoVisible {
-		game.debugWidgets.Update()
+		game.widgets.Update()
+
+		if game.debugInfoVisible {
+			game.debugWidgets.Update()
+		}
+
+		game.scaling += game.scalingVelocity
+		game.scaling = util.Clamp(game.scaling, 1.00, 4.00)
+		game.scalingVelocity *= 0.95
+	} else {
+		switch game.pauseMenu.ButtonPressed() {
+		case continueButtonPressed:
+			game.paused = false
+		case exitButtonPressed:
+			manager.End()
+		}
 	}
-
-	game.scaling += game.scalingVelocity
-	game.scaling = util.Clamp(game.scaling, 1.00, 4.00)
-	game.scalingVelocity *= 0.95
 
 	return nil
 }
@@ -97,6 +116,7 @@ func (game *GameScene) Update(manager *scene.SceneManager) error {
 func (game *GameScene) Draw(screen *ebiten.Image) {
 	sw, sh := screen.Size()
 
+	// draw the world
 	game.world.Render(screen, game.player.X, game.player.Y, game.scaling)
 
 	// Render the player
@@ -108,11 +128,13 @@ func (game *GameScene) Draw(screen *ebiten.Image) {
 	)
 	screen.DrawImage(asset_loader.Texture("person"), game.playerRenderingOptions)
 
+	// draw widgets
 	game.widgets.Render(screen)
 	if game.debugInfoVisible {
 		game.debugWidgets.Render(screen)
 	}
 
+	// draw debug info
 	if game.debugInfoVisible {
 		// TODO: extract this to separate widgets
 		// But that would require lots of architecture changed
@@ -130,6 +152,14 @@ func (game *GameScene) Draw(screen *ebiten.Image) {
 		engine.RenderFont(screen,
 			fmt.Sprintf("scaling %v", util.LimitFloatPrecision(game.scaling, 2)),
 			0, 48, colors.Black)
+	}
+
+	// draw pause menu
+	if game.paused {
+		err := game.pauseMenu.Draw(screen)
+		if err != nil {
+			log.Panicf("error while rendering pause menu - %v", err)
+		}
 	}
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/3elDU/bamboo/engine/asset_loader"
 	"github.com/3elDU/bamboo/engine/colors"
 	"github.com/3elDU/bamboo/engine/scene"
+	"github.com/3elDU/bamboo/game"
 	"github.com/3elDU/bamboo/ui"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -59,16 +60,15 @@ func NewMainMenuScene() *mainMenu {
 func (s *mainMenu) Update(manager *scene.SceneManager) error {
 	select {
 	case id := <-s.buttonPressed:
-		log.Printf("Got value %v from the channel", id)
 		switch id {
 		case 1: // New Game button
-			log.Println("New game button pressed")
-			manager.End()
+			log.Println("mainMenu - \"New Game\" button pressed")
+			manager.Switch(game.New())
 		case 2: // About
-			log.Println("About button pressed")
+			log.Println("mainMenu - \"About\" button pressed")
 			manager.Switch(NewAboutScene())
 		case 3: // Exit
-			log.Println("Exit button pressed")
+			log.Println("mainMenu - \"Exit\" button pressed")
 			manager.Exit()
 		}
 	default:

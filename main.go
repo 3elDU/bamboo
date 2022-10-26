@@ -13,7 +13,6 @@ import (
 	"github.com/3elDU/bamboo/engine/asset_loader"
 	"github.com/3elDU/bamboo/engine/scene"
 	"github.com/3elDU/bamboo/engine/scenes"
-	"github.com/3elDU/bamboo/game"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -45,7 +44,6 @@ func main() {
 	// init scene manager, and scenes
 	manager := scene.InitSceneManager()
 	manager.Push(scenes.NewMainMenuScene())
-	manager.Push(game.New())
 
 	// run main loop!
 	if err := ebiten.RunGame(manager); err != nil {
