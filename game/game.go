@@ -53,7 +53,7 @@ func New() *GameScene {
 
 	game.debugWidgets.AddTextWidget(
 		"debug",
-		&widgets.PerfWidget{Color: colors.Black, Face: asset_loader.DefaultFont()},
+		&widgets.PerfWidget{Color: colors.Black},
 	)
 
 	return game
@@ -118,16 +118,16 @@ func (game *GameScene) Draw(screen *ebiten.Image) {
 		// But that would require lots of architecture changed
 		// Because currently, there is no way to pass custom data to a widget
 
-		engine.RenderFont(screen, asset_loader.DefaultFont(),
+		engine.RenderFont(screen,
 			fmt.Sprintf("player pos %.2f, %.2f", game.player.X, game.player.Y),
 			0, 0, colors.Black)
 
-		engine.RenderFont(screen, asset_loader.DefaultFont(),
+		engine.RenderFont(screen,
 			fmt.Sprintf("world seed %v", game.world.Seed()),
 			0, 24, colors.Black,
 		)
 
-		engine.RenderFont(screen, asset_loader.DefaultFont(),
+		engine.RenderFont(screen,
 			fmt.Sprintf("scaling %v", util.LimitFloatPrecision(game.scaling, 2)),
 			0, 48, colors.Black)
 	}

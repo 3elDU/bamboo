@@ -23,6 +23,9 @@ type Scene interface {
 type SceneManager struct {
 	currentScene Scene
 	queue        []Scene
+
+	// special flag, that is set in SceneManager.Exit()
+	terminated bool
 }
 
 func InitSceneManager() *SceneManager {
@@ -53,9 +56,14 @@ func (manager *SceneManager) End() {
 	}
 }
 
-// Switches to the given scene, disregarding the queue
+// Switches to the given scene, inserting current scene to the queue
+// Switch is intented for temporary scenes, like pause menu
 func (manager *SceneManager) Switch(next Scene) {
+	if manager.currentScene != nil {
+		manager.queue = slices.Insert(manager.queue, 0, manager.currentScene)
+	}
 
+	manager.currentScene = next
 }
 
 // Pushes scene to the end of the queue
@@ -64,6 +72,10 @@ func (manager *SceneManager) Push(sc Scene) {
 }
 
 func (manager *SceneManager) Update() error {
+	if manager.terminated {
+		return fmt.Errorf("exit")
+	}
+
 	if ebiten.IsWindowBeingClosed() {
 		log.Println("SceneManager.Update() - Handling window close")
 
@@ -99,4 +111,16 @@ func (manager *SceneManager) Draw(screen *ebiten.Image) {
 
 func (manager *SceneManager) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return outsideWidth, outsideHeight
+}
+
+// Terminates the program, destroying all the remaining scenes
+func (manager *SceneManager) Exit() {
+	log.Println("SceneManager.Exit() called. Terminating all the scenes and quiting")
+	for _, scene := range manager.queue {
+		scene.Destroy()
+	}
+	if manager.currentScene != nil {
+		manager.currentScene.Destroy()
+	}
+	manager.terminated = true
 }

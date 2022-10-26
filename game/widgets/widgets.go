@@ -48,7 +48,6 @@ func (w *PerfWidget) Render() widget.Text {
 	return widget.Text{
 		Text: fmt.Sprintf("TPS: %v\nFPS: %v",
 			int(ebiten.ActualTPS()), int(ebiten.ActualFPS())),
-		Face:   w.Face,
 		Color:  w.Color,
 		Anchor: w.Anchor(),
 	}
@@ -58,7 +57,6 @@ type SimpleTextWidget struct {
 	Text  string
 	Anc   widget.Anchor
 	Color color.Color
-	Face  font.Face
 }
 
 func (w *SimpleTextWidget) Update() {
@@ -72,7 +70,6 @@ func (w *SimpleTextWidget) Anchor() widget.Anchor {
 func (w *SimpleTextWidget) Render() widget.Text {
 	return widget.Text{
 		Text:   w.Text,
-		Face:   w.Face,
 		Color:  w.Color,
 		Anchor: w.Anc,
 	}

@@ -5,9 +5,9 @@ import (
 	"log"
 
 	"github.com/3elDU/bamboo/engine"
+	"github.com/3elDU/bamboo/engine/asset_loader"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
-	"golang.org/x/image/font"
 )
 
 type Anchor int
@@ -28,7 +28,6 @@ const (
 
 type Text struct {
 	Text   string
-	Face   font.Face
 	Color  color.Color
 	Anchor Anchor
 }
@@ -61,7 +60,7 @@ type TextWidget interface {
 }
 
 // iw, ih are widget width and height
-// sw, sh are destination image width and height
+// ww, wh are destination image width and height
 func widgetPosition(iw, ih, ww, wh int, anchor Anchor) (int, int) {
 	switch anchor {
 	default:
@@ -102,11 +101,11 @@ func RenderWidget(screen *ebiten.Image, widget Widget) {
 func RenderTextWidget(screen *ebiten.Image, widget TextWidget) {
 	ww, wh := screen.Size()
 	t := widget.Render()
-	bounds := text.BoundString(t.Face, t.Text)
+	bounds := text.BoundString(asset_loader.DefaultFont(), t.Text)
 
 	x, y := widgetPosition(bounds.Dx(), bounds.Dy(), ww, wh, t.Anchor)
 
-	engine.RenderFont(screen, t.Face, t.Text, x, y, t.Color)
+	engine.RenderFont(screen, t.Text, float64(x), float64(y), t.Color)
 }
 
 // Universal container for both types of widgets, with useful methods
