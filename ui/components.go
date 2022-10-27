@@ -5,6 +5,7 @@
 package ui
 
 import (
+	"fmt"
 	"image/color"
 	"log"
 	"math/rand"
@@ -54,6 +55,9 @@ func (s *screenComponent) ComputedSize() (float64, float64) {
 func (s *screenComponent) Children() []View {
 	return []View{s.child}
 }
+func (s *screenComponent) Update() error {
+	return s.child.Update()
+}
 func (s *screenComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	// yes, a little hacky
 	s.screen = screen
@@ -84,6 +88,9 @@ func (p *paddingComponent) CapacityForChild(_ View) (float64, float64) {
 }
 func (p *paddingComponent) Children() []View {
 	return []View{p.child}
+}
+func (p *paddingComponent) Update() error {
+	return p.child.Update()
 }
 func (p *paddingComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	return p.child.Draw(screen, x+p.padding*Em, y+p.padding*Em)
@@ -197,6 +204,15 @@ func (s *stackComponent) CapacityForChild(child View) (float64, float64) {
 func (s *stackComponent) Children() []View {
 	return s.children
 }
+func (s *stackComponent) Update() error {
+	for _, child := range s.children {
+		err := child.Update()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 func (s *stackComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	for _, child := range s.children {
 		// there is multiple children in a stack
@@ -216,57 +232,6 @@ func (s *stackComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	}
 	return nil
 }
-
-/*
-type hstackComponent struct {
-	baseView
-
-	opts     StackOptions
-	children []View
-}
-
-func HStack(opts StackOptions, children ...View) *hstackComponent {
-	s := &hstackComponent{opts: opts, children: children}
-	for _, child := range children {
-		child.SetParent(s)
-	}
-	return s
-}
-
-func (s *hstackComponent) Bounds() (w, h float64) {
-	for i, child := range s.children {
-		cw, ch := child.Bounds()
-
-		// hstack's width is equal to the sum of all children + spacing between them
-		w += cw
-		if i < len(s.children)-1 {
-			w += s.opts.Spacing
-		}
-
-		// hstack's height is equal to the longest child's height
-		if ch > h {
-			h = ch
-		}
-	}
-
-	return
-}
-
-func (s *hstackComponent) Children() []View {
-	return s.children
-}
-
-func (s *hstackComponent) Draw(screen *ebiten.Image, x, y float64) {
-	w, h := s.Bounds()
-	ebitenutil.DrawRect(screen, x, y, w, h, colors.Orange)
-
-	for _, child := range s.children {
-		child.Draw(screen, x, y)
-		cw, _ := child.Bounds()
-		x += cw + s.opts.Spacing
-	}
-}
-*/
 
 type centerComponent struct {
 	baseView
@@ -289,6 +254,9 @@ func (c *centerComponent) CapacityForChild(child View) (float64, float64) {
 }
 func (c *centerComponent) Children() []View {
 	return []View{c.child}
+}
+func (c *centerComponent) Update() error {
+	return c.child.Update()
 }
 func (c *centerComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	w, h := c.parent.CapacityForChild(c)
@@ -336,6 +304,9 @@ func (l labelComponent) CapacityForChild(_ View) (float64, float64) {
 func (l labelComponent) Children() []View {
 	return []View{}
 }
+func (l *labelComponent) Update() error {
+	return nil
+}
 func (l *labelComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	engine.RenderFontWithOptions(screen, asset_loader.DefaultFont(), l.text, x, y, l.opts.Color, l.opts.Scaling)
 	return nil
@@ -375,6 +346,9 @@ func (b *buttonComponent) CapacityForChild(_ View) (float64, float64) {
 }
 func (b *buttonComponent) Children() []View {
 	return []View{b.child}
+}
+func (b *buttonComponent) Update() error {
+	return nil
 }
 func (b *buttonComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	// TODO: implement scaling
@@ -437,6 +411,9 @@ func (b *backgroundImageComponent) ComputedSize() (float64, float64) {
 }
 func (b *backgroundImageComponent) CapacityForChild(child View) (float64, float64) {
 	return b.MaxSize()
+}
+func (b *backgroundImageComponent) Update() error {
+	return b.child.Update()
 }
 func (b *backgroundImageComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	// draw background
@@ -534,6 +511,9 @@ func (b *backgroundColorComponent) ComputedSize() (float64, float64) {
 func (b *backgroundColorComponent) CapacityForChild(child View) (float64, float64) {
 	return b.MaxSize()
 }
+func (b *backgroundColorComponent) Update() error {
+	return b.child.Update()
+}
 func (b *backgroundColorComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	b.opts.GeoM.Reset()
 	w, h := b.ComputedSize()
@@ -546,4 +526,87 @@ func (b *backgroundColorComponent) Draw(screen *ebiten.Image, x, y float64) erro
 }
 func (b *backgroundColorComponent) Children() []View {
 	return []View{b.child}
+}
+
+// TODO: implement focus handling
+// So that multiple input widgets at once would be possible
+type inputComponent struct {
+	baseView
+
+	tex  *ebiten.Image
+	opts *ebiten.DrawImageOptions
+
+	enterKey ebiten.Key
+	input    string
+	handler  func(string)
+
+	pressedKeys []rune
+}
+
+func Input(handler func(string), enterKey ebiten.Key) *inputComponent {
+	return &inputComponent{
+		baseView: newBaseView(),
+
+		tex:  asset_loader.Texture("inputfield"),
+		opts: &ebiten.DrawImageOptions{},
+
+		enterKey: enterKey,
+		input:    "",
+		handler:  handler,
+
+		pressedKeys: make([]rune, 128),
+	}
+}
+
+func (i *inputComponent) MaxSize() (float64, float64) {
+	return i.ComputedSize()
+}
+func (i *inputComponent) ComputedSize() (float64, float64) {
+	w, h := i.tex.Size()
+	return float64(w), float64(h)
+}
+func (i *inputComponent) CapacityForChild(child View) (float64, float64) {
+	w, h := i.ComputedSize()
+	return w - Em*2, h - Em*2
+}
+func (i *inputComponent) Update() error {
+	// listen for the key presses
+	switch {
+	// handle enter key
+	case inpututil.IsKeyJustPressed(i.enterKey):
+		go i.handler(i.input)
+		i.input = ""
+
+	// handle backspace key
+	case (inpututil.IsKeyJustPressed(ebiten.KeyBackspace) || inpututil.KeyPressDuration(ebiten.KeyBackspace) > 30) && len(i.input) > 0:
+		i.input = i.input[:len(i.input)-1]
+
+	default:
+		// if the input string doesn't fit in the texture, don't accept any more keys
+		texCapacity, _ := i.CapacityForChild(nil)
+		textSize := text.BoundString(asset_loader.DefaultFont(), i.input)
+		if textSize.Dx() > int(texCapacity) {
+			break
+		}
+
+		// check for pressed keys, and append them to the input string
+		i.pressedKeys = ebiten.AppendInputChars(i.pressedKeys[:0])
+		for _, char := range i.pressedKeys {
+			i.input = fmt.Sprintf("%s%c", i.input, char) // HACK: Somewhat hacky, but works
+		}
+	}
+
+	return nil
+}
+func (i *inputComponent) Draw(screen *ebiten.Image, x, y float64) error {
+	i.opts.GeoM.Reset()
+	i.opts.GeoM.Translate(x, y)
+	screen.DrawImage(i.tex, i.opts)
+
+	engine.RenderFont(screen, i.input, x+Em, y+Em, colors.Black)
+
+	return nil
+}
+func (i *inputComponent) Children() []View {
+	return []View{}
 }

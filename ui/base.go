@@ -21,8 +21,7 @@ type View interface {
 	// practical maximum space, that provided child could take in the container
 	CapacityForChild(child View) (float64, float64)
 
-	// There is no Update() function
-	// Update of the component logic shall happen in the Draw() function
+	Update() error
 	Draw(screen *ebiten.Image, x, y float64) error
 
 	// returns unique identifier of the component, so it can be compared to others

@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"log"
-	"math/rand"
 
 	"github.com/3elDU/bamboo/engine"
 	"github.com/3elDU/bamboo/engine/asset_loader"
@@ -34,14 +33,14 @@ type GameScene struct {
 	debugInfoVisible bool
 }
 
-func New() *GameScene {
+func New(seed int64) *GameScene {
 	game := &GameScene{
 		widgets:      widget.NewWidgetContainer(),
 		debugWidgets: widget.NewWidgetContainer(),
 
 		pauseMenu: newPauseMenu(),
 
-		world:                  world.NewWorld(rand.Int63()),
+		world:                  world.NewWorld(seed),
 		player:                 &Player{0, 0, 0, 0},
 		playerRenderingOptions: &ebiten.DrawImageOptions{},
 

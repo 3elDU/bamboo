@@ -40,6 +40,8 @@ func InitSceneManager() *SceneManager {
 // Exits current scene, and switches to next in the queue
 // If the queue is empty, exits
 func (manager *SceneManager) End() {
+	log.Printf("SceneManager.End(); Queue - %v", manager.queue)
+
 	if manager.currentScene != nil {
 		manager.currentScene.Destroy()
 	}
@@ -59,6 +61,8 @@ func (manager *SceneManager) End() {
 // Switches to the given scene, inserting current scene to the queue
 // Switch is intented for temporary scenes, like pause menu
 func (manager *SceneManager) Switch(next Scene) {
+	log.Printf("SceneManager.Switch(); Queue - %v", manager.queue)
+
 	if manager.currentScene != nil {
 		manager.queue = slices.Insert(manager.queue, 0, manager.currentScene)
 	}
@@ -68,7 +72,14 @@ func (manager *SceneManager) Switch(next Scene) {
 
 // Pushes scene to the end of the queue
 func (manager *SceneManager) Push(sc Scene) {
+	log.Printf("SceneManager.Push(); Queue - %v", manager.queue)
+
 	manager.queue = append(manager.queue, sc)
+}
+
+// Inserts scene at the beginning of the queue
+func (manager *SceneManager) Insert(sc Scene) {
+	manager.queue = slices.Insert(manager.queue, 0, sc)
 }
 
 func (manager *SceneManager) Update() error {
