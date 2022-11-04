@@ -33,7 +33,7 @@ type GameScene struct {
 	debugInfoVisible bool
 }
 
-func New(seed int64) *GameScene {
+func NewGameScene(seed int64) *GameScene {
 	game := &GameScene{
 		widgets:      widget.NewWidgetContainer(),
 		debugWidgets: widget.NewWidgetContainer(),

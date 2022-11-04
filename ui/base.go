@@ -10,6 +10,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+// base interface for all components
 type View interface {
 	SetParent(parent View)
 	Children() []View
@@ -21,11 +22,38 @@ type View interface {
 	// practical maximum space, that provided child could take in the container
 	CapacityForChild(child View) (float64, float64)
 
+	// Update is pretty much useless
+	// Because for many widgets to update, we need to know their size
+	// And their size can't be calculated without access to graphics
+	// So, instead, all those operations are done in Draw() function
+	// But, things not dependent on graphics can be done there
 	Update() error
 	Draw(screen *ebiten.Image, x, y float64) error
 
 	// returns unique identifier of the component, so it can be compared to others
 	ID() uint64
+}
+
+// interface for various elements, that do have a focus
+type FocusView interface {
+	View
+
+	SetFocused(focus bool)
+	Focused() bool
+}
+
+type ButtonView interface {
+	View
+
+	IsPressed() bool
+	Press() // Simulates virtual button press
+}
+
+type InputView interface {
+	FocusView
+
+	Input() string
+	SetInput(input string)
 }
 
 type baseView struct {
@@ -45,4 +73,15 @@ func (b baseView) ID() uint64 {
 }
 func (b *baseView) SetParent(parent View) {
 	b.parent = parent
+}
+
+type baseFocusView struct {
+	focused bool
+}
+
+func (b *baseFocusView) SetFocused(focused bool) {
+	b.focused = focused
+}
+func (b *baseFocusView) Focused() bool {
+	return b.focused
 }

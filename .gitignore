@@ -11,3 +11,4 @@ bamboo
 *mem.prof
 .idea
 logs/Log*
+saves/*
