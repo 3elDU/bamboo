@@ -81,6 +81,10 @@ func (p *pauseMenu) Draw(screen *ebiten.Image) error {
 }
 
 func (p *pauseMenu) ButtonPressed() buttonPressedEvent {
+	if err := p.view.Update(); err != nil {
+		log.Panicf("pauseMenu.ButtonPressed() - %v", err)
+	}
+
 	select {
 	case <-p.continueBtn:
 		log.Println("pauseMenu - \"Continue\" button pressed")

@@ -43,7 +43,7 @@ func NewMainMenuScene() *mainMenu {
 					ui.Center(ui.Stack(ui.StackOptions{Spacing: 0.5},
 						ui.Button(
 							func() { buttonPressed <- 1 },
-							ui.Label(ui.DefaultLabelOptions(), "New Game"),
+							ui.Label(ui.DefaultLabelOptions(), "Singleplayer"),
 						),
 						ui.Button(
 							func() { buttonPressed <- 2 },
@@ -61,12 +61,17 @@ func NewMainMenuScene() *mainMenu {
 }
 
 func (s *mainMenu) Update(manager *scene.SceneManager) error {
+	err := s.view.Update()
+	if err != nil {
+		return err
+	}
+
 	select {
 	case id := <-s.buttonPressed:
 		switch id {
-		case 1: // New Game button
-			log.Println("mainMenu - \"New Game\" button pressed")
-			manager.Switch(NewNewWorldScene())
+		case 1: // Singleplayer button
+			log.Println("mainMenu - \"Singleplayer\" button pressed")
+			manager.Switch(NewWorldListScene())
 		case 2: // About
 			log.Println("mainMenu - \"About\" button pressed")
 			manager.Switch(NewAboutScene())
@@ -116,6 +121,11 @@ func NewAboutScene() *aboutScene {
 }
 
 func (s *aboutScene) Update(manager *scene.SceneManager) error {
+	err := s.view.Update()
+	if err != nil {
+		return err
+	}
+
 	select {
 	case <-s.goBackEvent:
 		manager.End()
@@ -138,25 +148,25 @@ func (s *aboutScene) Draw(screen *ebiten.Image) {
 type newWorldScene struct {
 	view ui.View
 
-	// world seed will be received through this channel
-	worldSeed chan string
+	// form results will be received through this channel
+	// first string is world name, second is world seed
+	formData chan []string
 }
 
 func NewNewWorldScene() *newWorldScene {
-	worldSeed := make(chan string, 1)
+	formData := make(chan []string, 1)
 
 	return &newWorldScene{
-		worldSeed: worldSeed,
-		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow"),
-			ui.Center(ui.Stack(ui.StackOptions{Direction: ui.VerticalStack, Spacing: 1.0},
-				ui.Label(ui.DefaultLabelOptions(), "Enter world seed:"),
-				ui.Input(
-					func(input string) {
-						worldSeed <- input
-					},
-					ebiten.KeyEnter,
-				),
-			)))),
+		formData: formData,
+
+		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow"), ui.Center(
+			ui.Form(
+				"Create a new world",
+				formData,
+				ui.FormPrompt{Title: "World name"},
+				ui.FormPrompt{Title: "World seed"},
+			),
+		))),
 	}
 }
 
@@ -167,21 +177,16 @@ func (s *newWorldScene) Update(manager *scene.SceneManager) error {
 	}
 
 	select {
-	case seed_string := <-s.worldSeed:
+	case formData := <-s.formData:
+		_, seed_string := formData[0], formData[1]
+
 		// convert string to bytes -> compute hash -> convert hash to int64
 		seed_bytes := []byte(seed_string)
 		seed_hash_bytes := fnv.New64a().Sum(seed_bytes)
 		var seed int64
 		binary.Read(bytes.NewReader(seed_hash_bytes), binary.BigEndian, &seed)
 
-		log.Printf("newWorldScene - Generating a world with seed %v", seed)
-
-		// Inserting (not pushing) the game scene into the queue
-		// So, the queue looks like this
-		// [GameScene, MainMenu]
-		// And, when the game scene exits, we get back to the main menu.
-		manager.Insert(game.New(seed))
-		manager.End()
+		manager.QSwitch(game.NewGameScene(seed))
 	default:
 	}
 	return nil
@@ -195,5 +200,161 @@ func (s *newWorldScene) Draw(screen *ebiten.Image) {
 	err := s.view.Draw(screen, 0, 0)
 	if err != nil {
 		log.Panicln(err)
+	}
+}
+
+type worldListScene struct {
+	view ui.View
+
+	// when the world will be selected by the user,
+	// world name will be transmitted through this channel
+	// selectedWorld chan uuid.UUID
+
+	// when the "New world" button will be pressed
+	// the event will be transmitted through this channel
+	newWorld chan bool
+}
+
+func NewWorldListScene() *worldListScene {
+	log.Println("NewWorldListScene() - parsing worlds...")
+
+	/*
+		worldList := make([]world.WorldSave, 0)
+		filepath.WalkDir(config.WorldSaveDirectory, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+
+			// only check for directories
+			if !d.IsDir() {
+				return nil
+			}
+
+			// read world metadata
+			worldInfo, err := os.Open(filepath.Join(path, "world.gob"))
+			if err != nil {
+				// skip the directory, if it doesn't have the "world.gob" file inside of it,
+				// or if it is inaccesible for some other reason
+				// but don't throw an error!
+				return nil
+			}
+			defer worldInfo.Close()
+
+			decoder := gob.NewDecoder(worldInfo)
+			worldMetadata := new(world.WorldSave)
+			if err = decoder.Decode(worldMetadata); err != nil {
+				return err
+			}
+
+			log.Println(*worldMetadata)
+			worldList = append(worldList, *worldMetadata)
+
+			return nil
+		})
+	*/
+
+	view := ui.Stack(ui.StackOptions{
+		Direction: ui.VerticalStack,
+		Spacing:   1,
+	})
+
+	/*
+		selectedWorld := make(chan uuid.UUID, 1)
+		for _, world := range worldList {
+			// extract world UUID here, to use it later in button handler
+			worldUUID := world.UUID
+
+			// assemble a view for each world
+			view.AddChild(ui.Stack(ui.StackOptions{Direction: ui.VerticalStack, Spacing: 0.5},
+				ui.Stack(ui.StackOptions{Direction: ui.HorizontalStack, Spacing: 1},
+					ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Name: %v", world.Name)),
+					ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Seed: %v", world.Seed)),
+					ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Size: %v", world.Size)),
+				),
+				ui.Button(func() { selectedWorld <- worldUUID }, ui.Label(ui.DefaultLabelOptions(), "Open world")),
+			))
+		}
+	*/
+
+	newWorld := make(chan bool, 1)
+	view.AddChild(ui.Center(
+		ui.Button(func() { newWorld <- true }, ui.Label(ui.DefaultLabelOptions(), "New world")),
+	))
+
+	return &worldListScene{
+		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow"), view)),
+
+		// selectedWorld: selectedWorld,
+		newWorld: newWorld,
+	}
+}
+
+func (s *worldListScene) Destroy() {
+	log.Println("worldListScene.Destroy() called")
+}
+
+func (s *worldListScene) Update(manager *scene.SceneManager) error {
+	if err := s.view.Update(); err != nil {
+		return err
+	}
+
+	select {
+	/*
+		case id := <-s.selectedWorld:
+			log.Printf("worldListScene - Selected world '%v'", id)
+			manager.Switch(NewNotImplementedYetScene("World loading"))
+	*/
+	case <-s.newWorld:
+		log.Println("worldListScene - New world")
+		manager.QSwitch(NewNewWorldScene())
+	default:
+	}
+	return nil
+}
+
+func (s *worldListScene) Draw(screen *ebiten.Image) {
+	if err := s.view.Draw(screen, 0, 0); err != nil {
+		log.Panicf("worldListScene.view.Draw() - %v", err)
+	}
+}
+
+type notImplementedYetScene struct {
+	view ui.View
+	back ui.ButtonView
+}
+
+func NewNotImplementedYetScene(thing string) *notImplementedYetScene {
+	backButton := ui.Button(func() {}, ui.Label(ui.DefaultLabelOptions(), "Back"))
+
+	return &notImplementedYetScene{
+		back: backButton,
+		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow"),
+			ui.Stack(ui.StackOptions{Direction: ui.VerticalStack},
+				ui.Center(ui.Label(ui.DefaultLabelOptions(), thing+" isn't implemented yet!")),
+				ui.Center(backButton),
+			),
+		)),
+	}
+}
+
+func (s *notImplementedYetScene) Destroy() {
+	log.Println("notImplementedYetScene.Destroy() called")
+}
+
+func (s *notImplementedYetScene) Update(manager *scene.SceneManager) error {
+	if s.back.IsPressed() {
+		manager.End()
+	}
+
+	if err := s.view.Update(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *notImplementedYetScene) Draw(screen *ebiten.Image) {
+	if err := s.view.Draw(screen, 0, 0); err != nil {
+		log.Panicf("notImplementedYetScene.view.Draw() - %v", err)
 	}
 }

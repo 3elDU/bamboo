@@ -7,6 +7,7 @@ package scene
 import (
 	"fmt"
 	"log"
+	"reflect"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/exp/slices"
@@ -24,6 +25,11 @@ type SceneManager struct {
 	currentScene Scene
 	queue        []Scene
 
+	// tick counter
+	// can be retrieved throuch Ticks() function,
+	// and used for timing purposes, etc.
+	counter uint64
+
 	// special flag, that is set in SceneManager.Exit()
 	terminated bool
 }
@@ -36,12 +42,16 @@ func InitSceneManager() *SceneManager {
 	}
 }
 
+// Returns internal tick counter, that is incremented on each Update() call
+// Can be used for different timing purposes, etc.
+func (manager SceneManager) Ticks() uint64 {
+	return manager.counter
+}
+
 // Must be called from Scene.Update()
 // Exits current scene, and switches to next in the queue
 // If the queue is empty, exits
 func (manager *SceneManager) End() {
-	log.Printf("SceneManager.End(); Queue - %v", manager.queue)
-
 	if manager.currentScene != nil {
 		manager.currentScene.Destroy()
 	}
@@ -56,30 +66,38 @@ func (manager *SceneManager) End() {
 	} else {
 		manager.currentScene = nil
 	}
+
+	manager.printQueue("End")
 }
 
 // Switches to the given scene, inserting current scene to the queue
 // Switch is intented for temporary scenes, like pause menu
 func (manager *SceneManager) Switch(next Scene) {
-	log.Printf("SceneManager.Switch(); Queue - %v", manager.queue)
-
 	if manager.currentScene != nil {
 		manager.queue = slices.Insert(manager.queue, 0, manager.currentScene)
 	}
 
 	manager.currentScene = next
+	manager.printQueue("Switch")
+}
+
+// Behaves similarly to Switch, but the main difference is,
+// QSwitch completely replaces current scene with new one
+func (manager *SceneManager) QSwitch(next Scene) {
+	manager.currentScene = next
+	manager.printQueue("QSwitch")
 }
 
 // Pushes scene to the end of the queue
 func (manager *SceneManager) Push(sc Scene) {
-	log.Printf("SceneManager.Push(); Queue - %v", manager.queue)
-
 	manager.queue = append(manager.queue, sc)
+	manager.printQueue("Push")
 }
 
 // Inserts scene at the beginning of the queue
 func (manager *SceneManager) Insert(sc Scene) {
 	manager.queue = slices.Insert(manager.queue, 0, sc)
+	manager.printQueue("Insert")
 }
 
 func (manager *SceneManager) Update() error {
@@ -113,11 +131,15 @@ func (manager *SceneManager) Update() error {
 		return err
 	}
 
+	manager.counter++
+
 	return nil
 }
 
 func (manager *SceneManager) Draw(screen *ebiten.Image) {
-	manager.currentScene.Draw(screen)
+	if manager.currentScene != nil {
+		manager.currentScene.Draw(screen)
+	}
 }
 
 func (manager *SceneManager) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -134,4 +156,14 @@ func (manager *SceneManager) Exit() {
 		manager.currentScene.Destroy()
 	}
 	manager.terminated = true
+}
+
+func (manager *SceneManager) printQueue(originFunc string) {
+	queueTypes := make([]reflect.Type, len(manager.queue))
+	for i, scene := range manager.queue {
+		queueTypes[i] = reflect.TypeOf(scene)
+	}
+
+	log.Printf("SceneManager.%v - current %v; queue %v",
+		originFunc, reflect.TypeOf(manager.currentScene), queueTypes)
 }

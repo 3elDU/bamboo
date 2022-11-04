@@ -51,7 +51,6 @@ func (s *screenComponent) CapacityForChild(child View) (float64, float64) {
 func (s *screenComponent) ComputedSize() (float64, float64) {
 	return s.MaxSize()
 }
-
 func (s *screenComponent) Children() []View {
 	return []View{s.child}
 }
@@ -204,6 +203,10 @@ func (s *stackComponent) CapacityForChild(child View) (float64, float64) {
 func (s *stackComponent) Children() []View {
 	return s.children
 }
+func (s *stackComponent) AddChild(child View) {
+	child.SetParent(s)
+	s.children = append(s.children, child)
+}
 func (s *stackComponent) Update() error {
 	for _, child := range s.children {
 		err := child.Update()
@@ -318,7 +321,11 @@ type buttonComponent struct {
 	tex       *ebiten.Image
 	tex_hover *ebiten.Image
 
-	child   View
+	child View
+
+	// transmits the button press event from Draw() to Update() (where the handler is called)
+	// cleared on every Update()
+	pressed bool
 	handler func()
 }
 
@@ -348,6 +355,10 @@ func (b *buttonComponent) Children() []View {
 	return []View{b.child}
 }
 func (b *buttonComponent) Update() error {
+	if b.pressed {
+		go b.handler()
+	}
+	b.pressed = false
 	return nil
 }
 func (b *buttonComponent) Draw(screen *ebiten.Image, x, y float64) error {
@@ -366,12 +377,18 @@ func (b *buttonComponent) Draw(screen *ebiten.Image, x, y float64) error {
 		screen.DrawImage(b.tex, opts)
 	}
 
-	// and, if the mouse button is also pressed, call the handler
+	// check if button is pressed
 	if mouseOver && inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		go b.handler()
+		b.pressed = true
 	}
 
 	return b.child.Draw(screen, x+Em, y+Em)
+}
+func (b *buttonComponent) IsPressed() bool {
+	return b.pressed
+}
+func (b *buttonComponent) Press() {
+	b.pressed = true
 }
 
 type BackgroundImageRenderingMode uint
@@ -532,9 +549,11 @@ func (b *backgroundColorComponent) Children() []View {
 // So that multiple input widgets at once would be possible
 type inputComponent struct {
 	baseView
+	baseFocusView
 
-	tex  *ebiten.Image
-	opts *ebiten.DrawImageOptions
+	tex        *ebiten.Image
+	texFocused *ebiten.Image
+	opts       *ebiten.DrawImageOptions
 
 	enterKey ebiten.Key
 	input    string
@@ -543,12 +562,14 @@ type inputComponent struct {
 	pressedKeys []rune
 }
 
-func Input(handler func(string), enterKey ebiten.Key) *inputComponent {
+func Input(handler func(string), enterKey ebiten.Key, initialFocus bool) *inputComponent {
 	return &inputComponent{
-		baseView: newBaseView(),
+		baseView:      newBaseView(),
+		baseFocusView: baseFocusView{focused: initialFocus},
 
-		tex:  asset_loader.Texture("inputfield"),
-		opts: &ebiten.DrawImageOptions{},
+		tex:        asset_loader.Texture("inputfield"),
+		texFocused: asset_loader.Texture("inputfield-focused"),
+		opts:       &ebiten.DrawImageOptions{},
 
 		enterKey: enterKey,
 		input:    "",
@@ -570,6 +591,11 @@ func (i *inputComponent) CapacityForChild(child View) (float64, float64) {
 	return w - Em*2, h - Em*2
 }
 func (i *inputComponent) Update() error {
+	// if the element isn't focused, skip
+	if !i.baseFocusView.focused {
+		return nil
+	}
+
 	// listen for the key presses
 	switch {
 	// handle enter key
@@ -599,9 +625,27 @@ func (i *inputComponent) Update() error {
 	return nil
 }
 func (i *inputComponent) Draw(screen *ebiten.Image, x, y float64) error {
+	// check for mouse presses, and update focus accordingly
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		cx_int, cy_int := ebiten.CursorPosition()
+		cx, cy := float64(cx_int), float64(cy_int)
+		w, h := i.ComputedSize()
+
+		if cx > x && cx < x+w && cy > y && cy < y+h {
+			// if this input was pressed, set the focus to true
+			i.SetFocused(true)
+		} else {
+			i.SetFocused(false)
+		}
+	}
+
 	i.opts.GeoM.Reset()
 	i.opts.GeoM.Translate(x, y)
-	screen.DrawImage(i.tex, i.opts)
+	if i.baseFocusView.focused {
+		screen.DrawImage(i.texFocused, i.opts)
+	} else {
+		screen.DrawImage(i.tex, i.opts)
+	}
 
 	engine.RenderFont(screen, i.input, x+Em, y+Em, colors.Black)
 
@@ -609,4 +653,10 @@ func (i *inputComponent) Draw(screen *ebiten.Image, x, y float64) error {
 }
 func (i *inputComponent) Children() []View {
 	return []View{}
+}
+func (i *inputComponent) Input() string {
+	return i.input
+}
+func (i *inputComponent) SetInput(input string) {
+	i.input = input
 }
