@@ -68,8 +68,9 @@ func newPauseMenu() *pauseMenu {
 func (p *pauseMenu) Draw(screen *ebiten.Image) error {
 	// "Dim" the screen with black texture
 	p.opts.GeoM.Reset()
-	bounds := screen.Bounds()
-	p.opts.GeoM.Scale(float64(bounds.Dx()), float64(bounds.Dy()))
+	w, h := screen.Size()
+	// Fixes #1
+	p.opts.GeoM.Scale(float64(w)+2, float64(h)+2)
 	screen.DrawImage(p.tex, p.opts)
 
 	err := p.view.Draw(screen, 0, 0)
