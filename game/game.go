@@ -4,19 +4,21 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/engine"
 	"github.com/3elDU/bamboo/engine/asset_loader"
 	"github.com/3elDU/bamboo/engine/colors"
 	"github.com/3elDU/bamboo/engine/scene"
 	"github.com/3elDU/bamboo/engine/widget"
 	"github.com/3elDU/bamboo/engine/world"
+	"github.com/3elDU/bamboo/game/player"
 	"github.com/3elDU/bamboo/game/widgets"
 	"github.com/3elDU/bamboo/util"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-type GameScene struct {
+type gameScene struct {
 	widgets      *widget.WidgetContainer
 	debugWidgets *widget.WidgetContainer
 
@@ -24,7 +26,7 @@ type GameScene struct {
 	pauseMenu *pauseMenu
 
 	world                  *world.World
-	player                 *Player
+	player                 *player.Player
 	playerRenderingOptions *ebiten.DrawImageOptions
 
 	scaling         float64
@@ -33,15 +35,15 @@ type GameScene struct {
 	debugInfoVisible bool
 }
 
-func NewGameScene(seed int64) *GameScene {
-	game := &GameScene{
+func NewGameScene(world *world.World, player player.Player) *gameScene {
+	game := &gameScene{
 		widgets:      widget.NewWidgetContainer(),
 		debugWidgets: widget.NewWidgetContainer(),
 
 		pauseMenu: newPauseMenu(),
 
-		world:                  world.NewWorld(seed),
-		player:                 &Player{0, 0, 0, 0},
+		world:                  world,
+		player:                 &player,
 		playerRenderingOptions: &ebiten.DrawImageOptions{},
 
 		scaling: 1.0,
@@ -49,21 +51,21 @@ func NewGameScene(seed int64) *GameScene {
 		debugInfoVisible: true,
 	}
 
-	/*
-		game.Widgets = append(game.Widgets,
-			&widgets.TextureWidget{image: asset_loader.Texture("test")},
-		)
-	*/
-
 	game.debugWidgets.AddTextWidget(
 		"debug",
 		&widgets.PerfWidget{Color: colors.Black},
 	)
 
+	// perform a save immediately after the scene creation
+	err := game.world.Save(player)
+	if err != nil {
+		log.Panicf("NewGameScene() - World save failed - %v", err)
+	}
+
 	return game
 }
 
-func (game *GameScene) Update(manager *scene.SceneManager) error {
+func (game *gameScene) Update(manager *scene.SceneManager) error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		game.paused = !game.paused
 		log.Printf("Escape pressed. Toggled pause menu. (%v)", game.paused)
@@ -82,7 +84,7 @@ func (game *GameScene) Update(manager *scene.SceneManager) error {
 		_, yvel := ebiten.Wheel()
 		game.scalingVelocity += yvel * 0.001
 
-		game.player.Update(MovementVector{
+		game.player.Update(player.MovementVector{
 			Left:  ebiten.IsKeyPressed(ebiten.KeyA),
 			Right: ebiten.IsKeyPressed(ebiten.KeyD),
 			Up:    ebiten.IsKeyPressed(ebiten.KeyW),
@@ -105,14 +107,24 @@ func (game *GameScene) Update(manager *scene.SceneManager) error {
 		case continueButtonPressed:
 			game.paused = false
 		case exitButtonPressed:
+			if err := game.world.Save(*game.player); err != nil {
+				log.Printf("Failed to save world - %v", err)
+			}
 			manager.End()
+		}
+	}
+
+	// perform world autosave each N ticks
+	if manager.Ticks()%config.WorldAutosaveDelay == 0 {
+		if err := game.world.Save(*game.player); err != nil {
+			log.Panicf("GameScene - world save failed - %v", err)
 		}
 	}
 
 	return nil
 }
 
-func (game *GameScene) Draw(screen *ebiten.Image) {
+func (game *gameScene) Draw(screen *ebiten.Image) {
 	sw, sh := screen.Size()
 
 	// draw the world
@@ -162,6 +174,6 @@ func (game *GameScene) Draw(screen *ebiten.Image) {
 	}
 }
 
-func (g *GameScene) Destroy() {
+func (g *gameScene) Destroy() {
 	log.Println("GameScene.Destroy() called")
 }

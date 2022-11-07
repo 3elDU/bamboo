@@ -1,4 +1,4 @@
-package game
+package player
 
 import (
 	"github.com/3elDU/bamboo/config"

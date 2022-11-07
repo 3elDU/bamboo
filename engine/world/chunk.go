@@ -13,17 +13,21 @@ type Chunk struct {
 	blocks [16][16]BlockStack
 
 	Texture *ebiten.Image
+
+	// Whether a chunk has been modified, and should be written to the disk
+	modified bool
 }
 
 // NewChunk creates new empty Chunk at specified chunk coordinates
 func NewChunk(cx, cy int64) *Chunk {
 	return &Chunk{
 		x: cx, y: cy,
-		Texture: ebiten.NewImage(256, 256),
+		Texture:  ebiten.NewImage(256, 256),
+		modified: true,
 	}
 }
 
-func (c *Chunk) BlockCoords() util.Coords2i {
+func (c Chunk) BlockCoords() util.Coords2i {
 	return util.Coords2i{X: c.x * 16, Y: c.y * 16}
 }
 
@@ -42,6 +46,8 @@ func (c *Chunk) SetBlock(x, y int, layer Layer, block Block) error {
 	block.SetParentChunk(c)
 	block.SetCoords(util.Coords2i{X: int64(x), Y: int64(y)})
 	block.SetLayer(layer)
+
+	c.modified = true
 	return nil
 }
 
@@ -68,5 +74,6 @@ func (c *Chunk) SetStack(x, y int, stack BlockStack) error {
 	}
 
 	c.blocks[x][y] = stack
+	c.modified = true
 	return nil
 }

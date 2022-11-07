@@ -1,10 +1,12 @@
 package world
 
 import (
+	"log"
 	"math/rand"
 
 	"github.com/3elDU/bamboo/util"
 	"github.com/aquilax/go-perlin"
+	"github.com/google/uuid"
 )
 
 type World struct {
@@ -13,14 +15,17 @@ type World struct {
 	groundGenerator *perlin.Perlin
 	topGenerator    *perlin.Perlin
 
-	mapSeed int64
+	Metadata WorldSave
 
 	// keys there are Chunk coordinates.
 	// so, actual Chunk coordinates are x*16 and y*16
 	data map[util.Coords2i]*Chunk
 }
 
-func NewWorld(seed int64) *World {
+// Creates a new world, using given name and seed
+func NewWorld(name string, uuid uuid.UUID, seed int64) *World {
+	log.Printf("NewWorld - name %v; seed %v", name, seed)
+
 	// make a random generator using global world seed
 	world := rand.New(rand.NewSource(seed))
 
@@ -36,7 +41,11 @@ func NewWorld(seed int64) *World {
 		groundGenerator: perlin.NewPerlin(2, 2, 16, groundSeed),
 		topGenerator:    perlin.NewPerlin(2, 2, 16, topSeed),
 
-		mapSeed: seed,
+		Metadata: WorldSave{
+			Name: name,
+			UUID: uuid,
+			Seed: seed,
+		},
 
 		data: make(map[util.Coords2i]*Chunk),
 	}
@@ -69,7 +78,7 @@ func (world *World) ChunkAt(x, y int64) (*Chunk, error) {
 // Acceps float64 so that negative coordinates will be handled properly
 // Note that x and y are block coordinates
 func (world *World) At(x, y float64) (*Chunk, error) {
-	// HACK: wtf
+	// HACK: handle negative coordinates properly
 	if x < 0 {
 		x -= 1
 	}
@@ -96,6 +105,6 @@ func (world *World) At(x, y float64) (*Chunk, error) {
 	return world.data[util.Coords2i{X: cx, Y: cy}], nil
 }
 
-func (world *World) Seed() int64 {
-	return world.mapSeed
+func (world World) Seed() int64 {
+	return world.Metadata.Seed
 }

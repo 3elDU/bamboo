@@ -7,14 +7,23 @@ package scenes
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/gob"
+	"fmt"
 	"hash/fnv"
+	"io/fs"
 	"log"
+	"os"
+	"path/filepath"
 
+	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/engine/asset_loader"
 	"github.com/3elDU/bamboo/engine/colors"
 	"github.com/3elDU/bamboo/engine/scene"
+	"github.com/3elDU/bamboo/engine/world"
 	"github.com/3elDU/bamboo/game"
+	"github.com/3elDU/bamboo/game/player"
 	"github.com/3elDU/bamboo/ui"
+	"github.com/google/uuid"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -178,7 +187,7 @@ func (s *newWorldScene) Update(manager *scene.SceneManager) error {
 
 	select {
 	case formData := <-s.formData:
-		_, seed_string := formData[0], formData[1]
+		world_name, seed_string := formData[0], formData[1]
 
 		// convert string to bytes -> compute hash -> convert hash to int64
 		seed_bytes := []byte(seed_string)
@@ -186,7 +195,8 @@ func (s *newWorldScene) Update(manager *scene.SceneManager) error {
 		var seed int64
 		binary.Read(bytes.NewReader(seed_hash_bytes), binary.BigEndian, &seed)
 
-		manager.QSwitch(game.NewGameScene(seed))
+		w := world.NewWorld(world_name, uuid.New(), seed)
+		manager.QSwitch(game.NewGameScene(w, player.Player{X: config.PlayerStartX, Y: config.PlayerStartY}))
 	default:
 	}
 	return nil
@@ -208,7 +218,7 @@ type worldListScene struct {
 
 	// when the world will be selected by the user,
 	// world name will be transmitted through this channel
-	// selectedWorld chan uuid.UUID
+	selectedWorld chan uuid.UUID
 
 	// when the "New world" button will be pressed
 	// the event will be transmitted through this channel
@@ -218,63 +228,59 @@ type worldListScene struct {
 func NewWorldListScene() *worldListScene {
 	log.Println("NewWorldListScene() - parsing worlds...")
 
-	/*
-		worldList := make([]world.WorldSave, 0)
-		filepath.WalkDir(config.WorldSaveDirectory, func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
+	worldList := make([]world.WorldSave, 0)
+	filepath.WalkDir(config.WorldSaveDirectory, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
 
-			// only check for directories
-			if !d.IsDir() {
-				return nil
-			}
-
-			// read world metadata
-			worldInfo, err := os.Open(filepath.Join(path, "world.gob"))
-			if err != nil {
-				// skip the directory, if it doesn't have the "world.gob" file inside of it,
-				// or if it is inaccesible for some other reason
-				// but don't throw an error!
-				return nil
-			}
-			defer worldInfo.Close()
-
-			decoder := gob.NewDecoder(worldInfo)
-			worldMetadata := new(world.WorldSave)
-			if err = decoder.Decode(worldMetadata); err != nil {
-				return err
-			}
-
-			log.Println(*worldMetadata)
-			worldList = append(worldList, *worldMetadata)
-
+		// only check for directories
+		if !d.IsDir() {
 			return nil
-		})
-	*/
+		}
+
+		// read world metadata
+		worldInfo, err := os.Open(filepath.Join(path, "world.gob"))
+		if err != nil {
+			// skip the directory, if it doesn't have the "world.gob" file inside of it,
+			// or if it is inaccesible for some other reason
+			// but don't throw an error!
+			return nil
+		}
+		defer worldInfo.Close()
+
+		decoder := gob.NewDecoder(worldInfo)
+		worldMetadata := new(world.WorldSave)
+		if err = decoder.Decode(worldMetadata); err != nil {
+			return err
+		}
+
+		log.Println(*worldMetadata)
+		worldList = append(worldList, *worldMetadata)
+
+		return nil
+	})
 
 	view := ui.Stack(ui.StackOptions{
 		Direction: ui.VerticalStack,
 		Spacing:   1,
 	})
 
-	/*
-		selectedWorld := make(chan uuid.UUID, 1)
-		for _, world := range worldList {
-			// extract world UUID here, to use it later in button handler
-			worldUUID := world.UUID
+	selectedWorld := make(chan uuid.UUID, 1)
+	for _, world := range worldList {
+		// extract world UUID here, to use it later in button handler
+		worldUUID := world.UUID
 
-			// assemble a view for each world
-			view.AddChild(ui.Stack(ui.StackOptions{Direction: ui.VerticalStack, Spacing: 0.5},
-				ui.Stack(ui.StackOptions{Direction: ui.HorizontalStack, Spacing: 1},
-					ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Name: %v", world.Name)),
-					ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Seed: %v", world.Seed)),
-					ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Size: %v", world.Size)),
-				),
-				ui.Button(func() { selectedWorld <- worldUUID }, ui.Label(ui.DefaultLabelOptions(), "Open world")),
-			))
-		}
-	*/
+		// assemble a view for each world
+		view.AddChild(ui.Stack(ui.StackOptions{Direction: ui.VerticalStack, Spacing: 0.5},
+			ui.Stack(ui.StackOptions{Direction: ui.HorizontalStack, Spacing: 1},
+				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Name: %v", world.Name)),
+				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Seed: %v", world.Seed)),
+				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Size: %v", world.Size)),
+			),
+			ui.Button(func() { selectedWorld <- worldUUID }, ui.Label(ui.DefaultLabelOptions(), "Open world")),
+		))
+	}
 
 	newWorld := make(chan bool, 1)
 	view.AddChild(ui.Center(
@@ -284,8 +290,8 @@ func NewWorldListScene() *worldListScene {
 	return &worldListScene{
 		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow"), view)),
 
-		// selectedWorld: selectedWorld,
-		newWorld: newWorld,
+		selectedWorld: selectedWorld,
+		newWorld:      newWorld,
 	}
 }
 
@@ -299,11 +305,10 @@ func (s *worldListScene) Update(manager *scene.SceneManager) error {
 	}
 
 	select {
-	/*
-		case id := <-s.selectedWorld:
-			log.Printf("worldListScene - Selected world '%v'", id)
-			manager.Switch(NewNotImplementedYetScene("World loading"))
-	*/
+	case id := <-s.selectedWorld:
+		log.Printf("worldListScene - Selected world '%v'", id)
+		w, p := world.Load(id)
+		manager.QSwitch(game.NewGameScene(w, p))
 	case <-s.newWorld:
 		log.Println("worldListScene - New world")
 		manager.QSwitch(NewNewWorldScene())
