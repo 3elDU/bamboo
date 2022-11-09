@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/3elDU/bamboo/config"
+	"github.com/3elDU/bamboo/engine/texture"
 	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/image/font"
@@ -97,12 +98,15 @@ func DefaultFont() font.Face {
 }
 
 // Texture panicks when a specified texture doesn't exist
-func Texture(name string) *ebiten.Image {
+func Texture(name string) texture.Texture {
 	tex, exists := GlobalAssets.Textures[name]
 	if !exists {
 		log.Panicf("texture %v doesn't exist", name)
 	}
-	return tex
+	return texture.Texture{
+		Name:    name,
+		Texture: tex,
+	}
 }
 
 // Font panicks when a specified font doesn't exist

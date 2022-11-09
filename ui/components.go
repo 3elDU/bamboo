@@ -331,8 +331,8 @@ type buttonComponent struct {
 
 func Button(handler func(), child View) *buttonComponent {
 	b := &buttonComponent{
-		tex:       asset_loader.Texture("button"),
-		tex_hover: asset_loader.Texture("button-hover"),
+		tex:       asset_loader.Texture("button").Texture,
+		tex_hover: asset_loader.Texture("button-hover").Texture,
 
 		child:   child,
 		handler: handler,
@@ -567,8 +567,8 @@ func Input(handler func(string), enterKey ebiten.Key, initialFocus bool) *inputC
 		baseView:      newBaseView(),
 		baseFocusView: baseFocusView{focused: initialFocus},
 
-		tex:        asset_loader.Texture("inputfield"),
-		texFocused: asset_loader.Texture("inputfield-focused"),
+		tex:        asset_loader.Texture("inputfield").Texture,
+		texFocused: asset_loader.Texture("inputfield-focused").Texture,
 		opts:       &ebiten.DrawImageOptions{},
 
 		enterKey: enterKey,

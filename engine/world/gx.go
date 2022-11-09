@@ -12,7 +12,7 @@ func (c *Chunk) Render() {
 		for y := 0; y < 16; y++ {
 			stack, _ := c.At(x, y)
 
-			for _, block := range []Block{stack.bottom, stack.ground, stack.top} {
+			for _, block := range []Block{stack.Bottom, stack.Ground, stack.Top} {
 				block.Render(c.Texture, util.Coords2f{
 					X: float64(x) * 16,
 					Y: float64(y) * 16,

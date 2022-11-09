@@ -47,6 +47,15 @@ func (c *Chunk) SetBlock(x, y int, layer Layer, block Block) error {
 	block.SetCoords(util.Coords2i{X: int64(x), Y: int64(y)})
 	block.SetLayer(layer)
 
+	switch layer {
+	case BottomLayer:
+		c.blocks[x][y].Bottom = block
+	case GroundLayer:
+		c.blocks[x][y].Ground = block
+	case TopLayer:
+		c.blocks[x][y].Top = block
+	}
+
 	c.modified = true
 	return nil
 }
@@ -68,7 +77,7 @@ func (c *Chunk) SetStack(x, y int, stack BlockStack) error {
 		return fmt.Errorf("invalid coordinates: %v, %v", x, y)
 	}
 
-	for _, block := range [3]Block{stack.bottom, stack.ground, stack.top} {
+	for _, block := range [3]Block{stack.Bottom, stack.Ground, stack.Top} {
 		block.SetParentChunk(c)
 		block.SetCoords(util.Coords2i{X: int64(x), Y: int64(y)})
 	}

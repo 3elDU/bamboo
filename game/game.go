@@ -69,6 +69,13 @@ func (game *gameScene) Update(manager *scene.SceneManager) error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		game.paused = !game.paused
 		log.Printf("Escape pressed. Toggled pause menu. (%v)", game.paused)
+
+		// trigger a world save, when entering pause menu
+		if game.paused {
+			if err := game.world.Save(*game.player); err != nil {
+				log.Panicf("GameScene - world save failed - %v", err)
+			}
+		}
 	}
 
 	if !game.paused {
@@ -78,6 +85,14 @@ func (game *gameScene) Update(manager *scene.SceneManager) error {
 		case inpututil.IsKeyJustPressed(ebiten.KeyF3):
 			game.debugInfoVisible = !game.debugInfoVisible
 			log.Printf("Toggled visibility of debug info. (%v)", game.debugInfoVisible)
+
+		// Places stone block under the player
+		case ebiten.IsKeyPressed(ebiten.KeyF):
+			if c, err := game.world.At(game.player.X, game.player.Y); err == nil {
+				c.SetGroundBlock(int(game.player.X)%16, int(game.player.Y)%16, world.NewStoneBlock(0))
+			} else {
+				log.Panicf("game.world.At() failed with %v", err)
+			}
 		}
 
 		// scale the map, using scroll wheel
@@ -108,7 +123,7 @@ func (game *gameScene) Update(manager *scene.SceneManager) error {
 			game.paused = false
 		case exitButtonPressed:
 			if err := game.world.Save(*game.player); err != nil {
-				log.Printf("Failed to save world - %v", err)
+				log.Printf("GameScene - world save failed - %v", err)
 			}
 			manager.End()
 		}
@@ -137,7 +152,7 @@ func (game *gameScene) Draw(screen *ebiten.Image) {
 		float64(sw)/2-8*game.scaling,
 		float64(sh)/2-8*game.scaling,
 	)
-	screen.DrawImage(asset_loader.Texture("person"), game.playerRenderingOptions)
+	screen.DrawImage(asset_loader.Texture("person").Texture, game.playerRenderingOptions)
 
 	// draw widgets
 	game.widgets.Render(screen)
@@ -175,5 +190,6 @@ func (game *gameScene) Draw(screen *ebiten.Image) {
 }
 
 func (g *gameScene) Destroy() {
+	g.world.Save(*g.player)
 	log.Println("GameScene.Destroy() called")
 }

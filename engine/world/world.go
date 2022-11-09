@@ -17,6 +17,10 @@ type World struct {
 
 	Metadata WorldSave
 
+	// keeping registry of chunks that were loaded
+	// in order from oldest to newest
+	loadedChunks []util.Coords2i
+
 	// keys there are Chunk coordinates.
 	// so, actual Chunk coordinates are x*16 and y*16
 	data map[util.Coords2i]*Chunk
@@ -46,6 +50,8 @@ func NewWorld(name string, uuid uuid.UUID, seed int64) *World {
 			UUID: uuid,
 			Seed: seed,
 		},
+
+		loadedChunks: make([]util.Coords2i, 0),
 
 		data: make(map[util.Coords2i]*Chunk),
 	}
@@ -92,14 +98,20 @@ func (world *World) At(x, y float64) (*Chunk, error) {
 
 	_, exists := world.data[util.Coords2i{X: cx, Y: cy}]
 
-	// generate Chunk, if it doesn't exist yet
 	if !exists {
-		chunk := NewChunk(cx, cy)
-		err := chunk.Generate(world.bottomGenerator, world.groundGenerator, world.topGenerator)
-		if err != nil {
-			return nil, err
+		// try to load the chunk from disk first
+		if chunk := LoadChunk(world.Metadata.UUID, cx, cy); chunk != nil {
+			world.data[util.Coords2i{X: cx, Y: cy}] = chunk
+		} else {
+			chunk := NewChunk(cx, cy)
+			err := chunk.Generate(world.bottomGenerator, world.groundGenerator, world.topGenerator)
+			if err != nil {
+				return nil, err
+			}
+			world.data[util.Coords2i{X: cx, Y: cy}] = chunk
 		}
-		world.data[util.Coords2i{X: cx, Y: cy}] = chunk
+
+		world.loadedChunks = append(world.loadedChunks, util.Coords2i{X: cx, Y: cy})
 	}
 
 	return world.data[util.Coords2i{X: cx, Y: cy}], nil

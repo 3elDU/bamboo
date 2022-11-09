@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/3elDU/bamboo/engine/asset_loader"
+	"github.com/3elDU/bamboo/engine/texture"
 	"github.com/3elDU/bamboo/util"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -27,6 +28,30 @@ const (
 	Grass_Plants
 )
 
+// Returns an empty interface
+func GetBlockByID(id BlockType) Block {
+	switch id {
+	case Empty:
+		return NewEmptyBlock()
+	case Stone:
+		return NewStoneBlock(0)
+	case Water:
+		return NewWaterBlock()
+	case Sand:
+		return NewSandBlock()
+	case Grass:
+		return NewGrassBlock()
+	case Snow:
+		return NewSnowBlock()
+	case Sand_Stone:
+		return NewSandStoneBlock()
+	case Grass_Plants_Small, Grass_Flowers, Grass_Plants:
+		return NewGrassVegetationBlock(Grass_Plants_Small)
+	}
+
+	return NewEmptyBlock()
+}
+
 type emptyBlock struct {
 	baseBlock
 }
@@ -34,9 +59,11 @@ type emptyBlock struct {
 func (e *emptyBlock) Update() {
 
 }
-
 func (e *emptyBlock) Render(_ *ebiten.Image, _ util.Coords2f) {
 
+}
+func (e *emptyBlock) TextureName() string {
+	return ""
 }
 
 func NewEmptyBlock() *emptyBlock {
@@ -126,7 +153,7 @@ func NewWaterBlock() *compositeBlock {
 			blockType:   Water,
 		},
 		texturedBlock: texturedBlock{
-			tex: util.RandomChoice([]*ebiten.Image{
+			tex: util.RandomChoice([]texture.Texture{
 				asset_loader.Texture("water1"),
 				asset_loader.Texture("water2"),
 			}),

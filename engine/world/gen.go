@@ -129,9 +129,9 @@ func (c *Chunk) Generate(bottom, ground, top *perlin.Perlin) error {
 			}
 
 			err := c.SetStack(x, y, BlockStack{
-				bottom: bottomBlock,
-				ground: groundBlock,
-				top:    topBlock,
+				Bottom: bottomBlock,
+				Ground: groundBlock,
+				Top:    topBlock,
 			})
 			if err != nil {
 				return err
