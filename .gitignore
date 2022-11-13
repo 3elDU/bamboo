@@ -12,3 +12,4 @@ bamboo
 .idea
 logs/Log*
 saves/*
+**/.DS_Store

@@ -11,7 +11,7 @@ import (
 
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/engine/asset_loader"
-	"github.com/3elDU/bamboo/engine/scene"
+	"github.com/3elDU/bamboo/engine/scene_manager"
 	"github.com/3elDU/bamboo/engine/scenes"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -19,7 +19,7 @@ import (
 func init() {
 	// init logging
 	logFilename := "Log-" + time.Now().Format("02-Jan-2006_15-04-05-MST") + ".txt"
-	file, err := os.OpenFile(filepath.Join("logs", logFilename), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	file, err := os.Create(filepath.Join("logs", logFilename))
 	if err != nil {
 		panic(fmt.Sprintf("failed to create log file: %v", err))
 	}
@@ -42,16 +42,8 @@ func init() {
 
 func main() {
 	// init scene manager, and scenes
-	manager := scene.InitSceneManager()
-	manager.Push(scenes.NewMainMenuScene())
+	scene_manager.Push(scenes.NewMainMenuScene())
 
 	// run main loop!
-	if err := ebiten.RunGame(manager); err != nil {
-		switch err.Error() {
-		case "exit":
-			break
-		default:
-			log.Panicln(err)
-		}
-	}
+	scene_manager.Run()
 }

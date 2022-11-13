@@ -2,7 +2,7 @@
 Scene is a distinct state of the program, that displays specific state of the game.
 For example: main menu scene, "new game" scene, playing scene, death scene, etc.
 */
-package scene
+package scene_manager
 
 import (
 	"fmt"
@@ -13,15 +13,18 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// Keeping one and global instance of scene manager
+var manager *sceneManager
+
 type Scene interface {
-	Update(manager *SceneManager) error
+	Update() error
 	Draw(screen *ebiten.Image)
 
 	// called when the scene is about to be deleted
 	Destroy()
 }
 
-type SceneManager struct {
+type sceneManager struct {
 	currentScene Scene
 	queue        []Scene
 
@@ -34,9 +37,9 @@ type SceneManager struct {
 	terminated bool
 }
 
-func InitSceneManager() *SceneManager {
+func init() {
 	ebiten.SetWindowClosingHandled(true)
-	return &SceneManager{
+	manager = &sceneManager{
 		currentScene: nil,
 		queue:        make([]Scene, 0),
 	}
@@ -44,14 +47,14 @@ func InitSceneManager() *SceneManager {
 
 // Returns internal tick counter, that is incremented on each Update() call
 // Can be used for different timing purposes, etc.
-func (manager SceneManager) Ticks() uint64 {
+func Ticks() uint64 {
 	return manager.counter
 }
 
 // Must be called from Scene.Update()
 // Exits current scene, and switches to next in the queue
 // If the queue is empty, exits
-func (manager *SceneManager) End() {
+func End() {
 	if manager.currentScene != nil {
 		manager.currentScene.Destroy()
 	}
@@ -70,9 +73,21 @@ func (manager *SceneManager) End() {
 	manager.printQueue("End")
 }
 
+// Terminates the program, destroying all the remaining scenes
+func Exit() {
+	log.Println("SceneManager.Exit() called. Terminating all the scenes and quiting")
+	for _, scene := range manager.queue {
+		scene.Destroy()
+	}
+	if manager.currentScene != nil {
+		manager.currentScene.Destroy()
+	}
+	manager.terminated = true
+}
+
 // Switches to the given scene, inserting current scene to the queue
 // Switch is intented for temporary scenes, like pause menu
-func (manager *SceneManager) Switch(next Scene) {
+func Switch(next Scene) {
 	if manager.currentScene != nil {
 		manager.queue = slices.Insert(manager.queue, 0, manager.currentScene)
 	}
@@ -83,24 +98,24 @@ func (manager *SceneManager) Switch(next Scene) {
 
 // Behaves similarly to Switch, but the main difference is,
 // QSwitch completely replaces current scene with new one
-func (manager *SceneManager) QSwitch(next Scene) {
+func QSwitch(next Scene) {
 	manager.currentScene = next
 	manager.printQueue("QSwitch")
 }
 
 // Pushes scene to the end of the queue
-func (manager *SceneManager) Push(sc Scene) {
+func Push(sc Scene) {
 	manager.queue = append(manager.queue, sc)
 	manager.printQueue("Push")
 }
 
 // Inserts scene at the beginning of the queue
-func (manager *SceneManager) Insert(sc Scene) {
+func Insert(sc Scene) {
 	manager.queue = slices.Insert(manager.queue, 0, sc)
 	manager.printQueue("Insert")
 }
 
-func (manager *SceneManager) Update() error {
+func (manager *sceneManager) Update() error {
 	if manager.terminated {
 		return fmt.Errorf("exit")
 	}
@@ -120,14 +135,14 @@ func (manager *SceneManager) Update() error {
 
 	if manager.currentScene == nil {
 		if len(manager.queue) != 0 {
-			manager.End()
+			End()
 		} else {
 			log.Println("SceneManager.Update() - No scenes left to display. Exiting!")
 			return fmt.Errorf("exit")
 		}
 	}
 
-	if err := manager.currentScene.Update(manager); err != nil {
+	if err := manager.currentScene.Update(); err != nil {
 		return err
 	}
 
@@ -136,29 +151,17 @@ func (manager *SceneManager) Update() error {
 	return nil
 }
 
-func (manager *SceneManager) Draw(screen *ebiten.Image) {
+func (manager *sceneManager) Draw(screen *ebiten.Image) {
 	if manager.currentScene != nil {
 		manager.currentScene.Draw(screen)
 	}
 }
 
-func (manager *SceneManager) Layout(outsideWidth, outsideHeight int) (int, int) {
+func (manager *sceneManager) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return outsideWidth, outsideHeight
 }
 
-// Terminates the program, destroying all the remaining scenes
-func (manager *SceneManager) Exit() {
-	log.Println("SceneManager.Exit() called. Terminating all the scenes and quiting")
-	for _, scene := range manager.queue {
-		scene.Destroy()
-	}
-	if manager.currentScene != nil {
-		manager.currentScene.Destroy()
-	}
-	manager.terminated = true
-}
-
-func (manager *SceneManager) printQueue(originFunc string) {
+func (manager *sceneManager) printQueue(originFunc string) {
 	queueTypes := make([]reflect.Type, len(manager.queue))
 	for i, scene := range manager.queue {
 		queueTypes[i] = reflect.TypeOf(scene)
@@ -166,4 +169,15 @@ func (manager *SceneManager) printQueue(originFunc string) {
 
 	log.Printf("SceneManager.%v - current %v; queue %v",
 		originFunc, reflect.TypeOf(manager.currentScene), queueTypes)
+}
+
+func Run() {
+	if err := ebiten.RunGame(manager); err != nil {
+		switch err.Error() {
+		case "exit":
+			break
+		default:
+			log.Panicln(err)
+		}
+	}
 }

@@ -147,7 +147,6 @@ func (b *baseBlock) State() []byte {
 	state := BaseBlockState{
 		Collidable:  b.collidable,
 		PlayerSpeed: b.playerSpeed,
-		BlockType:   b.blockType,
 	}
 	if err := gob.NewEncoder(buf).Encode(state); err != nil {
 		log.Panicf("baseBlock.State() - %v", err)
@@ -162,7 +161,6 @@ func (b *baseBlock) LoadState(state_bytes []byte) error {
 		return err
 	}
 	b.collidable = state.Collidable
-	b.blockType = state.BlockType
 	b.playerSpeed = state.PlayerSpeed
 	return nil
 }

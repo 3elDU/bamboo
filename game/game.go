@@ -8,7 +8,7 @@ import (
 	"github.com/3elDU/bamboo/engine"
 	"github.com/3elDU/bamboo/engine/asset_loader"
 	"github.com/3elDU/bamboo/engine/colors"
-	"github.com/3elDU/bamboo/engine/scene"
+	"github.com/3elDU/bamboo/engine/scene_manager"
 	"github.com/3elDU/bamboo/engine/widget"
 	"github.com/3elDU/bamboo/engine/world"
 	"github.com/3elDU/bamboo/game/player"
@@ -65,7 +65,7 @@ func NewGameScene(world *world.World, player player.Player) *gameScene {
 	return game
 }
 
-func (game *gameScene) Update(manager *scene.SceneManager) error {
+func (game *gameScene) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		game.paused = !game.paused
 		log.Printf("Escape pressed. Toggled pause menu. (%v)", game.paused)
@@ -125,12 +125,12 @@ func (game *gameScene) Update(manager *scene.SceneManager) error {
 			if err := game.world.Save(*game.player); err != nil {
 				log.Printf("GameScene - world save failed - %v", err)
 			}
-			manager.End()
+			scene_manager.End()
 		}
 	}
 
 	// perform world autosave each N ticks
-	if manager.Ticks()%config.WorldAutosaveDelay == 0 {
+	if scene_manager.Ticks()%config.WorldAutosaveDelay == 0 {
 		if err := game.world.Save(*game.player); err != nil {
 			log.Panicf("GameScene - world save failed - %v", err)
 		}

@@ -18,7 +18,7 @@ import (
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/engine/asset_loader"
 	"github.com/3elDU/bamboo/engine/colors"
-	"github.com/3elDU/bamboo/engine/scene"
+	"github.com/3elDU/bamboo/engine/scene_manager"
 	"github.com/3elDU/bamboo/engine/world"
 	"github.com/3elDU/bamboo/game"
 	"github.com/3elDU/bamboo/game/player"
@@ -69,7 +69,7 @@ func NewMainMenuScene() *mainMenu {
 	}
 }
 
-func (s *mainMenu) Update(manager *scene.SceneManager) error {
+func (s *mainMenu) Update() error {
 	err := s.view.Update()
 	if err != nil {
 		return err
@@ -80,13 +80,13 @@ func (s *mainMenu) Update(manager *scene.SceneManager) error {
 		switch id {
 		case 1: // Singleplayer button
 			log.Println("mainMenu - \"Singleplayer\" button pressed")
-			manager.Switch(NewWorldListScene())
+			scene_manager.Switch(NewWorldListScene())
 		case 2: // About
 			log.Println("mainMenu - \"About\" button pressed")
-			manager.Switch(NewAboutScene())
+			scene_manager.Switch(NewAboutScene())
 		case 3: // Exit
 			log.Println("mainMenu - \"Exit\" button pressed")
-			manager.Exit()
+			scene_manager.Exit()
 		}
 	default:
 	}
@@ -129,7 +129,7 @@ func NewAboutScene() *aboutScene {
 	}
 }
 
-func (s *aboutScene) Update(manager *scene.SceneManager) error {
+func (s *aboutScene) Update() error {
 	err := s.view.Update()
 	if err != nil {
 		return err
@@ -137,7 +137,7 @@ func (s *aboutScene) Update(manager *scene.SceneManager) error {
 
 	select {
 	case <-s.goBackEvent:
-		manager.End()
+		scene_manager.End()
 	default:
 	}
 	return nil
@@ -179,7 +179,7 @@ func NewNewWorldScene() *newWorldScene {
 	}
 }
 
-func (s *newWorldScene) Update(manager *scene.SceneManager) error {
+func (s *newWorldScene) Update() error {
 	err := s.view.Update()
 	if err != nil {
 		return err
@@ -196,7 +196,7 @@ func (s *newWorldScene) Update(manager *scene.SceneManager) error {
 		binary.Read(bytes.NewReader(seed_hash_bytes), binary.BigEndian, &seed)
 
 		w := world.NewWorld(world_name, uuid.New(), seed)
-		manager.QSwitch(game.NewGameScene(w, player.Player{X: config.PlayerStartX, Y: config.PlayerStartY}))
+		scene_manager.QSwitch(game.NewGameScene(w, player.Player{X: config.PlayerStartX, Y: config.PlayerStartY}))
 	default:
 	}
 	return nil
@@ -299,7 +299,7 @@ func (s *worldListScene) Destroy() {
 	log.Println("worldListScene.Destroy() called")
 }
 
-func (s *worldListScene) Update(manager *scene.SceneManager) error {
+func (s *worldListScene) Update() error {
 	if err := s.view.Update(); err != nil {
 		return err
 	}
@@ -308,10 +308,10 @@ func (s *worldListScene) Update(manager *scene.SceneManager) error {
 	case id := <-s.selectedWorld:
 		log.Printf("worldListScene - Selected world '%v'", id)
 		w, p := world.LoadWorld(id)
-		manager.QSwitch(game.NewGameScene(w, p))
+		scene_manager.QSwitch(game.NewGameScene(w, p))
 	case <-s.newWorld:
 		log.Println("worldListScene - New world")
-		manager.QSwitch(NewNewWorldScene())
+		scene_manager.QSwitch(NewNewWorldScene())
 	default:
 	}
 	return nil
@@ -346,9 +346,9 @@ func (s *notImplementedYetScene) Destroy() {
 	log.Println("notImplementedYetScene.Destroy() called")
 }
 
-func (s *notImplementedYetScene) Update(manager *scene.SceneManager) error {
+func (s *notImplementedYetScene) Update() error {
 	if s.back.IsPressed() {
-		manager.End()
+		scene_manager.End()
 	}
 
 	if err := s.view.Update(); err != nil {
