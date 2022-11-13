@@ -94,16 +94,7 @@ func (w *World) Save(player player.Player) error {
 	}
 
 	// loop over all loaded chunks, saving modified ones to the disk
-	for _, chunkCoords := range w.loadedChunks {
-		chunk, exists := w.data[chunkCoords]
-		if !exists {
-			// This really shouldn't happend
-			// But handle it anyway
-			log.Printf("loaded chunks: %v", w.loadedChunks)
-			log.Printf("world.data: %v", w.data)
-			log.Panicf("chunk at %v, %v doesn't exist", chunkCoords.X, chunkCoords.Y)
-		}
-
+	for _, chunk := range w.chunks {
 		if err := chunk.Save(w.Metadata.UUID); err != nil {
 			return err
 		}

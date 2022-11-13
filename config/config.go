@@ -1,5 +1,7 @@
 package config
 
+// All values with type uint64 are measured in ticks, unless noted otherwise
+// 1 second == 60 ticks
 const (
 	AssetDirectory         string  = "./assets/"
 	PerlinNoiseScaleFactor float64 = 128
@@ -14,7 +16,8 @@ const (
 
 	WorldSaveDirectory string = "./saves/"
 	WorldInfoFile      string = "world.gob"
-	WorldAutosaveDelay uint64 = 3600 // each 60 seconds
+	WorldAutosaveDelay uint64 = 3600
+	ChunkUnloadDelay   uint64 = 1800
 )
 
 var (

@@ -3,6 +3,7 @@ package world
 import (
 	"fmt"
 
+	"github.com/3elDU/bamboo/engine/scene_manager"
 	"github.com/3elDU/bamboo/util"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -15,15 +16,17 @@ type Chunk struct {
 	Texture *ebiten.Image
 
 	// Whether a chunk has been modified, and should be written to the disk
-	modified bool
+	modified     bool
+	lastAccessed uint64
 }
 
 // NewChunk creates new empty Chunk at specified chunk coordinates
 func NewChunk(cx, cy int64) *Chunk {
 	return &Chunk{
 		x: cx, y: cy,
-		Texture:  ebiten.NewImage(256, 256),
-		modified: true,
+		Texture:      ebiten.NewImage(256, 256),
+		modified:     true,
+		lastAccessed: scene_manager.Ticks(),
 	}
 }
 
@@ -35,6 +38,7 @@ func (c *Chunk) At(x, y int) (*BlockStack, error) {
 	if x > 16 || y > 16 {
 		return nil, fmt.Errorf("invalid coordinates: %v, %v", x, y)
 	}
+	c.lastAccessed = scene_manager.Ticks()
 	return &c.blocks[x][y], nil
 }
 
@@ -56,6 +60,7 @@ func (c *Chunk) SetBlock(x, y int, layer Layer, block Block) error {
 		c.blocks[x][y].Top = block
 	}
 
+	c.lastAccessed = scene_manager.Ticks()
 	c.modified = true
 	return nil
 }
@@ -83,6 +88,7 @@ func (c *Chunk) SetStack(x, y int, stack BlockStack) error {
 	}
 
 	c.blocks[x][y] = stack
+	c.lastAccessed = scene_manager.Ticks()
 	c.modified = true
 	return nil
 }
