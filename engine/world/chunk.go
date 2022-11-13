@@ -16,7 +16,10 @@ type Chunk struct {
 	Texture *ebiten.Image
 
 	// Whether a chunk has been modified, and should be written to the disk
-	modified     bool
+	modified bool
+	// similar to modified, but indicates that a redraw is required
+	// and is reset on Chunk.Render() call
+	needsRedraw  bool
 	lastAccessed uint64
 }
 
@@ -26,6 +29,7 @@ func NewChunk(cx, cy int64) *Chunk {
 		x: cx, y: cy,
 		Texture:      ebiten.NewImage(256, 256),
 		modified:     true,
+		needsRedraw:  true,
 		lastAccessed: scene_manager.Ticks(),
 	}
 }
@@ -62,6 +66,7 @@ func (c *Chunk) SetBlock(x, y int, layer Layer, block Block) error {
 
 	c.lastAccessed = scene_manager.Ticks()
 	c.modified = true
+	c.needsRedraw = true
 	return nil
 }
 
@@ -90,5 +95,6 @@ func (c *Chunk) SetStack(x, y int, stack BlockStack) error {
 	c.blocks[x][y] = stack
 	c.lastAccessed = scene_manager.Ticks()
 	c.modified = true
+	c.needsRedraw = true
 	return nil
 }

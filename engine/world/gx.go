@@ -8,6 +8,11 @@ import (
 )
 
 func (c *Chunk) Render() {
+	// do not redraw a chunk, when there is no need to
+	if !c.needsRedraw {
+		return
+	}
+
 	for x := 0; x < 16; x++ {
 		for y := 0; y < 16; y++ {
 			stack, _ := c.At(x, y)
@@ -20,6 +25,8 @@ func (c *Chunk) Render() {
 			}
 		}
 	}
+
+	c.needsRedraw = false
 }
 
 func (world *World) Render(screen *ebiten.Image, px, py, scaling float64) {
