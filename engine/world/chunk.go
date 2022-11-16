@@ -34,8 +34,32 @@ func NewChunk(cx, cy int64) *Chunk {
 	}
 }
 
+// Returns a chunk filled with water
+func NewDummyChunk(cx, cy int64) *Chunk {
+	c := NewChunk(cx, cy)
+
+	for x := 0; x < 16; x++ {
+		for y := 0; y < 16; y++ {
+			c.SetStack(x, y, BlockStack{
+				NewEmptyBlock(),
+				NewWaterBlock(),
+				NewEmptyBlock(),
+			})
+		}
+	}
+
+	// avoid saving dummy chunk to disk
+	c.modified = false
+
+	return c
+}
+
 func (c Chunk) BlockCoords() util.Coords2i {
 	return util.Coords2i{X: c.x * 16, Y: c.y * 16}
+}
+
+func (c Chunk) Coords() util.Coords2i {
+	return util.Coords2i{X: c.x, Y: c.y}
 }
 
 func (c *Chunk) At(x, y int) (*BlockStack, error) {

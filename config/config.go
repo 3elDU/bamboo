@@ -17,7 +17,7 @@ const (
 	WorldSaveDirectory string = "./saves/"
 	WorldInfoFile      string = "world.gob"
 	WorldAutosaveDelay uint64 = 3600
-	ChunkUnloadDelay   uint64 = 1800
+	ChunkUnloadDelay   uint64 = 600
 )
 
 var (

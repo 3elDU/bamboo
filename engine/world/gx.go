@@ -1,6 +1,7 @@
 package world
 
 import (
+	"log"
 	"math"
 
 	"github.com/3elDU/bamboo/util"
@@ -45,7 +46,7 @@ func (world *World) Render(screen *ebiten.Image, px, py, scaling float64) {
 		for y := py - screenHeightInChunks/2*16 - 16; y < py+screenHeightInChunks/2*16+16; y += 16 {
 			chunk, err := world.At(x, y)
 			if err != nil {
-				panic(err)
+				log.Panicf("world.Render() - world.At() returned error %v", err)
 			}
 
 			chunk.Render()

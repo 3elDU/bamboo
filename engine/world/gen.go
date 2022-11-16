@@ -4,11 +4,86 @@ Functions related to world generation
 package world
 
 import (
+	"log"
 	"math/rand"
 
 	"github.com/3elDU/bamboo/config"
+	"github.com/3elDU/bamboo/util"
 	"github.com/aquilax/go-perlin"
 )
+
+// WorldGenerator maintains chunk generation queue
+// Actual generation happens in separate goroutine,
+// so we don't have any freezes on the main thread
+type WorldGenerator struct {
+	// Separate perlin noise generators for each layer
+	bottomGenerator *perlin.Perlin
+	groundGenerator *perlin.Perlin
+	topGenerator    *perlin.Perlin
+
+	requests  chan util.Coords2i
+	generated chan *Chunk
+}
+
+func NewWorldGenerator(seed int64) *WorldGenerator {
+	// make a random generator using global world seed
+	world := rand.New(rand.NewSource(seed))
+
+	// and generate perlin noise seeds, using it
+	var (
+		bottomSeed = world.Int63()
+		groundSeed = world.Int63()
+		topSeed    = world.Int63()
+	)
+
+	return &WorldGenerator{
+		bottomGenerator: perlin.NewPerlin(2, 2, 16, bottomSeed),
+		groundGenerator: perlin.NewPerlin(2, 2, 16, groundSeed),
+		topGenerator:    perlin.NewPerlin(2, 2, 16, topSeed),
+
+		// for some reason, without buffering, it hangs
+		requests:  make(chan util.Coords2i, 128),
+		generated: make(chan *Chunk),
+	}
+}
+
+func (g *WorldGenerator) run() {
+	for {
+		// listen for incoming requests
+		req := <-g.requests
+
+		c := NewChunk(req.X, req.Y)
+		if err := c.Generate(g.bottomGenerator, g.groundGenerator, g.topGenerator); err != nil {
+			log.Panicf("WorldGenerator.run() - error while generating chunk - %v", err)
+		}
+
+		// FIXME: This is probably not very safe to pass pointers between goroutines
+		g.generated <- c
+	}
+}
+
+// starts chunk generator in separate goroutine
+func (g *WorldGenerator) Run() {
+	go g.run()
+}
+
+// Requests a chunk generation
+// Chunk can be retrieved later through WorldGenerator.Receive()
+func (g *WorldGenerator) Generate(cx, cy int64) {
+	g.requests <- util.Coords2i{X: cx, Y: cy}
+	log.Printf("WorldGenerator.Generate() - %v; %v", cx, cy)
+}
+
+// Returns newly generated chunk
+// If none are pending, returns nil
+func (g *WorldGenerator) Receive() *Chunk {
+	select {
+	case c := <-g.generated:
+		return c
+	default:
+		return nil
+	}
+}
 
 // Features are regular random numbers, that can be used while generating blocks.
 // Useful, when we need regular number generation, not perlin noise.
@@ -128,12 +203,44 @@ func (c *Chunk) Generate(bottom, ground, top *perlin.Perlin) error {
 				topBlock = genTop(top, groundBlock, makeFeatures(bottom, bx, by), float64(bx), float64(by))
 			}
 
-			err := c.SetStack(x, y, BlockStack{
+			if err := c.SetStack(x, y, BlockStack{
 				Bottom: bottomBlock,
 				Ground: groundBlock,
 				Top:    topBlock,
-			})
-			if err != nil {
+			}); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// simply fills a chunk with water
+func (c *Chunk) GenerateDummy() error {
+	// check if the chunk is out of the world borders
+	// if it is, don't generate a world, instead return a chunk filled with stone blocks
+	chunkOutOfBorders := c.x < 0 || c.y < 0 || c.x >= config.WorldWidth || c.y >= config.WorldHeight
+
+	for x := 0; x < 16; x++ {
+		for y := 0; y < 16; y++ {
+			var bottomBlock, groundBlock, topBlock Block
+
+			if chunkOutOfBorders {
+				bottomBlock = NewStoneBlock(0)
+				groundBlock = NewEmptyBlock()
+				topBlock = NewEmptyBlock()
+			} else {
+				bottomBlock = NewEmptyBlock()
+				groundBlock = NewWaterBlock()
+				topBlock = NewWaterBlock()
+			}
+
+			if err := c.SetStack(x, y, BlockStack{
+				Bottom: bottomBlock,
+				Ground: groundBlock,
+				Top:    topBlock,
+			}); err != nil {
 				return err
 			}
 		}

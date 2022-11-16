@@ -2,20 +2,16 @@ package world
 
 import (
 	"log"
-	"math/rand"
 
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/engine/scene_manager"
 	"github.com/3elDU/bamboo/util"
-	"github.com/aquilax/go-perlin"
 	"github.com/google/uuid"
 )
 
 type World struct {
-	// Separate perlin noise generators for each layer
-	bottomGenerator *perlin.Perlin
-	groundGenerator *perlin.Perlin
-	topGenerator    *perlin.Perlin
+	generator   *WorldGenerator
+	saverLoader *WorldSaverLoader
 
 	Metadata WorldSave
 
@@ -28,26 +24,19 @@ type World struct {
 func NewWorld(name string, uuid uuid.UUID, seed int64) *World {
 	log.Printf("NewWorld - name %v; seed %v", name, seed)
 
-	// make a random generator using global world seed
-	world := rand.New(rand.NewSource(seed))
+	generator := NewWorldGenerator(seed)
+	go generator.Run()
 
-	// and generate perlin noise seeds, using it
-	var (
-		bottomSeed = world.Int63()
-		groundSeed = world.Int63()
-		topSeed    = world.Int63()
-	)
+	metadata := WorldSave{Name: name, UUID: uuid, Seed: seed}
+
+	saverLoader := NewWorldSaverLoader(metadata)
+	go saverLoader.Run()
 
 	return &World{
-		bottomGenerator: perlin.NewPerlin(2, 2, 16, bottomSeed),
-		groundGenerator: perlin.NewPerlin(2, 2, 16, groundSeed),
-		topGenerator:    perlin.NewPerlin(2, 2, 16, topSeed),
+		generator:   generator,
+		saverLoader: saverLoader,
 
-		Metadata: WorldSave{
-			Name: name,
-			UUID: uuid,
-			Seed: seed,
-		},
+		Metadata: metadata,
 
 		chunks: make(map[util.Coords2i]*Chunk),
 	}
@@ -55,6 +44,24 @@ func NewWorld(name string, uuid uuid.UUID, seed int64) *World {
 
 // Update - x and y are player coordinates
 func (world *World) Update(_, _ float64) {
+	// receive newly generated chunks from world generator
+	for {
+		if chunk := world.generator.Receive(); chunk != nil {
+			world.chunks[chunk.Coords()] = chunk
+		} else {
+			break
+		}
+	}
+
+	// receive newly loaded chunks
+	for {
+		if chunk := world.saverLoader.Receive(); chunk != nil {
+			world.chunks[chunk.Coords()] = chunk
+		} else {
+			break
+		}
+	}
+
 	// each 30 ticks ( half a second ) check for chunks,
 	// that weren't accessed ( neither read, nor write ) for specified amount of ticks
 	// ( check config.go )
@@ -63,9 +70,7 @@ func (world *World) Update(_, _ float64) {
 
 		for coords, chunk := range world.chunks {
 			if scene_manager.Ticks()-chunk.lastAccessed > config.ChunkUnloadDelay {
-				if err := chunk.Save(world.Metadata.UUID); err != nil {
-					log.Panicf("World.Update() - Error while unloading chunk to disk - %v", err)
-				}
+				world.saverLoader.Save(chunk)
 				delete(world.chunks, coords)
 				chunksUnloaded++
 			}
@@ -75,25 +80,12 @@ func (world *World) Update(_, _ float64) {
 			log.Printf("World.Update() - Unloaded %v chunks from memory; currently loaded - %v", chunksUnloaded, len(world.chunks))
 		}
 	}
-
 }
 
 // At Returns a Chunk at given coordinates. Note that x and y are Chunk
 // coordinates, not block coordinates
 func (world *World) ChunkAt(x, y int64) (*Chunk, error) {
-	_, exists := world.chunks[util.Coords2i{X: x, Y: y}]
-
-	// generate Chunk, if it doesn't exist yet
-	if !exists {
-		chunk := NewChunk(x, y)
-		err := chunk.Generate(world.bottomGenerator, world.groundGenerator, world.topGenerator)
-		if err != nil {
-			return nil, err
-		}
-		world.chunks[util.Coords2i{X: x, Y: y}] = chunk
-	}
-
-	return world.chunks[util.Coords2i{X: x, Y: y}], nil
+	return world.At(float64(x)*16, float64(y)*16)
 }
 
 // Calculates chunk position from given world coordinates
@@ -117,18 +109,19 @@ func (world *World) At(x, y float64) (*Chunk, error) {
 
 	if !exists {
 		// try to load the chunk from disk first
-		if chunk := LoadChunk(world.Metadata.UUID, cx, cy); chunk != nil {
-			world.chunks[chunkCoordinates] = chunk
+		if ChunkExistsOnDisk(world.Metadata.UUID, cx, cy) {
+			// request chunk loading
+			world.saverLoader.Load(cx, cy)
 		} else {
-			chunk := NewChunk(cx, cy)
-			err := chunk.Generate(world.bottomGenerator, world.groundGenerator, world.topGenerator)
-			if err != nil {
-				return nil, err
-			}
-			world.chunks[chunkCoordinates] = chunk
+			// request chunk generation
+			world.generator.Generate(cx, cy)
 		}
+
+		world.chunks[chunkCoordinates] = NewDummyChunk(cx, cy)
+		return world.chunks[chunkCoordinates], nil
 	}
 
+	world.chunks[chunkCoordinates].lastAccessed = scene_manager.Ticks()
 	return world.chunks[chunkCoordinates], nil
 }
 

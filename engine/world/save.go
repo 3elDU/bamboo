@@ -11,12 +11,86 @@ import (
 
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/game/player"
+	"github.com/3elDU/bamboo/util"
 	"github.com/google/uuid"
 )
 
 func init() {
 	// create saves directory, if it doesn't exist yet
 	os.Mkdir(config.WorldSaveDirectory, os.ModePerm)
+}
+
+// WorldSaverLoader maintains chunk loading/saving queue,
+// while doing actual work on separate goroutine,
+// so we don't have any freezes on the main thread
+type WorldSaverLoader struct {
+	Metadata WorldSave
+
+	saveRequests chan Chunk
+	loadRequests chan util.Coords2i
+	loaded       chan *Chunk
+}
+
+func NewWorldSaverLoader(metadata WorldSave) *WorldSaverLoader {
+	return &WorldSaverLoader{
+		Metadata: metadata,
+
+		saveRequests: make(chan Chunk, 1024),
+		loadRequests: make(chan util.Coords2i, 256),
+		loaded:       make(chan *Chunk),
+	}
+}
+
+func (sl *WorldSaverLoader) runSaver() {
+	for {
+		chunk := <-sl.saveRequests
+
+		// FIXME: This is probably not very save
+		if err := chunk.Save(sl.Metadata.UUID); err != nil {
+			log.Panicf("sl.runSaver() - error while saving chunk - %v", err)
+		}
+	}
+}
+
+func (sl *WorldSaverLoader) runLoader() {
+	for {
+		request := <-sl.loadRequests
+
+		c := LoadChunk(sl.Metadata.UUID, request.X, request.Y)
+		if c == nil {
+			// if the requested chunk doesn't exist, simply ignore the error and skip it
+			continue
+		}
+		log.Printf("WorldSaverLoader.runLoader() - loaded chunk %v; %v from disk", request.X, request.Y)
+
+		sl.loaded <- c
+	}
+}
+
+func (sl *WorldSaverLoader) Run() {
+	go sl.runSaver()
+	go sl.runLoader()
+}
+
+// Returns newly loaded chunk
+// If there is no pending chunks, returns nil
+func (sl *WorldSaverLoader) Receive() *Chunk {
+	select {
+	case c := <-sl.loaded:
+		return c
+	default:
+		return nil
+	}
+}
+
+// Pushes chunk save request to the queue
+func (sl *WorldSaverLoader) Save(chunk *Chunk) {
+	sl.saveRequests <- *chunk
+}
+
+// Pushes chunk load reuqest to the queue
+func (sl *WorldSaverLoader) Load(cx, cy int64) {
+	sl.loadRequests <- util.Coords2i{X: cx, Y: cy}
 }
 
 // structure with metadata, representing a world save
@@ -103,6 +177,14 @@ func (w *World) Save(player player.Player) error {
 	log.Println("World.Save() - saved")
 
 	return nil
+}
+
+func ChunkExistsOnDisk(id uuid.UUID, x, y int64) bool {
+	path := filepath.Join(config.WorldSaveDirectory, id.String(),
+		fmt.Sprintf("chunk_%v_%v.gob", x, y))
+
+	_, err := os.Stat(path)
+	return err == nil
 }
 
 // if saved chunk doesn't exist, returns nil
