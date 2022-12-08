@@ -279,6 +279,10 @@ func (b *connectedBlock) Render(world *World, screen *ebiten.Image, pos util.Coo
 
 		if neighbor.Ground.Type() == b.Type() {
 			sidesConnected[i] = true
+			// If neighbor is on another chunk, trigger redraw of that chunk
+			if neighbor.Ground.ParentChunk() != b.parentChunk {
+				neighbor.Ground.ParentChunk().needsRedraw = true
+			}
 		}
 	}
 	b.tex.SetSidesArray(sidesConnected)
