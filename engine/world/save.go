@@ -100,7 +100,6 @@ func (sl *WorldSaverLoader) Load(cx, cy int64) {
 		return
 	}
 	sl.loadRequestsPool[coords] = true
-	log.Println(len(sl.loadRequestsPool))
 	sl.loadRequests <- coords
 }
 
