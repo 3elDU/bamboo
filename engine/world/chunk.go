@@ -9,16 +9,16 @@ import (
 )
 
 type Chunk struct {
-	// those are coordinates, not block coordinates
+	// those are chunk coordinates, not block coordinates
 	x, y   int64
 	blocks [16][16]BlockStack
 
 	Texture *ebiten.Image
 
-	// Whether a chunk has been modified, and should be written to the disk
+	// Whether a chunk has been modified since last update
 	modified bool
 	// similar to modified, but indicates that a redraw is required
-	// and is reset on Chunk.Render() call
+	// resets on Chunk.Render()
 	needsRedraw  bool
 	lastAccessed uint64
 }
@@ -54,6 +54,18 @@ func NewDummyChunk(cx, cy int64) *Chunk {
 	return c
 }
 
+func (c *Chunk) Update(world *World) {
+	if c.modified {
+		for x := 0; x < 16; x++ {
+			for y := 0; y < 16; y++ {
+				c.blocks[x][y].Bottom.Update(world)
+				c.blocks[x][y].Ground.Update(world)
+				c.blocks[x][y].Top.Update(world)
+			}
+		}
+	}
+}
+
 func (c Chunk) BlockCoords() util.Coords2i {
 	return util.Coords2i{X: c.x * 16, Y: c.y * 16}
 }
@@ -63,7 +75,7 @@ func (c Chunk) Coords() util.Coords2i {
 }
 
 func (c *Chunk) At(x, y int) (*BlockStack, error) {
-	if x > 16 || y > 16 {
+	if x < 0 || y < 0 || x > 16 || y > 16 {
 		return nil, fmt.Errorf("invalid coordinates: %v, %v", x, y)
 	}
 	c.lastAccessed = scene_manager.Ticks()
@@ -76,7 +88,7 @@ func (c *Chunk) SetBlock(x, y int, layer Layer, block Block) error {
 	}
 
 	block.SetParentChunk(c)
-	block.SetCoords(util.Coords2i{X: int64(x), Y: int64(y)})
+	block.SetCoords(util.Coords2i{X: c.x*16 + int64(x), Y: c.y*16 + int64(y)})
 	block.SetLayer(layer)
 
 	switch layer {
@@ -107,14 +119,18 @@ func (c *Chunk) SetTopBlock(x, y int, block Block) error {
 }
 
 func (c *Chunk) SetStack(x, y int, stack BlockStack) error {
-	if x > 15 || y > 15 {
+	if x < 0 || y < 0 || x > 15 || y > 15 {
 		return fmt.Errorf("invalid coordinates: %v, %v", x, y)
 	}
 
-	for _, block := range [3]Block{stack.Bottom, stack.Ground, stack.Top} {
-		block.SetParentChunk(c)
-		block.SetCoords(util.Coords2i{X: int64(x), Y: int64(y)})
-	}
+	blockCoordinates := util.Coords2i{X: c.x*16 + int64(x), Y: c.y*16 + int64(y)}
+
+	stack.Bottom.SetParentChunk(c)
+	stack.Bottom.SetCoords(blockCoordinates)
+	stack.Ground.SetParentChunk(c)
+	stack.Ground.SetCoords(blockCoordinates)
+	stack.Top.SetParentChunk(c)
+	stack.Top.SetCoords(blockCoordinates)
 
 	c.blocks[x][y] = stack
 	c.lastAccessed = scene_manager.Ticks()

@@ -34,7 +34,7 @@ func GetBlockByID(id BlockType) Block {
 	case Empty:
 		return NewEmptyBlock()
 	case Stone:
-		return NewStoneBlock(0)
+		return NewStoneBlock()
 	case Water:
 		return NewWaterBlock()
 	case Sand:
@@ -56,10 +56,10 @@ type emptyBlock struct {
 	baseBlock
 }
 
-func (e *emptyBlock) Update() {
+func (e *emptyBlock) Update(_ *World) {
 
 }
-func (e *emptyBlock) Render(_ *ebiten.Image, _ util.Coords2f) {
+func (e *emptyBlock) Render(_ *World, _ *ebiten.Image, _ util.Coords2f) {
 
 }
 func (e *emptyBlock) TextureName() string {
@@ -76,17 +76,14 @@ func NewEmptyBlock() *emptyBlock {
 	}
 }
 
-func NewGrassBlock() *compositeBlock {
-	return &compositeBlock{
+func NewGrassBlock() *connectedBlock {
+	return &connectedBlock{
 		baseBlock: baseBlock{
 			collidable:  false,
 			playerSpeed: 1,
 			blockType:   Grass,
 		},
-		texturedBlock: texturedBlock{
-			tex:      asset_loader.Texture("grass1"),
-			rotation: float64(util.RandomChoice([]int{0, 90, 180, 270})),
-		},
+		tex: asset_loader.ConnectedTexture("grass", true, true, true, true),
 	}
 }
 
@@ -176,27 +173,13 @@ func NewSnowBlock() *compositeBlock {
 	}
 }
 
-func NewStoneBlock(height float64) *compositeBlock {
-	var texVariant string
-	// use different texture depending on mountain height
-	switch {
-	case height <= 1.51:
-		texVariant = "stone1"
-	case height <= 1.57:
-		texVariant = "stone2"
-	case height <= 1.65:
-		texVariant = "stone3"
-	}
-
-	return &compositeBlock{
+func NewStoneBlock() *connectedBlock {
+	return &connectedBlock{
 		baseBlock: baseBlock{
 			collidable:  false,
 			playerSpeed: 0.3,
 			blockType:   Stone,
 		},
-		texturedBlock: texturedBlock{
-			tex:      asset_loader.Texture(texVariant),
-			rotation: 0,
-		},
+		tex: asset_loader.ConnectedTexture("stone", false, false, false, false),
 	}
 }

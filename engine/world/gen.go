@@ -21,8 +21,11 @@ type WorldGenerator struct {
 	groundGenerator *perlin.Perlin
 	topGenerator    *perlin.Perlin
 
-	requests  chan util.Coords2i
-	generated chan *Chunk
+	// requestsPool keeps track of currently requested chunks,
+	// so that one same chunk can't be requested twice
+	requestsPool map[util.Coords2i]bool
+	requests     chan util.Coords2i
+	generated    chan *Chunk
 }
 
 func NewWorldGenerator(seed int64) *WorldGenerator {
@@ -41,9 +44,10 @@ func NewWorldGenerator(seed int64) *WorldGenerator {
 		groundGenerator: perlin.NewPerlin(2, 2, 16, groundSeed),
 		topGenerator:    perlin.NewPerlin(2, 2, 16, topSeed),
 
+		requestsPool: make(map[util.Coords2i]bool),
 		// for some reason, without buffering, it hangs
 		requests:  make(chan util.Coords2i, 128),
-		generated: make(chan *Chunk),
+		generated: make(chan *Chunk, 128),
 	}
 }
 
@@ -70,8 +74,12 @@ func (g *WorldGenerator) Run() {
 // Requests a chunk generation
 // Chunk can be retrieved later through WorldGenerator.Receive()
 func (g *WorldGenerator) Generate(cx, cy int64) {
-	g.requests <- util.Coords2i{X: cx, Y: cy}
-	log.Printf("WorldGenerator.Generate() - %v; %v", cx, cy)
+	coords := util.Coords2i{X: cx, Y: cy}
+	if g.requestsPool[coords] {
+		return
+	}
+	g.requests <- coords
+	g.requestsPool[coords] = true
 }
 
 // Returns newly generated chunk
@@ -79,6 +87,8 @@ func (g *WorldGenerator) Generate(cx, cy int64) {
 func (g *WorldGenerator) Receive() *Chunk {
 	select {
 	case c := <-g.generated:
+		// remove chunk from request pool
+		delete(g.requestsPool, c.Coords())
 		return c
 	default:
 		return nil
@@ -121,7 +131,7 @@ func height(gen *perlin.Perlin, x, y, scale float64) float64 {
 // generates bottom block at given coordinates
 func genBottom(p *perlin.Perlin, features BlockFeatures, x, y float64) Block {
 	// h := height(source.p, x, y, config.PerlinNoiseScaleFactor/4)
-	return NewStoneBlock(0)
+	return NewEmptyBlock()
 }
 
 // generates ground block at given coordinates
@@ -137,7 +147,7 @@ func genGround(p *perlin.Perlin, prevBlock Block, features BlockFeatures, x, y f
 	case h <= 1.45: // Grass
 		return NewGrassBlock()
 	case h <= 1.65: // Stone
-		return NewStoneBlock(h)
+		return NewStoneBlock()
 	default: // Snow
 		return NewSnowBlock()
 	}
@@ -194,7 +204,7 @@ func (c *Chunk) Generate(bottom, ground, top *perlin.Perlin) error {
 			var bottomBlock, groundBlock, topBlock Block
 
 			if chunkOutOfBorders {
-				bottomBlock = NewStoneBlock(0)
+				bottomBlock = NewStoneBlock()
 				groundBlock = NewEmptyBlock()
 				topBlock = NewEmptyBlock()
 			} else {
@@ -227,7 +237,7 @@ func (c *Chunk) GenerateDummy() error {
 			var bottomBlock, groundBlock, topBlock Block
 
 			if chunkOutOfBorders {
-				bottomBlock = NewStoneBlock(0)
+				bottomBlock = NewStoneBlock()
 				groundBlock = NewEmptyBlock()
 				topBlock = NewEmptyBlock()
 			} else {

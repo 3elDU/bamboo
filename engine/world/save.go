@@ -26,7 +26,10 @@ func init() {
 type WorldSaverLoader struct {
 	Metadata WorldSave
 
-	saveRequests chan Chunk
+	saveRequests     chan Chunk
+	loadRequestsPool map[util.Coords2i]bool
+	// loadRequestsPool keeps track of currently requested chunks,
+	// so that one same chunk can't be requested twice
 	loadRequests chan util.Coords2i
 	loaded       chan *Chunk
 }
@@ -35,9 +38,10 @@ func NewWorldSaverLoader(metadata WorldSave) *WorldSaverLoader {
 	return &WorldSaverLoader{
 		Metadata: metadata,
 
-		saveRequests: make(chan Chunk, 1024),
-		loadRequests: make(chan util.Coords2i, 256),
-		loaded:       make(chan *Chunk),
+		saveRequests:     make(chan Chunk, 1024),
+		loadRequestsPool: make(map[util.Coords2i]bool),
+		loadRequests:     make(chan util.Coords2i, 256),
+		loaded:           make(chan *Chunk),
 	}
 }
 
@@ -77,6 +81,7 @@ func (sl *WorldSaverLoader) Run() {
 func (sl *WorldSaverLoader) Receive() *Chunk {
 	select {
 	case c := <-sl.loaded:
+		delete(sl.loadRequestsPool, c.Coords())
 		return c
 	default:
 		return nil
@@ -90,7 +95,13 @@ func (sl *WorldSaverLoader) Save(chunk *Chunk) {
 
 // Pushes chunk load reuqest to the queue
 func (sl *WorldSaverLoader) Load(cx, cy int64) {
-	sl.loadRequests <- util.Coords2i{X: cx, Y: cy}
+	coords := util.Coords2i{X: cx, Y: cy}
+	if sl.loadRequestsPool[coords] {
+		return
+	}
+	sl.loadRequestsPool[coords] = true
+	log.Println(len(sl.loadRequestsPool))
+	sl.loadRequests <- coords
 }
 
 // structure with metadata, representing a world save

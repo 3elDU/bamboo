@@ -1,7 +1,3 @@
-/*
-	Helper functions to simplify usual operations
-*/
-
 package engine
 
 import (

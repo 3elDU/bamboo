@@ -38,8 +38,8 @@ type Block interface {
 	// Whether the player should collide with the block
 	Collidable() bool
 
-	Update()
-	Render(screen *ebiten.Image, pos util.Coords2f)
+	Update(world *World)
+	Render(world *World, screen *ebiten.Image, pos util.Coords2f)
 	TextureName() string
 
 	State() []byte
@@ -69,8 +69,9 @@ type baseBlock struct {
 	// Usually you don't have to set this for youself,
 	// Since world.Gen() sets them automatically
 	parentChunk *Chunk
-	x, y        int
-	layer       Layer
+	// Block coordinates in world space
+	x, y  int
+	layer Layer
 
 	// Whether collision will work with this block
 	collidable bool
@@ -107,15 +108,28 @@ type compositeBlock struct {
 	texturedBlock
 }
 
+type ConnectedTextureState struct {
+	Base           string
+	SidesConnected [4]bool
+}
+
+type ConnectedBlockState struct {
+	BaseBlockState        []byte
+	ConnectedTextureState []byte
+}
+
+type connectedBlock struct {
+	baseBlock
+	tex texture.ConnectedTexture
+}
+
 func (b *baseBlock) Coords() util.Coords2i {
 	return util.Coords2i{X: int64(b.x), Y: int64(b.y)}
 }
 
 func (b *baseBlock) SetCoords(coords util.Coords2i) {
-	if coords.X > 15 || coords.Y > 15 {
-		return
-	}
-
+	b.x = int(coords.X)
+	b.y = int(coords.Y)
 }
 
 func (b *baseBlock) ParentChunk() *Chunk {
@@ -165,7 +179,7 @@ func (b *baseBlock) LoadState(state_bytes []byte) error {
 	return nil
 }
 
-func (b *texturedBlock) Render(screen *ebiten.Image, pos util.Coords2f) {
+func (b *texturedBlock) Render(_ *World, screen *ebiten.Image, pos util.Coords2f) {
 	opts := &ebiten.DrawImageOptions{}
 
 	if b.rotation != 0 {
@@ -210,7 +224,7 @@ func (b *texturedBlock) LoadState(state_bytes []byte) error {
 }
 
 // Dummy update method
-func (b *compositeBlock) Update() {
+func (b *compositeBlock) Update(world *World) {
 
 }
 
@@ -245,6 +259,78 @@ func (b *compositeBlock) LoadState(state_bytes []byte) error {
 	if err := b.texturedBlock.LoadState(state.TexturedBlockState); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+// Update connected sides
+func (b *connectedBlock) Update(world *World) {
+
+}
+
+func (b *connectedBlock) Render(world *World, screen *ebiten.Image, pos util.Coords2f) {
+	var sidesConnected [4]bool
+	for i, side := range [4]util.Coords2i{{-1, 0}, {1, 0}, {0, -1}, {0, 1}} {
+		x, y := int64(b.x)+side.X, int64(b.y)+side.Y
+		neighbor, err := world.BlockAt(x, y)
+		if err != nil {
+			continue
+		}
+
+		if neighbor.Ground.Type() == b.Type() {
+			sidesConnected[i] = true
+		}
+	}
+	b.tex.SetSidesArray(sidesConnected)
+
+	opts := &ebiten.DrawImageOptions{}
+	opts.GeoM.Translate(pos.X, pos.Y)
+	screen.DrawImage(asset_loader.Texture(b.tex.FullName()).Texture, opts)
+}
+
+func (b *connectedBlock) TextureName() string {
+	return b.tex.FullName()
+}
+
+func (b *connectedBlock) State() []byte {
+	baseState := b.baseBlock.State()
+
+	texStateBuf := bytes.NewBuffer(make([]byte, 0))
+	if err := gob.NewEncoder(texStateBuf).Encode(ConnectedTextureState{Base: b.tex.Base, SidesConnected: b.tex.SidesConnected}); err != nil {
+		log.Panicf("connectedBlock.State() - %v", err)
+	}
+	texState := texStateBuf.Bytes()
+
+	state := ConnectedBlockState{
+		BaseBlockState:        baseState,
+		ConnectedTextureState: texState,
+	}
+
+	buf := new(bytes.Buffer)
+	if err := gob.NewEncoder(buf).Encode(state); err != nil {
+		log.Panicf("connectedBlock.State() - %v", err)
+	}
+
+	return buf.Bytes()
+}
+
+func (b *connectedBlock) LoadState(state_bytes []byte) error {
+	buf := bytes.NewBuffer(state_bytes)
+	state := new(ConnectedBlockState)
+	if err := gob.NewDecoder(buf).Decode(state); err != nil {
+		return err
+	}
+
+	if err := b.baseBlock.LoadState(state.BaseBlockState); err != nil {
+		return err
+	}
+
+	tex := new(ConnectedTextureState)
+	if err := gob.NewDecoder(bytes.NewReader(state.ConnectedTextureState)).Decode(tex); err != nil {
+		return err
+	}
+	b.tex.Base = tex.Base
+	b.tex.SidesConnected = tex.SidesConnected
 
 	return nil
 }

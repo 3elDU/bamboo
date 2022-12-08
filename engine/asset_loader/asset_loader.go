@@ -50,7 +50,41 @@ func LoadAssets(dir string) error {
 			return err
 		}
 
-		if !d.IsDir() {
+		// If there is a directory, treat it as a texture atlas
+		if d.IsDir() {
+			data, err := os.ReadFile(filepath.Join(path, "atlas.png"))
+			if err != nil {
+				return err
+			}
+
+			img, _, err := image.Decode(bytes.NewReader(data))
+			if err != nil {
+				return err
+			}
+
+			tex := ebiten.NewImageFromImage(img)
+
+			// extract sub-textures from atlas
+			// each character after the texture name resembles a side
+			// if a side is connected, it's t, else it's f
+			// sides are in order: left, right, top, bottom
+			assetList.Textures[d.Name()+"-ffff"] = ebiten.NewImageFromImage(tex.SubImage(image.Rect(0, 0, 16, 16)))
+			assetList.Textures[d.Name()+"-ftff"] = ebiten.NewImageFromImage(tex.SubImage(image.Rect(16, 0, 32, 32)))
+			assetList.Textures[d.Name()+"-ttff"] = ebiten.NewImageFromImage(tex.SubImage(image.Rect(32, 0, 48, 48)))
+			assetList.Textures[d.Name()+"-tfff"] = ebiten.NewImageFromImage(tex.SubImage(image.Rect(48, 0, 64, 64)))
+			assetList.Textures[d.Name()+"-ffft"] = ebiten.NewImageFromImage(tex.SubImage(image.Rect(0, 16, 16, 32)))
+			assetList.Textures[d.Name()+"-ftft"] = ebiten.NewImageFromImage(tex.SubImage(image.Rect(16, 16, 32, 32)))
+			assetList.Textures[d.Name()+"-ttft"] = ebiten.NewImageFromImage(tex.SubImage(image.Rect(32, 16, 48, 32)))
+			assetList.Textures[d.Name()+"-tfft"] = ebiten.NewImageFromImage(tex.SubImage(image.Rect(48, 16, 64, 32)))
+			assetList.Textures[d.Name()+"-fftt"] = ebiten.NewImageFromImage(tex.SubImage(image.Rect(0, 32, 16, 48)))
+			assetList.Textures[d.Name()+"-fttt"] = ebiten.NewImageFromImage(tex.SubImage(image.Rect(16, 32, 32, 48)))
+			assetList.Textures[d.Name()+"-tttt"] = ebiten.NewImageFromImage(tex.SubImage(image.Rect(32, 32, 48, 48)))
+			assetList.Textures[d.Name()+"-tftt"] = ebiten.NewImageFromImage(tex.SubImage(image.Rect(48, 32, 64, 48)))
+			assetList.Textures[d.Name()+"-fftf"] = ebiten.NewImageFromImage(tex.SubImage(image.Rect(0, 48, 16, 64)))
+			assetList.Textures[d.Name()+"-fttf"] = ebiten.NewImageFromImage(tex.SubImage(image.Rect(16, 48, 32, 64)))
+			assetList.Textures[d.Name()+"-tttf"] = ebiten.NewImageFromImage(tex.SubImage(image.Rect(32, 48, 48, 64)))
+			assetList.Textures[d.Name()+"-tftf"] = ebiten.NewImageFromImage(tex.SubImage(image.Rect(48, 48, 64, 64)))
+		} else {
 			data, err := os.ReadFile(path)
 			if err != nil {
 				return err
@@ -106,6 +140,30 @@ func Texture(name string) texture.Texture {
 	return texture.Texture{
 		Name:    name,
 		Texture: tex,
+	}
+}
+
+// ConnectedTexture panicks when a specified texture doesn't exist
+func ConnectedTexture(baseName string, left, right, top, bottom bool) texture.ConnectedTexture {
+	assembledName := baseName + "-"
+
+	for _, side := range [4]bool{left, right, top, bottom} {
+		if side {
+			assembledName += "t"
+		} else {
+			assembledName += "f"
+		}
+	}
+
+	tex, exists := GlobalAssets.Textures[assembledName]
+	if !exists {
+		log.Panicf("connected texture %v doesn't exist", assembledName)
+	}
+
+	return texture.ConnectedTexture{
+		Base:           baseName,
+		SidesConnected: [4]bool{left, right, top, bottom},
+		Texture:        tex,
 	}
 }
 

@@ -1,14 +1,13 @@
 package world
 
 import (
-	"log"
 	"math"
 
 	"github.com/3elDU/bamboo/util"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-func (c *Chunk) Render() {
+func (c *Chunk) Render(world *World) {
 	// do not redraw a chunk, when there is no need to
 	if !c.needsRedraw {
 		return
@@ -19,7 +18,7 @@ func (c *Chunk) Render() {
 			stack, _ := c.At(x, y)
 
 			for _, block := range []Block{stack.Bottom, stack.Ground, stack.Top} {
-				block.Render(c.Texture, util.Coords2f{
+				block.Render(world, c.Texture, util.Coords2f{
 					X: float64(x) * 16,
 					Y: float64(y) * 16,
 				})
@@ -44,12 +43,8 @@ func (world *World) Render(screen *ebiten.Image, px, py, scaling float64) {
 	// hence, we subtract half of screen size, converted to blocks.
 	for x := px - screenWidthInChunks/2*16 - 16; x < px+screenWidthInChunks/2*16+16; x += 16 {
 		for y := py - screenHeightInChunks/2*16 - 16; y < py+screenHeightInChunks/2*16+16; y += 16 {
-			chunk, err := world.At(x, y)
-			if err != nil {
-				log.Panicf("world.Render() - world.At() returned error %v", err)
-			}
-
-			chunk.Render()
+			chunk := world.ChunkAtF(x, y)
+			chunk.Render(world)
 
 			var (
 				sx = (x-px-math.Mod(x, 16))*16 + float64(screenWidth)/2 - (float64(screenWidth)/scaling*(scaling-1))/2

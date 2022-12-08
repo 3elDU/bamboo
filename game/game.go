@@ -88,11 +88,7 @@ func (game *gameScene) Update() error {
 
 		// Places stone block under the player
 		case ebiten.IsKeyPressed(ebiten.KeyF):
-			if c, err := game.world.At(game.player.X, game.player.Y); err == nil {
-				c.SetGroundBlock(int(game.player.X)%16, int(game.player.Y)%16, world.NewStoneBlock(0))
-			} else {
-				log.Panicf("game.world.At() failed with %v", err)
-			}
+			game.world.ChunkAtF(game.player.X, game.player.Y).SetGroundBlock(int(game.player.X)%16, int(game.player.Y)%16, world.NewStoneBlock())
 		}
 
 		// scale the map, using scroll wheel
