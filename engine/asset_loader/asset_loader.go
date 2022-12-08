@@ -54,7 +54,8 @@ func LoadAssets(dir string) error {
 		if d.IsDir() {
 			data, err := os.ReadFile(filepath.Join(path, "atlas.png"))
 			if err != nil {
-				return err
+				// Ignore folders without a texture atlas
+				return nil
 			}
 
 			img, _, err := image.Decode(bytes.NewReader(data))
