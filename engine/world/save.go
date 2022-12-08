@@ -281,3 +281,10 @@ func (c *Chunk) Save(id uuid.UUID) error {
 	log.Printf("Chunk.Save() - %v; %v", c.x, c.y)
 	return nil
 }
+
+func DeleteWorld(id uuid.UUID) {
+	path := filepath.Join(config.WorldSaveDirectory, id.String())
+	if err := os.RemoveAll(path); err != nil {
+		log.Panicf("Failed to delete world %v - %v", id, err)
+	}
+}

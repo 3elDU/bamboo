@@ -171,35 +171,34 @@ func (s *stackComponent) CapacityForChild(child View) (float64, float64) {
 			break
 		}
 	}
-
-	if i != -1 {
-		space := 1.0
-
-		// compute proportions
-		if len(s.opts.Proportions) > 0 {
-			for j, p := range s.opts.Proportions {
-				// if proportion exists for given child, return it
-				if j == i {
-					if s.opts.Direction == VerticalStack {
-						return w, h * p
-					} else {
-						return w * p, h
-					}
-				}
-				space -= p
-			}
-		}
-		// if there is no proportion for current child,
-		// divide remaining space equally between all remaining children
-		if s.opts.Direction == VerticalStack {
-			return w, (h * space) / float64(len(s.children)-len(s.opts.Proportions))
-		} else {
-			return (w * space) / float64(len(s.children)-len(s.opts.Proportions)), h
-		}
+	if i == -1 {
+		return 0, 0
 	}
 
-	return 0, 0
+	space := 1.0
+	// compute proportions
+	if len(s.opts.Proportions) > 0 {
+		for j, p := range s.opts.Proportions {
+			// if proportion exists for given child, return it
+			if j == i {
+				if s.opts.Direction == VerticalStack {
+					return w, h * p
+				} else {
+					return w * p, h
+				}
+			}
+			space -= p
+		}
+	}
+	// if there is no proportion for current child,
+	// divide remaining space equally between all remaining children
+	if s.opts.Direction == VerticalStack {
+		return w, (h * space) / float64(len(s.children)-len(s.opts.Proportions))
+	} else {
+		return (w * space) / float64(len(s.children)-len(s.opts.Proportions)), h
+	}
 }
+
 func (s *stackComponent) Children() []View {
 	return s.children
 }
