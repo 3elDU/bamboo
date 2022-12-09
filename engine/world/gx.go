@@ -1,6 +1,7 @@
 package world
 
 import (
+	"log"
 	"math"
 
 	"github.com/3elDU/bamboo/util"
@@ -15,14 +16,15 @@ func (c *Chunk) Render(world *World) {
 
 	for x := 0; x < 16; x++ {
 		for y := 0; y < 16; y++ {
-			stack, _ := c.At(x, y)
-
-			for _, block := range []Block{stack.Bottom, stack.Ground, stack.Top} {
-				block.Render(world, c.Texture, util.Coords2f{
-					X: float64(x) * 16,
-					Y: float64(y) * 16,
-				})
+			block, err := c.At(x, y)
+			if err != nil {
+				log.Panicf("Chunk.Render() - chunk.At() failed with %v", err)
 			}
+
+			block.Render(world, c.Texture, util.Coords2f{
+				X: float64(x) * 16,
+				Y: float64(y) * 16,
+			})
 		}
 	}
 

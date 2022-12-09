@@ -130,7 +130,7 @@ type SavedBlock struct {
 // all chunks are converted to this structure before saving
 type SavedChunk struct {
 	X, Y int64
-	Data [16][16][3]SavedBlock
+	Data [16][16]SavedBlock
 }
 
 // Loads a world with given uuid
@@ -218,14 +218,12 @@ func LoadChunk(id uuid.UUID, x, y int64) *Chunk {
 		// decode blocks
 		for x := 0; x < 16; x++ {
 			for y := 0; y < 16; y++ {
-				for z := 0; z < 3; z++ {
-					b := GetBlockByID(savedChunk.Data[x][y][z].Type)
-					if err := b.LoadState(savedChunk.Data[x][y][z].State); err != nil {
-						log.Panicf("LoadChunk() - Block.LoadState() failed - %v", err)
-					}
-					if err := c.SetBlock(x, y, Layer(z), b); err != nil {
-						log.Panicf("LoadChunk() - Chunkk.SetBlock() failed - %v", err)
-					}
+				b := GetBlockByID(savedChunk.Data[x][y].Type)
+				if err := b.LoadState(savedChunk.Data[x][y].State); err != nil {
+					log.Panicf("LoadChunk() - Block.LoadState() failed - %v", err)
+				}
+				if err := c.SetBlock(x, y, b); err != nil {
+					log.Panicf("LoadChunk() - Chunkk.SetBlock() failed - %v", err)
 				}
 			}
 		}
@@ -255,15 +253,13 @@ func (c *Chunk) Save(id uuid.UUID) error {
 	defer f.Close()
 
 	// serialize the blockjs
-	var blocks [16][16][3]SavedBlock
+	var blocks [16][16]SavedBlock
 	for x := 0; x < 16; x++ {
 		for y := 0; y < 16; y++ {
-			stack := c.blocks[x][y]
-			for z, block := range []Block{stack.Bottom, stack.Ground, stack.Top} {
-				blocks[x][y][z] = SavedBlock{
-					Type:  block.Type(),
-					State: block.State(),
-				}
+			block := c.blocks[x][y]
+			blocks[x][y] = SavedBlock{
+				Type:  block.Type(),
+				State: block.State(),
 			}
 		}
 	}

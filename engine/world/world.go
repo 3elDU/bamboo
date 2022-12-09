@@ -144,7 +144,7 @@ func (world *World) ChunkAtF(x, y float64) *Chunk {
 	return world.chunks[chunkCoordinates]
 }
 
-func (world *World) BlockAt(x, y int64) (*BlockStack, error) {
+func (world *World) BlockAt(x, y int64) (Block, error) {
 	cx, cy := x/16, y/16
 
 	chunk, exists := world.chunks[util.Coords2i{X: cx, Y: cy}]

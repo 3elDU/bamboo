@@ -5,8 +5,6 @@
 package world
 
 import (
-	"fmt"
-
 	"github.com/3elDU/bamboo/engine/asset_loader"
 	"github.com/3elDU/bamboo/engine/texture"
 	"github.com/3elDU/bamboo/util"
@@ -20,12 +18,9 @@ const (
 	Sand
 	Grass
 	Snow
-
-	// Top-layer blocks
-	Sand_Stone
-	Grass_Plants_Small
-	Grass_Flowers
-	Grass_Plants
+	Short_Grass
+	Tall_Grass
+	Flowers
 )
 
 // Returns an empty interface
@@ -38,15 +33,17 @@ func GetBlockByID(id BlockType) Block {
 	case Water:
 		return NewWaterBlock()
 	case Sand:
-		return NewSandBlock()
+		return NewSandBlock(false)
 	case Grass:
 		return NewGrassBlock()
 	case Snow:
 		return NewSnowBlock()
-	case Sand_Stone:
-		return NewSandStoneBlock()
-	case Grass_Plants_Small, Grass_Flowers, Grass_Plants:
-		return NewGrassVegetationBlock(Grass_Plants_Small)
+	case Short_Grass:
+		return NewShortGrassBlock()
+	case Tall_Grass:
+		return NewTallGrassBlock()
+	case Flowers:
+		return NewFlowersBlock()
 	}
 
 	return NewEmptyBlock()
@@ -83,38 +80,59 @@ func NewGrassBlock() *connectedBlock {
 			playerSpeed: 1,
 			blockType:   Grass,
 		},
-		tex: asset_loader.ConnectedTexture("grass", true, true, true, true),
+		tex:        asset_loader.ConnectedTexture("grass", true, true, true, true),
+		connectsTo: []BlockType{Grass, Short_Grass, Tall_Grass, Flowers},
 	}
 }
 
-func NewGrassVegetationBlock(variant BlockType) *compositeBlock {
-	var texture string
-
-	switch variant {
-	case Grass_Plants_Small:
-		texture = "grass2"
-	case Grass_Plants:
-		texture = "grass4"
-	case Grass_Flowers:
-		texture = "grass3"
-	default:
-		panic(fmt.Sprintf("invalid grass vegetation variant - %v", variant))
-	}
-
+func NewShortGrassBlock() *compositeBlock {
 	return &compositeBlock{
 		baseBlock: baseBlock{
 			collidable:  false,
-			playerSpeed: 1.0,
-			blockType:   variant,
+			playerSpeed: 1,
+			blockType:   Short_Grass,
 		},
 		texturedBlock: texturedBlock{
-			tex:      asset_loader.Texture(texture),
+			tex:      asset_loader.Texture("short_grass"),
 			rotation: 0,
 		},
 	}
 }
 
-func NewSandBlock() *compositeBlock {
+func NewTallGrassBlock() *compositeBlock {
+	return &compositeBlock{
+		baseBlock: baseBlock{
+			collidable:  false,
+			playerSpeed: 1,
+			blockType:   Tall_Grass,
+		},
+		texturedBlock: texturedBlock{
+			tex:      asset_loader.Texture("tall_grass"),
+			rotation: 0,
+		},
+	}
+}
+
+func NewFlowersBlock() *compositeBlock {
+	return &compositeBlock{
+		baseBlock: baseBlock{
+			collidable:  false,
+			playerSpeed: 1,
+			blockType:   Flowers,
+		},
+		texturedBlock: texturedBlock{
+			tex:      asset_loader.Texture("flowers"),
+			rotation: 0,
+		},
+	}
+}
+
+func NewSandBlock(stones bool) *compositeBlock {
+	texVariant := "sand"
+	if stones {
+		texVariant = "sand-stones"
+	}
+
 	return &compositeBlock{
 		baseBlock: baseBlock{
 			collidable:  false,
@@ -122,21 +140,7 @@ func NewSandBlock() *compositeBlock {
 			blockType:   Sand,
 		},
 		texturedBlock: texturedBlock{
-			tex:      asset_loader.Texture("sand"),
-			rotation: float64(util.RandomChoice([]int{0, 90, 180, 270})),
-		},
-	}
-}
-
-func NewSandStoneBlock() *compositeBlock {
-	return &compositeBlock{
-		baseBlock: baseBlock{
-			collidable:  false,
-			playerSpeed: 0.8,
-			blockType:   Sand_Stone,
-		},
-		texturedBlock: texturedBlock{
-			tex:      asset_loader.Texture("sand-stones"),
+			tex:      asset_loader.Texture(texVariant),
 			rotation: float64(util.RandomChoice([]int{0, 90, 180, 270})),
 		},
 	}
@@ -180,6 +184,7 @@ func NewStoneBlock() *connectedBlock {
 			playerSpeed: 0.3,
 			blockType:   Stone,
 		},
-		tex: asset_loader.ConnectedTexture("stone", false, false, false, false),
+		tex:        asset_loader.ConnectedTexture("stone", false, false, false, false),
+		connectsTo: []BlockType{Stone},
 	}
 }

@@ -14,14 +14,7 @@ import (
 	"github.com/3elDU/bamboo/engine/texture"
 	"github.com/3elDU/bamboo/util"
 	"github.com/hajimehoshi/ebiten/v2"
-)
-
-type Layer int
-
-const (
-	BottomLayer Layer = iota
-	GroundLayer
-	TopLayer
+	"golang.org/x/exp/slices"
 )
 
 type BlockType int
@@ -31,8 +24,6 @@ type Block interface {
 	SetCoords(coords util.Coords2i)
 	ParentChunk() *Chunk
 	SetParentChunk(chunk *Chunk)
-	SetLayer(layer Layer)
-	Layer() Layer
 	Type() BlockType
 
 	// Whether the player should collide with the block
@@ -44,17 +35,6 @@ type Block interface {
 
 	State() []byte
 	LoadState(state_bytes []byte) error
-}
-
-// The map is actually 3D, and consists of three layers:
-//
-//  1. Fossils / Ore
-//  2. Ground block ( the one you`ll see the most )
-//  3. Top block - decoration / vegetation / player buildings / etc.
-type BlockStack struct {
-	Bottom Block
-	Ground Block
-	Top    Block
 }
 
 type BaseBlockState struct {
@@ -70,8 +50,7 @@ type baseBlock struct {
 	// Since world.Gen() sets them automatically
 	parentChunk *Chunk
 	// Block coordinates in world space
-	x, y  int
-	layer Layer
+	x, y int
 
 	// Whether collision will work with this block
 	collidable bool
@@ -116,11 +95,13 @@ type ConnectedTextureState struct {
 type ConnectedBlockState struct {
 	BaseBlockState        []byte
 	ConnectedTextureState []byte
+	ConnectsTo            []BlockType
 }
 
 type connectedBlock struct {
 	baseBlock
-	tex texture.ConnectedTexture
+	connectsTo []BlockType
+	tex        texture.ConnectedTexture
 }
 
 func (b *baseBlock) Coords() util.Coords2i {
@@ -138,14 +119,6 @@ func (b *baseBlock) ParentChunk() *Chunk {
 
 func (b *baseBlock) SetParentChunk(c *Chunk) {
 	b.parentChunk = c
-}
-
-func (b *baseBlock) Layer() Layer {
-	return b.layer
-}
-
-func (b *baseBlock) SetLayer(layer Layer) {
-	b.layer = layer
 }
 
 func (b *baseBlock) Collidable() bool {
@@ -268,21 +241,27 @@ func (b *connectedBlock) Update(world *World) {
 
 }
 
+func (b *connectedBlock) shouldConnect(other BlockType) bool {
+	return slices.Contains(b.connectsTo, other)
+}
+
 func (b *connectedBlock) Render(world *World, screen *ebiten.Image, pos util.Coords2f) {
 	var sidesConnected [4]bool
-	for i, side := range [4]util.Coords2i{{-1, 0}, {1, 0}, {0, -1}, {0, 1}} {
+	for i, side := range [4]util.Coords2i{{X: -1, Y: 0}, {X: 1, Y: 0}, {X: 0, Y: -1}, {X: 0, Y: 1}} {
 		x, y := int64(b.x)+side.X, int64(b.y)+side.Y
 		neighbor, err := world.BlockAt(x, y)
 		if err != nil {
 			continue
 		}
 
-		if neighbor.Ground.Type() == b.Type() {
-			sidesConnected[i] = true
-			// If neighbor is on another chunk, trigger redraw of that chunk
-			if neighbor.Ground.ParentChunk() != b.parentChunk {
-				neighbor.Ground.ParentChunk().needsRedraw = true
-			}
+		if !b.shouldConnect(neighbor.Type()) {
+			continue
+		}
+
+		sidesConnected[i] = true
+		// If neighbor is on another chunk, trigger redraw of that chunk
+		if neighbor.ParentChunk() != b.parentChunk {
+			neighbor.ParentChunk().needsRedraw = true
 		}
 	}
 	b.tex.SetSidesArray(sidesConnected)
@@ -308,6 +287,7 @@ func (b *connectedBlock) State() []byte {
 	state := ConnectedBlockState{
 		BaseBlockState:        baseState,
 		ConnectedTextureState: texState,
+		ConnectsTo:            b.connectsTo,
 	}
 
 	buf := new(bytes.Buffer)
@@ -324,6 +304,7 @@ func (b *connectedBlock) LoadState(state_bytes []byte) error {
 	if err := gob.NewDecoder(buf).Decode(state); err != nil {
 		return err
 	}
+	b.connectsTo = state.ConnectsTo
 
 	if err := b.baseBlock.LoadState(state.BaseBlockState); err != nil {
 		return err

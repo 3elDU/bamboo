@@ -16,10 +16,9 @@ import (
 // Actual generation happens in separate goroutine,
 // so we don't have any freezes on the main thread
 type WorldGenerator struct {
-	// Separate perlin noise generators for each layer
-	bottomGenerator *perlin.Perlin
-	groundGenerator *perlin.Perlin
-	topGenerator    *perlin.Perlin
+	// Separate perlin noise generators for base blocks and vegetation/features
+	baseGenerator      *perlin.Perlin
+	secondaryGenerator *perlin.Perlin
 
 	// requestsPool keeps track of currently requested chunks,
 	// so that one same chunk can't be requested twice
@@ -34,15 +33,13 @@ func NewWorldGenerator(seed int64) *WorldGenerator {
 
 	// and generate perlin noise seeds, using it
 	var (
-		bottomSeed = world.Int63()
-		groundSeed = world.Int63()
-		topSeed    = world.Int63()
+		baseSeed      = world.Int63()
+		secondarySeed = world.Int63()
 	)
 
 	return &WorldGenerator{
-		bottomGenerator: perlin.NewPerlin(2, 2, 16, bottomSeed),
-		groundGenerator: perlin.NewPerlin(2, 2, 16, groundSeed),
-		topGenerator:    perlin.NewPerlin(2, 2, 16, topSeed),
+		baseGenerator:      perlin.NewPerlin(2, 2, 16, baseSeed),
+		secondaryGenerator: perlin.NewPerlin(2, 2, 16, secondarySeed),
 
 		requestsPool: make(map[util.Coords2i]bool),
 		// for some reason, without buffering, it hangs
@@ -57,7 +54,7 @@ func (g *WorldGenerator) run() {
 		req := <-g.requests
 
 		c := NewChunk(req.X, req.Y)
-		if err := c.Generate(g.bottomGenerator, g.groundGenerator, g.topGenerator); err != nil {
+		if err := c.Generate(g.baseGenerator, g.secondaryGenerator); err != nil {
 			log.Panicf("WorldGenerator.run() - error while generating chunk - %v", err)
 		}
 
@@ -96,9 +93,7 @@ func (g *WorldGenerator) Receive() *Chunk {
 }
 
 // Features are regular random numbers, that can be used while generating blocks.
-// Useful, when we need regular number generation, not perlin noise.
-// For example, while generating vegetation, with 10% change we generate a flower instead of regular grass.
-// So, we check block features, and depending on that, we decide.
+// Useful, when we need simple RNG, not perlin noise.
 //
 // They are reproducible, and unique for each block
 type BlockFeatures struct {
@@ -128,72 +123,91 @@ func height(gen *perlin.Perlin, x, y, scale float64) float64 {
 	return gen.Noise2D(x/scale, y/scale) + 1
 }
 
-// generates bottom block at given coordinates
-func genBottom(p *perlin.Perlin, features BlockFeatures, x, y float64) Block {
-	// h := height(source.p, x, y, config.PerlinNoiseScaleFactor/4)
-	return NewEmptyBlock()
-}
-
-// generates ground block at given coordinates
-func genGround(p *perlin.Perlin, prevBlock Block, features BlockFeatures, x, y float64) Block {
-	// returns a value from 0 to 2
-	h := height(p, x, y, config.PerlinNoiseScaleFactor)
+// generates basic blocks ( sand, water, etc. )
+func genBase(baseGenerator *perlin.Perlin, x, y float64) Block {
+	baseHeight := height(baseGenerator, x, y, config.PerlinNoiseScaleFactor)
 
 	switch {
-	case h <= 1: // Water
+	case baseHeight <= 1: // Water
 		return NewWaterBlock()
-	case h <= 1.1: // Sand
-		return NewSandBlock()
-	case h <= 1.45: // Grass
+	case baseHeight <= 1.1: // Sand
+		return NewSandBlock(false)
+	case baseHeight <= 1.45: // Grass
 		return NewGrassBlock()
-	case h <= 1.65: // Stone
+	case baseHeight <= 1.65: // Stone
 		return NewStoneBlock()
 	default: // Snow
 		return NewSnowBlock()
 	}
 }
 
-// generates top block at given coordinates
-func genTop(p *perlin.Perlin, prevBlock Block, features BlockFeatures, x, y float64) Block {
-	h := height(p, x, y, config.PerlinNoiseScaleFactor/3)
-
-	// check for the underlying block
-	switch prevBlock.Type() {
-	case Grass:
-		var vegetationType BlockType
-
-		switch {
-		case h <= 0.9:
-			return NewEmptyBlock()
-		case h <= 1.3:
-			// with 8% chance, make flowered grass
-			if features.f1 <= 0.08 {
-				vegetationType = Grass_Flowers
-			} else {
-				vegetationType = Grass_Plants_Small
-			}
-		default:
-			vegetationType = Grass_Plants
-		}
-
-		return NewGrassVegetationBlock(vegetationType)
-	case Sand:
-		// With 3% change, generate stone with gravel
-		if features.f1 <= 0.03 {
-			return NewSandStoneBlock()
-		} else {
-			return NewEmptyBlock()
-		}
-	default:
-		return NewEmptyBlock()
+// Checks if 8 neighbors of the block are of the same type
+func checkNeighbors(desiredType BlockType, baseGenerator *perlin.Perlin, x, y float64) bool {
+	sides := [8][2]float64{
+		{x - 1, y},     // left
+		{x + 1, y},     // right
+		{x, y - 1},     // top
+		{x, y + 1},     // bottom
+		{x - 1, y - 1}, // top-left
+		{x + 1, y - 1}, // top-right
+		{x - 1, y + 1}, // bottom-left
+		{x + 1, y + 1}, // bottom-right
 	}
+
+	for _, side := range sides {
+		if genBase(baseGenerator, side[0], side[1]).Type() != desiredType {
+			return false
+		}
+	}
+
+	return true
 }
 
-func (c *Chunk) Generate(bottom, ground, top *perlin.Perlin) error {
-	// log.Printf("Chunk.Generate() - Generating chunk at %v, %v", c.x, c.y)
+// generates block features, depending on previous block
+func genFeatures(previous Block, baseGenerator *perlin.Perlin, secondaryGenerator *perlin.Perlin, features BlockFeatures, x, y float64) Block {
+	secondaryHeight := height(secondaryGenerator, x, y, config.PerlinNoiseScaleFactor)
 
+	switch previous.Type() {
+	case Sand:
+		// With 3% change, generate sand with stones
+		if features.f1 <= 0.03 {
+			return NewSandBlock(true)
+		}
+	case Grass:
+		// generate features on grass, only if it is surrounded by grass on all sides
+		if !checkNeighbors(Grass, baseGenerator, x, y) {
+			return previous
+		}
+
+		switch {
+		case secondaryHeight <= 0.9: // Empty grass
+			return previous
+		case secondaryHeight <= 1.3: // Short grass / flowers
+			// with 8% chance, make flowered grass
+			if features.f1 <= 0.08 {
+				return NewFlowersBlock()
+			}
+			return NewShortGrassBlock()
+		default: // Tall grass
+			return NewTallGrassBlock()
+		}
+	}
+
+	// pass the base block forward, without any modifications
+	return previous
+}
+
+// generates ground block at given coordinates
+func gen(baseGenerator, secondaryGenerator *perlin.Perlin, x, y float64) Block {
+	base := genBase(baseGenerator, x, y)
+	withFeatures := genFeatures(base, baseGenerator, secondaryGenerator, makeFeatures(secondaryGenerator, int64(x), int64(y)), x, y)
+
+	return withFeatures
+}
+
+func (c *Chunk) Generate(baseGenerator, secondaryGenerator *perlin.Perlin) error {
 	// check if the chunk is out of the world borders
-	// if it is, don't generate a world, instead return a chunk filled with stone blocks
+	// if it is, don't generate anything, instead return a chunk filled with stone blocks
 	chunkOutOfBorders := c.x < 0 || c.y < 0 || c.x >= config.WorldWidth || c.y >= config.WorldHeight
 
 	for x := 0; x < 16; x++ {
@@ -201,23 +215,12 @@ func (c *Chunk) Generate(bottom, ground, top *perlin.Perlin) error {
 			bx := c.x*16 + int64(x)
 			by := c.y*16 + int64(y)
 
-			var bottomBlock, groundBlock, topBlock Block
-
-			if chunkOutOfBorders {
-				bottomBlock = NewStoneBlock()
-				groundBlock = NewEmptyBlock()
-				topBlock = NewEmptyBlock()
-			} else {
-				bottomBlock = genBottom(bottom, makeFeatures(bottom, bx, by), float64(bx), float64(by))
-				groundBlock = genGround(ground, bottomBlock, makeFeatures(bottom, bx, by), float64(bx), float64(by))
-				topBlock = genTop(top, groundBlock, makeFeatures(bottom, bx, by), float64(bx), float64(by))
+			var generatedBlock Block = NewStoneBlock()
+			if !chunkOutOfBorders {
+				generatedBlock = gen(baseGenerator, secondaryGenerator, float64(bx), float64(by))
 			}
 
-			if err := c.SetStack(x, y, BlockStack{
-				Bottom: bottomBlock,
-				Ground: groundBlock,
-				Top:    topBlock,
-			}); err != nil {
+			if err := c.SetBlock(x, y, generatedBlock); err != nil {
 				return err
 			}
 		}
@@ -229,28 +232,18 @@ func (c *Chunk) Generate(bottom, ground, top *perlin.Perlin) error {
 // simply fills a chunk with water
 func (c *Chunk) GenerateDummy() error {
 	// check if the chunk is out of the world borders
-	// if it is, don't generate a world, instead return a chunk filled with stone blocks
+	// if it is, don't generate anything, instead return a chunk filled with stone blocks
 	chunkOutOfBorders := c.x < 0 || c.y < 0 || c.x >= config.WorldWidth || c.y >= config.WorldHeight
 
 	for x := 0; x < 16; x++ {
 		for y := 0; y < 16; y++ {
-			var bottomBlock, groundBlock, topBlock Block
 
-			if chunkOutOfBorders {
-				bottomBlock = NewStoneBlock()
-				groundBlock = NewEmptyBlock()
-				topBlock = NewEmptyBlock()
-			} else {
-				bottomBlock = NewEmptyBlock()
-				groundBlock = NewWaterBlock()
-				topBlock = NewWaterBlock()
+			var generatedBlock Block = NewStoneBlock()
+			if !chunkOutOfBorders {
+				generatedBlock = NewWaterBlock()
 			}
 
-			if err := c.SetStack(x, y, BlockStack{
-				Bottom: bottomBlock,
-				Ground: groundBlock,
-				Top:    topBlock,
-			}); err != nil {
+			if err := c.SetBlock(x, y, generatedBlock); err != nil {
 				return err
 			}
 		}
