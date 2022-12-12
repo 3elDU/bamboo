@@ -138,10 +138,7 @@ func Texture(name string) texture.Texture {
 	if !exists {
 		log.Panicf("texture %v doesn't exist", name)
 	}
-	return texture.Texture{
-		Name:    name,
-		Texture: tex,
-	}
+	return texture.NewTexture(name, tex)
 }
 
 // ConnectedTexture panicks when a specified texture doesn't exist
@@ -161,11 +158,7 @@ func ConnectedTexture(baseName string, left, right, top, bottom bool) texture.Co
 		log.Panicf("connected texture %v doesn't exist", assembledName)
 	}
 
-	return texture.ConnectedTexture{
-		Base:           baseName,
-		SidesConnected: [4]bool{left, right, top, bottom},
-		Texture:        tex,
-	}
+	return texture.NewConnectedTexture(baseName, [4]bool{left, right, top, bottom}, tex)
 }
 
 // Font panicks when a specified font doesn't exist

@@ -123,7 +123,7 @@ type WorldSave struct {
 // + optional metadata, that can be written individually by each block
 type SavedBlock struct {
 	Type  BlockType
-	State []byte
+	State interface{}
 }
 
 // represents chunk on the disk

@@ -148,7 +148,7 @@ func (game *gameScene) Draw(screen *ebiten.Image) {
 		float64(sw)/2-8*game.scaling,
 		float64(sh)/2-8*game.scaling,
 	)
-	screen.DrawImage(asset_loader.Texture("person").Texture, game.playerRenderingOptions)
+	screen.DrawImage(asset_loader.Texture("person").Texture(), game.playerRenderingOptions)
 
 	// draw widgets
 	game.widgets.Render(screen)

@@ -40,7 +40,7 @@ func NewMainMenuScene() *mainMenu {
 	return &mainMenu{
 		buttonPressed: buttonPressed,
 		view: ui.Screen(
-			ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture, ui.Padding(1,
+			ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(), ui.Padding(1,
 				ui.Stack(ui.StackOptions{Spacing: 0, Proportions: []float64{0.2}},
 					ui.Center(ui.Label(
 						ui.LabelOptions{
@@ -115,7 +115,7 @@ func NewAboutScene() *aboutScene {
 
 	return &aboutScene{
 		goBackEvent: goBackEvent,
-		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture,
+		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(),
 			ui.Center(ui.Stack(ui.StackOptions{Direction: ui.VerticalStack, Spacing: 1},
 				ui.Label(ui.DefaultLabelOptions(), "Very important text..."),
 				ui.Label(ui.DefaultLabelOptions(), "Blah blah blah..."),
@@ -168,7 +168,7 @@ func NewNewWorldScene() *newWorldScene {
 	return &newWorldScene{
 		formData: formData,
 
-		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture, ui.Center(
+		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(), ui.Center(
 			ui.Form(
 				"Create a new world",
 				formData,
@@ -292,7 +292,7 @@ func (s *worldListScene) UpdateUI() {
 		ui.Button(func() { s.newWorld <- true }, ui.Label(ui.DefaultLabelOptions(), "New world")),
 	))
 
-	s.view = ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture, view))
+	s.view = ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(), view))
 }
 
 func NewWorldListScene() *worldListScene {
@@ -354,7 +354,7 @@ func NewNotImplementedYetScene(thing string) *notImplementedYetScene {
 
 	return &notImplementedYetScene{
 		back: backButton,
-		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture,
+		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(),
 			ui.Stack(ui.StackOptions{Direction: ui.VerticalStack},
 				ui.Center(ui.Label(ui.DefaultLabelOptions(), thing+" isn't implemented yet!")),
 				ui.Center(backButton),

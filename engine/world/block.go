@@ -5,9 +5,8 @@
 package world
 
 import (
-	"bytes"
 	"encoding/gob"
-	"log"
+	"fmt"
 	"math"
 
 	"github.com/3elDU/bamboo/engine/asset_loader"
@@ -16,6 +15,14 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/exp/slices"
 )
+
+func init() {
+	// Register types for proper serialization
+	gob.Register(BaseBlockState{})
+	gob.Register(TexturedBlockState{})
+	gob.Register(CompositeBlockState{})
+	gob.Register(ConnectedBlockState{})
+}
 
 type BlockType int
 
@@ -33,8 +40,8 @@ type Block interface {
 	Render(world *World, screen *ebiten.Image, pos util.Coords2f)
 	TextureName() string
 
-	State() []byte
-	LoadState(state_bytes []byte) error
+	State() interface{}
+	LoadState(interface{}) error
 }
 
 type BaseBlockState struct {
@@ -78,8 +85,8 @@ type texturedBlock struct {
 }
 
 type CompositeBlockState struct {
-	BaseBlockState     []byte
-	TexturedBlockState []byte
+	BaseBlockState
+	TexturedBlockState
 }
 
 type compositeBlock struct {
@@ -88,14 +95,13 @@ type compositeBlock struct {
 }
 
 type ConnectedTextureState struct {
-	Base           string
-	SidesConnected [4]bool
+	Base  string
+	Sides [4]bool
 }
 
 type ConnectedBlockState struct {
-	BaseBlockState        []byte
-	ConnectedTextureState []byte
-	ConnectsTo            []BlockType
+	BaseBlockState
+	ConnectedTextureState
 }
 
 type connectedBlock struct {
@@ -129,26 +135,22 @@ func (b *baseBlock) Type() BlockType {
 	return b.blockType
 }
 
-func (b *baseBlock) State() []byte {
-	buf := new(bytes.Buffer)
-	state := BaseBlockState{
+func (b *baseBlock) State() interface{} {
+	return BaseBlockState{
 		Collidable:  b.collidable,
 		PlayerSpeed: b.playerSpeed,
+		BlockType:   b.blockType,
 	}
-	if err := gob.NewEncoder(buf).Encode(state); err != nil {
-		log.Panicf("baseBlock.State() - %v", err)
-	}
-	return buf.Bytes()
 }
 
-func (b *baseBlock) LoadState(state_bytes []byte) error {
-	buf := bytes.NewBuffer(state_bytes)
-	state := new(BaseBlockState)
-	if err := gob.NewDecoder(buf).Decode(state); err != nil {
-		return err
+func (b *baseBlock) LoadState(state interface{}) error {
+	if state, ok := state.(BaseBlockState); ok {
+		b.collidable = state.Collidable
+		b.playerSpeed = state.PlayerSpeed
+		b.blockType = state.BlockType
+	} else {
+		return fmt.Errorf("%T - invalid state type; expected %T, got %T", b, BaseBlockState{}, state)
 	}
-	b.collidable = state.Collidable
-	b.playerSpeed = state.PlayerSpeed
 	return nil
 }
 
@@ -156,7 +158,7 @@ func (b *texturedBlock) Render(_ *World, screen *ebiten.Image, pos util.Coords2f
 	opts := &ebiten.DrawImageOptions{}
 
 	if b.rotation != 0 {
-		w, h := b.tex.Texture.Size()
+		w, h := b.tex.Texture().Size()
 		// Move image half a texture size, so that rotation origin will be in the center
 		opts.GeoM.Translate(float64(-w/2), float64(-h/2))
 		opts.GeoM.Rotate(b.rotation * (math.Pi / 180))
@@ -166,33 +168,27 @@ func (b *texturedBlock) Render(_ *World, screen *ebiten.Image, pos util.Coords2f
 
 	opts.GeoM.Translate(pos.X, pos.Y)
 
-	screen.DrawImage(b.tex.Texture, opts)
+	screen.DrawImage(b.tex.Texture(), opts)
 }
 
 func (b *texturedBlock) TextureName() string {
 	return b.tex.Name
 }
 
-func (b *texturedBlock) State() []byte {
-	buf := new(bytes.Buffer)
-	state := TexturedBlockState{
+func (b *texturedBlock) State() interface{} {
+	return TexturedBlockState{
 		Name:     b.tex.Name,
 		Rotation: b.rotation,
 	}
-	if err := gob.NewEncoder(buf).Encode(state); err != nil {
-		log.Panicf("texturedBlock.State() - %v", err)
-	}
-	return buf.Bytes()
 }
 
-func (b *texturedBlock) LoadState(state_bytes []byte) error {
-	buf := bytes.NewBuffer(state_bytes)
-	state := new(TexturedBlockState)
-	if err := gob.NewDecoder(buf).Decode(state); err != nil {
-		return err
+func (b *texturedBlock) LoadState(state interface{}) error {
+	if state, ok := state.(TexturedBlockState); ok {
+		b.tex = asset_loader.Texture(state.Name)
+		b.rotation = state.Rotation
+	} else {
+		return fmt.Errorf("%T - invalid state type; expected %T, got %T", b, TexturedBlockState{}, state)
 	}
-	b.tex = asset_loader.Texture(state.Name)
-	b.rotation = state.Rotation
 	return nil
 }
 
@@ -201,38 +197,24 @@ func (b *compositeBlock) Update(world *World) {
 
 }
 
-func (b *compositeBlock) State() []byte {
-	baseState := b.baseBlock.State()
-	texState := b.texturedBlock.State()
-
-	state := CompositeBlockState{
-		BaseBlockState:     baseState,
-		TexturedBlockState: texState,
+func (b *compositeBlock) State() interface{} {
+	return CompositeBlockState{
+		BaseBlockState:     b.baseBlock.State().(BaseBlockState),
+		TexturedBlockState: b.texturedBlock.State().(TexturedBlockState),
 	}
-
-	buf := new(bytes.Buffer)
-	if err := gob.NewEncoder(buf).Encode(state); err != nil {
-		log.Panicf("compositeBlock.State() - %v", err)
-	}
-
-	return buf.Bytes()
 }
 
-func (b *compositeBlock) LoadState(state_bytes []byte) error {
-	buf := bytes.NewBuffer(state_bytes)
-	state := new(CompositeBlockState)
-	if err := gob.NewDecoder(buf).Decode(state); err != nil {
-		return err
+func (b *compositeBlock) LoadState(state interface{}) error {
+	if state, ok := state.(CompositeBlockState); ok {
+		if err := b.baseBlock.LoadState(state.BaseBlockState); err != nil {
+			return err
+		}
+		if err := b.texturedBlock.LoadState(state.TexturedBlockState); err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("%T - invalid state type; expected %T, got %T", b, CompositeBlockState{}, state)
 	}
-
-	if err := b.baseBlock.LoadState(state.BaseBlockState); err != nil {
-		return err
-	}
-
-	if err := b.texturedBlock.LoadState(state.TexturedBlockState); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -268,54 +250,33 @@ func (b *connectedBlock) Render(world *World, screen *ebiten.Image, pos util.Coo
 
 	opts := &ebiten.DrawImageOptions{}
 	opts.GeoM.Translate(pos.X, pos.Y)
-	screen.DrawImage(asset_loader.Texture(b.tex.FullName()).Texture, opts)
+	screen.DrawImage(asset_loader.Texture(b.tex.FullName()).Texture(), opts)
 }
 
 func (b *connectedBlock) TextureName() string {
 	return b.tex.FullName()
 }
 
-func (b *connectedBlock) State() []byte {
-	baseState := b.baseBlock.State()
-
-	texStateBuf := bytes.NewBuffer(make([]byte, 0))
-	if err := gob.NewEncoder(texStateBuf).Encode(ConnectedTextureState{Base: b.tex.Base, SidesConnected: b.tex.SidesConnected}); err != nil {
-		log.Panicf("connectedBlock.State() - %v", err)
+func (b *connectedBlock) State() interface{} {
+	return ConnectedBlockState{
+		BaseBlockState:        b.baseBlock.State().(BaseBlockState),
+		ConnectedTextureState: ConnectedTextureState{Base: b.tex.Base, Sides: b.tex.SidesConnected},
 	}
-	texState := texStateBuf.Bytes()
-
-	state := ConnectedBlockState{
-		BaseBlockState:        baseState,
-		ConnectedTextureState: texState,
-		ConnectsTo:            b.connectsTo,
-	}
-
-	buf := new(bytes.Buffer)
-	if err := gob.NewEncoder(buf).Encode(state); err != nil {
-		log.Panicf("connectedBlock.State() - %v", err)
-	}
-
-	return buf.Bytes()
 }
 
-func (b *connectedBlock) LoadState(state_bytes []byte) error {
-	buf := bytes.NewBuffer(state_bytes)
-	state := new(ConnectedBlockState)
-	if err := gob.NewDecoder(buf).Decode(state); err != nil {
-		return err
+func (b *connectedBlock) LoadState(state interface{}) error {
+	if state, ok := state.(ConnectedBlockState); ok {
+		if err := b.baseBlock.LoadState(state.BaseBlockState); err != nil {
+			return err
+		}
+		b.tex = asset_loader.ConnectedTexture(state.ConnectedTextureState.Base,
+			state.ConnectedTextureState.Sides[0],
+			state.ConnectedTextureState.Sides[1],
+			state.ConnectedTextureState.Sides[2],
+			state.ConnectedTextureState.Sides[3],
+		)
+	} else {
+		return fmt.Errorf("%T - invalid state type; expected %T, got %T", b, CompositeBlockState{}, state)
 	}
-	b.connectsTo = state.ConnectsTo
-
-	if err := b.baseBlock.LoadState(state.BaseBlockState); err != nil {
-		return err
-	}
-
-	tex := new(ConnectedTextureState)
-	if err := gob.NewDecoder(bytes.NewReader(state.ConnectedTextureState)).Decode(tex); err != nil {
-		return err
-	}
-	b.tex.Base = tex.Base
-	b.tex.SidesConnected = tex.SidesConnected
-
 	return nil
 }
