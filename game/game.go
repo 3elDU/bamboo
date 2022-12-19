@@ -88,7 +88,7 @@ func (game *gameScene) Update() error {
 
 		// Places stone block under the player
 		case ebiten.IsKeyPressed(ebiten.KeyF):
-			game.world.ChunkAt(uint64(game.player.X), uint64(game.player.Y)).
+			game.world.ChunkAtB(uint64(game.player.X), uint64(game.player.Y)).
 				SetBlock(uint(game.player.X)%16, uint(game.player.Y)%16, world.NewStoneBlock())
 		}
 
