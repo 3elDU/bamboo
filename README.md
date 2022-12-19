@@ -31,3 +31,7 @@ Clone the repository, and run `go run .` in the terminal.
 ### Plans for the future
 - [ ] Multiplayer
 - [ ] Lua scripting
+
+## Naming conventions
+You may notice, that some functions are suffixed with `B` (example: `world.ChunkAtB`), and some are not.  
+The reason is pretty simple: functions with suffix `B` accept block coordinates, and functions without that suffix accept chunk coordinates.

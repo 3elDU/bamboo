@@ -196,7 +196,7 @@ func (s *newWorldScene) Update() error {
 		binary.Read(bytes.NewReader(seed_hash_bytes), binary.BigEndian, &seed)
 
 		w := world.NewWorld(world_name, uuid.New(), seed)
-		scene_manager.QSwitch(game.NewGameScene(w, player.Player{X: config.PlayerStartX, Y: config.PlayerStartY}))
+		scene_manager.QSwitch(game.NewGameScene(w, player.Player{X: float64(config.PlayerStartX), Y: float64(config.PlayerStartY)}))
 	default:
 	}
 	return nil

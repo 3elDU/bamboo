@@ -27,8 +27,8 @@ func init() {
 type BlockType int
 
 type Block interface {
-	Coords() util.Coords2i
-	SetCoords(coords util.Coords2i)
+	Coords() util.Coords2u
+	SetCoords(coords util.Coords2u)
 	ParentChunk() *Chunk
 	SetParentChunk(chunk *Chunk)
 	Type() BlockType
@@ -57,7 +57,7 @@ type baseBlock struct {
 	// Since world.Gen() sets them automatically
 	parentChunk *Chunk
 	// Block coordinates in world space
-	x, y int
+	x, y uint
 
 	// Whether collision will work with this block
 	collidable bool
@@ -110,13 +110,13 @@ type connectedBlock struct {
 	tex        texture.ConnectedTexture
 }
 
-func (b *baseBlock) Coords() util.Coords2i {
-	return util.Coords2i{X: int64(b.x), Y: int64(b.y)}
+func (b *baseBlock) Coords() util.Coords2u {
+	return util.Coords2u{X: uint64(b.x), Y: uint64(b.y)}
 }
 
-func (b *baseBlock) SetCoords(coords util.Coords2i) {
-	b.x = int(coords.X)
-	b.y = int(coords.Y)
+func (b *baseBlock) SetCoords(coords util.Coords2u) {
+	b.x = uint(coords.X)
+	b.y = uint(coords.Y)
 }
 
 func (b *baseBlock) ParentChunk() *Chunk {
@@ -231,7 +231,7 @@ func (b *connectedBlock) Render(world *World, screen *ebiten.Image, pos util.Coo
 	var sidesConnected [4]bool
 	for i, side := range [4]util.Coords2i{{X: -1, Y: 0}, {X: 1, Y: 0}, {X: 0, Y: -1}, {X: 0, Y: 1}} {
 		x, y := int64(b.x)+side.X, int64(b.y)+side.Y
-		neighbor, err := world.BlockAt(x, y)
+		neighbor, err := world.BlockAt(uint64(x), uint64(y))
 		if err != nil {
 			continue
 		}

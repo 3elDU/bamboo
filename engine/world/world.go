@@ -18,7 +18,7 @@ type World struct {
 
 	// keys there are Chunk coordinates.
 	// so, actual Chunk coordinates are x*16 and y*16
-	chunks map[util.Coords2i]*Chunk
+	chunks map[util.Coords2u]*Chunk
 }
 
 // Creates a new world, using given name and seed
@@ -39,7 +39,7 @@ func NewWorld(name string, uuid uuid.UUID, seed int64) *World {
 
 		Metadata: metadata,
 
-		chunks: make(map[util.Coords2i]*Chunk),
+		chunks: make(map[util.Coords2u]*Chunk),
 	}
 }
 
@@ -51,7 +51,7 @@ func (world *World) Update(_, _ float64) {
 			log.Printf("world.Update() - received chunk %v, %v", chunk.Coords().X, chunk.Coords().Y)
 			world.chunks[chunk.Coords()] = chunk
 			// Request redraw of each neighbor
-			for _, neighbor := range world.GetNeighborsF(float64(chunk.Coords().X), float64(chunk.Coords().Y)) {
+			for _, neighbor := range world.GetNeighbors(chunk.Coords().X, chunk.Coords().Y) {
 				neighbor.needsRedraw = true
 			}
 		} else {
@@ -64,7 +64,7 @@ func (world *World) Update(_, _ float64) {
 		if chunk := world.saverLoader.Receive(); chunk != nil {
 			world.chunks[chunk.Coords()] = chunk
 			// Request redraw of each neighbor
-			for _, neighbor := range world.GetNeighborsF(float64(chunk.Coords().X), float64(chunk.Coords().Y)) {
+			for _, neighbor := range world.GetNeighbors(chunk.Coords().X, chunk.Coords().Y) {
 				neighbor.needsRedraw = true
 			}
 		} else {
@@ -100,28 +100,14 @@ func (world *World) Update(_, _ float64) {
 	// log.Printf("World.Update() - chunk update took %v; loaded chunks - %v", updateEnd.Sub(updateStart).String(), len(world.chunks))
 }
 
-// At Returns a Chunk at given coordinates. Note that x and y are Chunk
-// coordinates, not block coordinates
-func (world *World) ChunkAt(x, y int64) *Chunk {
-	return world.ChunkAtF(float64(x)*16, float64(y)*16)
+func (world *World) ChunkAt(cx, cy uint64) *Chunk {
+	return world.ChunkAtB(cx*16, cy*16)
 }
 
-// Calculates chunk position from given world coordinates
-// Acceps float64 so that negative coordinates will be handled properly
-// Note that x and y are block coordinates
-func (world *World) ChunkAtF(x, y float64) *Chunk {
-	// HACK: handle negative coordinates properly
-	if x < 0 {
-		x -= 1
-	}
-	if y < 0 {
-		y -= 1
-	}
-	var (
-		cx = int64(x / 16)
-		cy = int64(y / 16)
-	)
-	chunkCoordinates := util.Coords2i{X: cx, Y: cy}
+func (world *World) ChunkAtB(bx, by uint64) *Chunk {
+	cx := bx / 16
+	cy := by / 16
+	chunkCoordinates := util.Coords2u{X: cx, Y: cy}
 
 	_, exists := world.chunks[chunkCoordinates]
 
@@ -144,48 +130,38 @@ func (world *World) ChunkAtF(x, y float64) *Chunk {
 	return world.chunks[chunkCoordinates]
 }
 
-func (world *World) BlockAt(x, y int64) (Block, error) {
-	cx, cy := x/16, y/16
+// There is no B suffix, because it's trivial that this function accepts block coordinates
+func (world *World) BlockAt(bx, by uint64) (Block, error) {
+	cx, cy := bx/16, by/16
 
-	chunk, exists := world.chunks[util.Coords2i{X: cx, Y: cy}]
+	chunk, exists := world.chunks[util.Coords2u{X: cx, Y: cy}]
 	if !exists {
 		return nil, fmt.Errorf("chunk at %v, %v doesn't exist", cx, cy)
 	}
 
-	return chunk.At(int(x%16), int(y%16))
+	return chunk.At(uint(bx%16), uint(by%16))
 }
 
-func (world *World) ChunkExistsF(x, y float64) bool {
-	// HACK: handle negative coordinates properly
-	if x < 0 {
-		x -= 1
-	}
-	if y < 0 {
-		y -= 1
-	}
-
-	_, exists := world.chunks[util.Coords2i{X: int64(x / 16), Y: int64(y / 16)}]
+func (world *World) ChunkExists(cx, cy uint64) bool {
+	_, exists := world.chunks[util.Coords2u{X: cx, Y: cy}]
 	return exists
 }
 
-func (world *World) GetNeighborsF(x, y float64) []*Chunk {
-	x *= 16
-	y *= 16
-
-	sides := [4]util.Coords2f{
-		{X: x - 16, Y: y}, // left
-		{X: x + 16, Y: y}, // right
-		{X: x, Y: y - 16}, // top
-		{X: x, Y: y + 16}, // bottom
+func (world *World) GetNeighbors(cx, cy uint64) []*Chunk {
+	sides := [4]util.Coords2u{
+		{X: cx - 1, Y: cy}, // left
+		{X: cx + 1, Y: cy}, // right
+		{X: cx, Y: cy - 1}, // top
+		{X: cx, Y: cy + 1}, // bottom
 	}
 
 	neighbors := make([]*Chunk, 0)
 
 	for _, side := range sides {
-		if !world.ChunkExistsF(side.X, side.Y) {
+		if !world.ChunkExists(side.X, side.Y) {
 			continue
 		}
-		neighbors = append(neighbors, world.ChunkAtF(side.X, side.Y))
+		neighbors = append(neighbors, world.ChunkAt(side.X, side.Y))
 	}
 
 	return neighbors
@@ -194,13 +170,13 @@ func (world *World) GetNeighborsF(x, y float64) []*Chunk {
 // Checks neighbors of the given chunk
 // Returns false if at least one of them doesn't exist
 // Automatically requests generation of neighbors
-func (world *World) CheckNeighbors(x, y float64) bool {
-	if !world.ChunkExistsF(x, y) {
+func (world *World) CheckNeighbors(cx, cy uint64) bool {
+	if !world.ChunkExists(cx, cy) {
 		// If the given chunk doesn't exist
 		return false
 	}
 
-	return len(world.GetNeighborsF(x, y)) == 4
+	return len(world.GetNeighbors(cx, cy)) == 4
 }
 
 func (world World) Seed() int64 {

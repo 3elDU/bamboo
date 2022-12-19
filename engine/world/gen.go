@@ -22,8 +22,8 @@ type WorldGenerator struct {
 
 	// requestsPool keeps track of currently requested chunks,
 	// so that one same chunk can't be requested twice
-	requestsPool map[util.Coords2i]bool
-	requests     chan util.Coords2i
+	requestsPool map[util.Coords2u]bool
+	requests     chan util.Coords2u
 	generated    chan *Chunk
 }
 
@@ -41,9 +41,9 @@ func NewWorldGenerator(seed int64) *WorldGenerator {
 		baseGenerator:      perlin.NewPerlin(2, 2, 16, baseSeed),
 		secondaryGenerator: perlin.NewPerlin(2, 2, 16, secondarySeed),
 
-		requestsPool: make(map[util.Coords2i]bool),
+		requestsPool: make(map[util.Coords2u]bool),
 		// for some reason, without buffering, it hangs
-		requests:  make(chan util.Coords2i, 128),
+		requests:  make(chan util.Coords2u, 128),
 		generated: make(chan *Chunk, 128),
 	}
 }
@@ -70,8 +70,8 @@ func (g *WorldGenerator) Run() {
 
 // Requests a chunk generation
 // Chunk can be retrieved later through WorldGenerator.Receive()
-func (g *WorldGenerator) Generate(cx, cy int64) {
-	coords := util.Coords2i{X: cx, Y: cy}
+func (g *WorldGenerator) Generate(cx, cy uint64) {
+	coords := util.Coords2u{X: cx, Y: cy}
 	if g.requestsPool[coords] {
 		return
 	}
@@ -103,10 +103,10 @@ type BlockFeatures struct {
 }
 
 // TODO: Optimize this
-func makeFeatures(p *perlin.Perlin, bx, by int64) BlockFeatures {
+func makeFeatures(p *perlin.Perlin, bx, by uint64) BlockFeatures {
 	// We make new random generator, using block coordinates and perlin noise generator
 	// This ensures that we get the same result every time, using same arguments
-	seed := int64((height(p, float64(bx), float64(by), config.PerlinNoiseScaleFactor) / 2) * float64(1<<63))
+	seed := int64((height(p, bx, by, config.PerlinNoiseScaleFactor) / 2) * float64(1<<63))
 	r := rand.New(rand.NewSource(seed))
 
 	return BlockFeatures{
@@ -119,12 +119,12 @@ func makeFeatures(p *perlin.Perlin, bx, by int64) BlockFeatures {
 // returns values from 0 to 2
 //
 // x and y are world(block) coordinates
-func height(gen *perlin.Perlin, x, y, scale float64) float64 {
-	return gen.Noise2D(x/scale, y/scale) + 1
+func height(gen *perlin.Perlin, x, y uint64, scale float64) float64 {
+	return gen.Noise2D(float64(x)/scale, float64(y)/scale) + 1
 }
 
 // generates basic blocks ( sand, water, etc. )
-func genBase(baseGenerator *perlin.Perlin, x, y float64) Block {
+func genBase(baseGenerator *perlin.Perlin, x, y uint64) Block {
 	baseHeight := height(baseGenerator, x, y, config.PerlinNoiseScaleFactor)
 
 	switch {
@@ -142,8 +142,8 @@ func genBase(baseGenerator *perlin.Perlin, x, y float64) Block {
 }
 
 // Checks if 8 neighbors of the block are of the same type
-func checkNeighbors(desiredType BlockType, baseGenerator *perlin.Perlin, x, y float64) bool {
-	sides := [8][2]float64{
+func checkNeighbors(desiredType BlockType, baseGenerator *perlin.Perlin, x, y uint64) bool {
+	sides := [8][2]uint64{
 		{x - 1, y},     // left
 		{x + 1, y},     // right
 		{x, y - 1},     // top
@@ -164,7 +164,7 @@ func checkNeighbors(desiredType BlockType, baseGenerator *perlin.Perlin, x, y fl
 }
 
 // generates block features, depending on previous block
-func genFeatures(previous Block, baseGenerator *perlin.Perlin, secondaryGenerator *perlin.Perlin, features BlockFeatures, x, y float64) Block {
+func genFeatures(previous Block, baseGenerator *perlin.Perlin, secondaryGenerator *perlin.Perlin, features BlockFeatures, x, y uint64) Block {
 	secondaryHeight := height(secondaryGenerator, x, y, config.PerlinNoiseScaleFactor)
 
 	switch previous.Type() {
@@ -198,29 +198,20 @@ func genFeatures(previous Block, baseGenerator *perlin.Perlin, secondaryGenerato
 }
 
 // generates ground block at given coordinates
-func gen(baseGenerator, secondaryGenerator *perlin.Perlin, x, y float64) Block {
+func gen(baseGenerator, secondaryGenerator *perlin.Perlin, x, y uint64) Block {
 	base := genBase(baseGenerator, x, y)
-	withFeatures := genFeatures(base, baseGenerator, secondaryGenerator, makeFeatures(secondaryGenerator, int64(x), int64(y)), x, y)
+	withFeatures := genFeatures(base, baseGenerator, secondaryGenerator, makeFeatures(secondaryGenerator, x, y), x, y)
 
 	return withFeatures
 }
 
 func (c *Chunk) Generate(baseGenerator, secondaryGenerator *perlin.Perlin) error {
-	// check if the chunk is out of the world borders
-	// if it is, don't generate anything, instead return a chunk filled with stone blocks
-	chunkOutOfBorders := c.x < 0 || c.y < 0 || c.x >= config.WorldWidth || c.y >= config.WorldHeight
+	for x := uint(0); x < 16; x++ {
+		for y := uint(0); y < 16; y++ {
+			bx := c.x*16 + uint64(x)
+			by := c.y*16 + uint64(y)
 
-	for x := 0; x < 16; x++ {
-		for y := 0; y < 16; y++ {
-			bx := c.x*16 + int64(x)
-			by := c.y*16 + int64(y)
-
-			var generatedBlock Block = NewStoneBlock()
-			if !chunkOutOfBorders {
-				generatedBlock = gen(baseGenerator, secondaryGenerator, float64(bx), float64(by))
-			}
-
-			if err := c.SetBlock(x, y, generatedBlock); err != nil {
+			if err := c.SetBlock(x, y, gen(baseGenerator, secondaryGenerator, bx, by)); err != nil {
 				return err
 			}
 		}
@@ -231,19 +222,9 @@ func (c *Chunk) Generate(baseGenerator, secondaryGenerator *perlin.Perlin) error
 
 // simply fills a chunk with water
 func (c *Chunk) GenerateDummy() error {
-	// check if the chunk is out of the world borders
-	// if it is, don't generate anything, instead return a chunk filled with stone blocks
-	chunkOutOfBorders := c.x < 0 || c.y < 0 || c.x >= config.WorldWidth || c.y >= config.WorldHeight
-
-	for x := 0; x < 16; x++ {
-		for y := 0; y < 16; y++ {
-
-			var generatedBlock Block = NewStoneBlock()
-			if !chunkOutOfBorders {
-				generatedBlock = NewWaterBlock()
-			}
-
-			if err := c.SetBlock(x, y, generatedBlock); err != nil {
+	for x := uint(0); x < 16; x++ {
+		for y := uint(0); y < 16; y++ {
+			if err := c.SetBlock(x, y, NewWaterBlock()); err != nil {
 				return err
 			}
 		}

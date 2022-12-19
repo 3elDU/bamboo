@@ -27,10 +27,10 @@ type WorldSaverLoader struct {
 	Metadata WorldSave
 
 	saveRequests     chan Chunk
-	loadRequestsPool map[util.Coords2i]bool
+	loadRequestsPool map[util.Coords2u]bool
 	// loadRequestsPool keeps track of currently requested chunks,
 	// so that one same chunk can't be requested twice
-	loadRequests chan util.Coords2i
+	loadRequests chan util.Coords2u
 	loaded       chan *Chunk
 }
 
@@ -39,8 +39,8 @@ func NewWorldSaverLoader(metadata WorldSave) *WorldSaverLoader {
 		Metadata: metadata,
 
 		saveRequests:     make(chan Chunk, 1024),
-		loadRequestsPool: make(map[util.Coords2i]bool),
-		loadRequests:     make(chan util.Coords2i, 256),
+		loadRequestsPool: make(map[util.Coords2u]bool),
+		loadRequests:     make(chan util.Coords2u, 256),
 		loaded:           make(chan *Chunk),
 	}
 }
@@ -94,8 +94,8 @@ func (sl *WorldSaverLoader) Save(chunk *Chunk) {
 }
 
 // Pushes chunk load reuqest to the queue
-func (sl *WorldSaverLoader) Load(cx, cy int64) {
-	coords := util.Coords2i{X: cx, Y: cy}
+func (sl *WorldSaverLoader) Load(cx, cy uint64) {
+	coords := util.Coords2u{X: cx, Y: cy}
 	if sl.loadRequestsPool[coords] {
 		return
 	}
@@ -129,7 +129,7 @@ type SavedBlock struct {
 // represents chunk on the disk
 // all chunks are converted to this structure before saving
 type SavedChunk struct {
-	X, Y int64
+	X, Y uint64
 	Data [16][16]SavedBlock
 }
 
@@ -189,7 +189,7 @@ func (w *World) Save(player player.Player) error {
 	return nil
 }
 
-func ChunkExistsOnDisk(id uuid.UUID, x, y int64) bool {
+func ChunkExistsOnDisk(id uuid.UUID, x, y uint64) bool {
 	path := filepath.Join(config.WorldSaveDirectory, id.String(),
 		fmt.Sprintf("chunk_%v_%v.gob", x, y))
 
@@ -198,7 +198,7 @@ func ChunkExistsOnDisk(id uuid.UUID, x, y int64) bool {
 }
 
 // if saved chunk doesn't exist, returns nil
-func LoadChunk(id uuid.UUID, x, y int64) *Chunk {
+func LoadChunk(id uuid.UUID, x, y uint64) *Chunk {
 	path := filepath.Join(config.WorldSaveDirectory, id.String(),
 		fmt.Sprintf("chunk_%v_%v.gob", x, y))
 
@@ -216,8 +216,8 @@ func LoadChunk(id uuid.UUID, x, y int64) *Chunk {
 		c := NewChunk(x, y)
 
 		// decode blocks
-		for x := 0; x < 16; x++ {
-			for y := 0; y < 16; y++ {
+		for x := uint(0); x < 16; x++ {
+			for y := uint(0); y < 16; y++ {
 				b := GetBlockByID(savedChunk.Data[x][y].Type)
 				if err := b.LoadState(savedChunk.Data[x][y].State); err != nil {
 					log.Panicf("LoadChunk() - Block.LoadState() failed - %v", err)

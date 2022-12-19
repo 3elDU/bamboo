@@ -11,8 +11,8 @@ const (
 	WorldHeight int64 = 1024
 
 	// Initial player position, when the world is created
-	PlayerStartX float64 = float64(WorldWidth) / 2
-	PlayerStartY float64 = float64(WorldHeight) / 2
+	PlayerStartX int64 = WorldWidth / 2
+	PlayerStartY int64 = WorldHeight / 2
 
 	WorldSaveDirectory string = "./saves/"
 	WorldInfoFile      string = "world.gob"

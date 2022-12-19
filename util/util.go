@@ -11,6 +11,10 @@ type Coords2i struct {
 	X, Y int64
 }
 
+type Coords2u struct {
+	X, Y uint64
+}
+
 type Coords2f struct {
 	X, Y float64
 }
@@ -35,4 +39,11 @@ func RandomChoice[T any](objects []T) T {
 		panic("objects with zero length")
 	}
 	return objects[rand.Intn(len(objects))]
+}
+
+// Convert block coordinates to chunk coordinates
+func CoordsBlockToChunk(blockCoords Coords2i) Coords2i {
+	blockCoords.X += 8
+	blockCoords.Y += 8
+	return Coords2i{X: blockCoords.X / 16, Y: blockCoords.Y / 16}
 }

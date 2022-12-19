@@ -10,7 +10,7 @@ import (
 
 type Chunk struct {
 	// those are chunk coordinates, not block coordinates
-	x, y   int64
+	x, y   uint64
 	blocks [16][16]Block
 
 	Texture *ebiten.Image
@@ -24,7 +24,7 @@ type Chunk struct {
 }
 
 // NewChunk creates new empty Chunk at specified chunk coordinates
-func NewChunk(cx, cy int64) *Chunk {
+func NewChunk(cx, cy uint64) *Chunk {
 	return &Chunk{
 		x: cx, y: cy,
 		Texture:      ebiten.NewImage(256, 256),
@@ -35,11 +35,11 @@ func NewChunk(cx, cy int64) *Chunk {
 }
 
 // Returns a chunk filled with water
-func NewDummyChunk(cx, cy int64) *Chunk {
+func NewDummyChunk(cx, cy uint64) *Chunk {
 	c := NewChunk(cx, cy)
 
-	for x := 0; x < 16; x++ {
-		for y := 0; y < 16; y++ {
+	for x := uint(0); x < 16; x++ {
+		for y := uint(0); y < 16; y++ {
 			c.SetBlock(x, y, NewWaterBlock())
 		}
 	}
@@ -60,29 +60,29 @@ func (c *Chunk) Update(world *World) {
 	}
 }
 
-func (c Chunk) BlockCoords() util.Coords2i {
-	return util.Coords2i{X: c.x * 16, Y: c.y * 16}
+func (c Chunk) BlockCoords() util.Coords2u {
+	return util.Coords2u{X: c.x * 16, Y: c.y * 16}
 }
 
-func (c Chunk) Coords() util.Coords2i {
-	return util.Coords2i{X: c.x, Y: c.y}
+func (c Chunk) Coords() util.Coords2u {
+	return util.Coords2u{X: c.x, Y: c.y}
 }
 
-func (c *Chunk) At(x, y int) (Block, error) {
-	if x < 0 || y < 0 || x > 16 || y > 16 {
+func (c *Chunk) At(x, y uint) (Block, error) {
+	if x > 16 || y > 16 {
 		return nil, fmt.Errorf("invalid coordinates: %v, %v", x, y)
 	}
 	c.lastAccessed = scene_manager.Ticks()
 	return c.blocks[x][y], nil
 }
 
-func (c *Chunk) SetBlock(x, y int, block Block) error {
+func (c *Chunk) SetBlock(x, y uint, block Block) error {
 	if x > 15 || y > 15 {
 		return fmt.Errorf("invalid coordinates: %v, %v", x, y)
 	}
 
 	block.SetParentChunk(c)
-	block.SetCoords(util.Coords2i{X: c.x*16 + int64(x), Y: c.y*16 + int64(y)})
+	block.SetCoords(util.Coords2u{X: c.x*16 + uint64(x), Y: c.y*16 + uint64(y)})
 	c.blocks[x][y] = block
 	c.lastAccessed = scene_manager.Ticks()
 	c.modified = true
