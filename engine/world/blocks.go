@@ -21,6 +21,7 @@ const (
 	Short_Grass
 	Tall_Grass
 	Flowers
+	PineTree
 )
 
 // Returns an empty interface
@@ -44,6 +45,8 @@ func GetBlockByID(id BlockType) Block {
 		return NewTallGrassBlock()
 	case Flowers:
 		return NewFlowersBlock()
+	case PineTree:
+		return NewPineTreeBlock()
 	}
 
 	return NewEmptyBlock()
@@ -81,7 +84,7 @@ func NewGrassBlock() *connectedBlock {
 			blockType:   Grass,
 		},
 		tex:        asset_loader.ConnectedTexture("grass", true, true, true, true),
-		connectsTo: []BlockType{Grass, Short_Grass, Tall_Grass, Flowers},
+		connectsTo: []BlockType{Grass, Short_Grass, Tall_Grass, Flowers, PineTree},
 	}
 }
 
@@ -186,5 +189,16 @@ func NewStoneBlock() *connectedBlock {
 		},
 		tex:        asset_loader.ConnectedTexture("stone", false, false, false, false),
 		connectsTo: []BlockType{Stone},
+	}
+}
+
+func NewPineTreeBlock() *connectedBlock {
+	return &connectedBlock{
+		baseBlock: baseBlock{
+			collidable: true,
+			blockType:  PineTree,
+		},
+		tex:        asset_loader.ConnectedTexture("pine", false, false, false, false),
+		connectsTo: []BlockType{PineTree},
 	}
 }

@@ -216,8 +216,8 @@ func genFeatures(previous Block, baseGenerator *perlin.Perlin, secondaryGenerato
 				return NewFlowersBlock()
 			}
 			return NewShortGrassBlock()
-		default: // Tall grass
-			return NewTallGrassBlock()
+		default: // Tree
+			return NewPineTreeBlock()
 		}
 	}
 
