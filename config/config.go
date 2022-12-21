@@ -7,12 +7,12 @@ const (
 	PerlinNoiseScaleFactor float64 = 128
 	PlayerSpeed            float64 = 0.05
 
-	WorldWidth  int64 = 1024
-	WorldHeight int64 = 1024
+	WorldWidth  uint64 = 1024
+	WorldHeight uint64 = 1024
 
 	// Initial player position, when the world is created
-	PlayerStartX int64 = WorldWidth / 2
-	PlayerStartY int64 = WorldHeight / 2
+	PlayerStartX uint64 = WorldWidth / 2
+	PlayerStartY uint64 = WorldHeight / 2
 
 	WorldSaveDirectory string = "./saves/"
 	WorldInfoFile      string = "world.gob"

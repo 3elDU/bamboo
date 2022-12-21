@@ -5,6 +5,7 @@ package world
 
 import (
 	"log"
+	"math"
 	"math/rand"
 
 	"github.com/3elDU/bamboo/config"
@@ -116,6 +117,30 @@ func makeFeatures(p *perlin.Perlin, bx, by uint64) BlockFeatures {
 	}
 }
 
+// Applies circular mask to generated perlin noise
+// The further block is from the center, the stronger the mask will be
+// This makes the world look like an archipelago, surrounded by ocean on all sides,
+// not like an infinite number of islands
+func applyCircularMask(x, y float64, val float64) float64 {
+	// TODO: make an "advanced options" sub-menu, in "new world" menu,
+	// and move those constants there
+	const (
+		radius  = float64(config.WorldWidth) / 2.5
+		centerX = float64(config.WorldWidth) / 2
+		centerY = float64(config.WorldHeight) / 2
+	)
+
+	pointInsideCircle := math.Pow(float64(x)-centerX, 2)+math.Pow(float64(y)-centerY, 2) < math.Pow(radius, 2)
+	if !pointInsideCircle {
+		return 0
+	}
+
+	distanceToCenter := math.Sqrt(math.Pow(float64(x)-centerX, 2) + math.Pow(float64(y)-centerY, 2))
+	// Divide the mask by 1.5, so it won't be too big
+	mask := distanceToCenter / radius / 1.5
+	return val - mask
+}
+
 // returns values from 0 to 2
 //
 // x and y are world(block) coordinates
@@ -125,7 +150,9 @@ func height(gen *perlin.Perlin, x, y uint64, scale float64) float64 {
 
 // generates basic blocks ( sand, water, etc. )
 func genBase(baseGenerator *perlin.Perlin, x, y uint64) Block {
-	baseHeight := height(baseGenerator, x, y, config.PerlinNoiseScaleFactor)
+	baseHeight := applyCircularMask(float64(x), float64(y),
+		height(baseGenerator, x, y, config.PerlinNoiseScaleFactor),
+	)
 
 	switch {
 	case baseHeight <= 1: // Water
@@ -165,6 +192,7 @@ func checkNeighbors(desiredType BlockType, baseGenerator *perlin.Perlin, x, y ui
 
 // generates block features, depending on previous block
 func genFeatures(previous Block, baseGenerator *perlin.Perlin, secondaryGenerator *perlin.Perlin, features BlockFeatures, x, y uint64) Block {
+	// do not apply circular mask, while generating block features
 	secondaryHeight := height(secondaryGenerator, x, y, config.PerlinNoiseScaleFactor)
 
 	switch previous.Type() {
