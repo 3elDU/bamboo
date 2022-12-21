@@ -11,9 +11,11 @@ Clone the repository, and run `go run .` in the terminal.
 
 ### Progress
 - [x] World generation
+    - [x] Trees
+    - [x] Mushrooms
     - [ ] Biomes
     - [ ] Caves
-- [ ] The map actually looks like a giant island
+- [x] The map actually looks like a giant island
 - [x] Player movement
     - WASD
 - [ ] Player physics
@@ -23,6 +25,7 @@ Clone the repository, and run `go run .` in the terminal.
 - [x] World saving/loading
 - [x] Placing blocks
     - Hold F to place stone blocks under you
+- [ ] Inventory
 - [ ] Items
 - [ ] Crafting
 - [ ] Animals

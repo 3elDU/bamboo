@@ -101,6 +101,7 @@ type BlockFeatures struct {
 	i1 int64
 	u1 uint64
 	f1 float64
+	f2 float64
 }
 
 // TODO: Optimize this
@@ -114,6 +115,7 @@ func makeFeatures(p *perlin.Perlin, bx, by uint64) BlockFeatures {
 		i1: r.Int63(),
 		u1: r.Uint64(),
 		f1: r.Float64(),
+		f2: r.Float64(),
 	}
 }
 
@@ -210,11 +212,20 @@ func genFeatures(previous Block, baseGenerator *perlin.Perlin, secondaryGenerato
 		switch {
 		case secondaryHeight <= 0.9: // Empty grass
 			return previous
-		case secondaryHeight <= 1.3: // Short grass / flowers
-			// with 8% chance, make flowered grass
-			if features.f1 <= 0.08 {
+		case secondaryHeight <= 1.3: // Foliage
+			switch {
+			// with 1.5% chance, generate mushroom
+			case features.f1 <= 0.015:
+				if features.f2 <= 0.5 {
+					return NewRedMushroomBlock()
+				} else {
+					return NewWhiteMushroomBlock()
+				}
+			// with 6% chance, generate flowers
+			case features.f1 <= 0.06:
 				return NewFlowersBlock()
 			}
+
 			return NewShortGrassBlock()
 		default: // Tree
 			return NewPineTreeBlock()

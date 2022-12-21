@@ -94,7 +94,7 @@ func (game *gameScene) Update() error {
 
 		// scale the map, using scroll wheel
 		_, yvel := ebiten.Wheel()
-		game.scalingVelocity += yvel * 0.001
+		game.scalingVelocity += yvel * 0.004
 
 		game.player.Update(player.MovementVector{
 			Left:  ebiten.IsKeyPressed(ebiten.KeyA),
@@ -112,7 +112,7 @@ func (game *gameScene) Update() error {
 		}
 
 		game.scaling += game.scalingVelocity
-		game.scaling = util.Clamp(game.scaling, 1.00, 4.00)
+		game.scaling = util.Clamp(game.scaling, 1.00, 6.00)
 		game.scalingVelocity *= 0.95
 	} else {
 		switch game.pauseMenu.ButtonPressed() {

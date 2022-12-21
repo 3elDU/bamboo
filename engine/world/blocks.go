@@ -22,6 +22,8 @@ const (
 	Tall_Grass
 	Flowers
 	PineTree
+	RedMushroom
+	WhiteMushroom
 )
 
 // Returns an empty interface
@@ -47,6 +49,10 @@ func GetBlockByID(id BlockType) Block {
 		return NewFlowersBlock()
 	case PineTree:
 		return NewPineTreeBlock()
+	case RedMushroom:
+		return NewRedMushroomBlock()
+	case WhiteMushroom:
+		return NewWhiteMushroomBlock()
 	}
 
 	return NewEmptyBlock()
@@ -84,7 +90,7 @@ func NewGrassBlock() *connectedBlock {
 			blockType:   Grass,
 		},
 		tex:        asset_loader.ConnectedTexture("grass", true, true, true, true),
-		connectsTo: []BlockType{Grass, Short_Grass, Tall_Grass, Flowers, PineTree},
+		connectsTo: []BlockType{Grass, Short_Grass, Tall_Grass, Flowers, PineTree, RedMushroom, WhiteMushroom},
 	}
 }
 
@@ -200,5 +206,31 @@ func NewPineTreeBlock() *connectedBlock {
 		},
 		tex:        asset_loader.ConnectedTexture("pine", false, false, false, false),
 		connectsTo: []BlockType{PineTree},
+	}
+}
+
+func NewRedMushroomBlock() *compositeBlock {
+	return &compositeBlock{
+		baseBlock: baseBlock{
+			collidable:  false,
+			playerSpeed: 1.0,
+			blockType:   RedMushroom,
+		},
+		texturedBlock: texturedBlock{
+			tex: asset_loader.Texture("red-mushroom"),
+		},
+	}
+}
+
+func NewWhiteMushroomBlock() *compositeBlock {
+	return &compositeBlock{
+		baseBlock: baseBlock{
+			collidable:  false,
+			playerSpeed: 1.0,
+			blockType:   RedMushroom,
+		},
+		texturedBlock: texturedBlock{
+			tex: asset_loader.Texture("white-mushroom"),
+		},
 	}
 }
