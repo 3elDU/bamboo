@@ -227,7 +227,7 @@ func NewWhiteMushroomBlock() *compositeBlock {
 		baseBlock: baseBlock{
 			collidable:  false,
 			playerSpeed: 1.0,
-			blockType:   RedMushroom,
+			blockType:   WhiteMushroom,
 		},
 		texturedBlock: texturedBlock{
 			tex: asset_loader.Texture("white-mushroom"),

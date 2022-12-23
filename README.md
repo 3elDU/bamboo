@@ -25,7 +25,9 @@ Clone the repository, and run `go run .` in the terminal.
 - [x] World saving/loading
 - [x] Placing blocks
     - Hold F to place stone blocks under you
-- [ ] Inventory
+- [x] Inventory
+    - Very basic as of now. You can hold only one item.
+    - Press P to pick block under the player
 - [ ] Items
 - [ ] Crafting
 - [ ] Animals

@@ -32,21 +32,25 @@ type gameScene struct {
 	scaling         float64
 	scalingVelocity float64 // for smooth scaling animation
 
+	blockInHand world.Item
+
 	debugInfoVisible bool
 }
 
-func NewGameScene(world *world.World, player player.Player) *gameScene {
+func NewGameScene(gameWorld *world.World, player player.Player) *gameScene {
 	game := &gameScene{
 		widgets:      widget.NewWidgetContainer(),
 		debugWidgets: widget.NewWidgetContainer(),
 
 		pauseMenu: newPauseMenu(),
 
-		world:                  world,
+		world:                  gameWorld,
 		player:                 &player,
 		playerRenderingOptions: &ebiten.DrawImageOptions{},
 
 		scaling: 1.0,
+
+		blockInHand: world.NewCustomItem(asset_loader.Texture("pine-ffff"), world.PineTree, 1),
 
 		debugInfoVisible: true,
 	}
@@ -86,10 +90,16 @@ func (game *gameScene) Update() error {
 			game.debugInfoVisible = !game.debugInfoVisible
 			log.Printf("Toggled visibility of debug info. (%v)", game.debugInfoVisible)
 
-		// Places stone block under the player
+		// Places block under the player
 		case ebiten.IsKeyPressed(ebiten.KeyF):
 			game.world.ChunkAtB(uint64(game.player.X), uint64(game.player.Y)).
-				SetBlock(uint(game.player.X)%16, uint(game.player.Y)%16, world.NewStoneBlock())
+				SetBlock(uint(game.player.X)%16, uint(game.player.Y)%16, world.GetBlockByID(game.blockInHand.Type()))
+
+		// Pick up the block under the player
+		case ebiten.IsKeyPressed(ebiten.KeyP):
+			if block, err := game.world.BlockAt(uint64(game.player.X), uint64(game.player.Y)); err == nil {
+				game.blockInHand = world.NewCustomItem(asset_loader.Texture(block.TextureName()), block.Type(), 1)
+			}
 		}
 
 		// scale the map, using scroll wheel
@@ -150,6 +160,15 @@ func (game *gameScene) Draw(screen *ebiten.Image) {
 		float64(sh)/2-8*game.scaling,
 	)
 	screen.DrawImage(asset_loader.Texture("person").Texture(), game.playerRenderingOptions)
+
+	// render block in hand
+	if game.blockInHand != nil {
+		opts := &ebiten.DrawImageOptions{}
+		game.blockInHand.Texture()
+		opts.GeoM.Scale(5, 5)
+		opts.GeoM.Translate(0, 80)
+		screen.DrawImage(game.blockInHand.Texture(), opts)
+	}
 
 	// draw widgets
 	game.widgets.Render(screen)
