@@ -10,32 +10,7 @@ Clone the repository, and run `go run .` in the terminal.
 [Go](https://go.dev/) must be installed for this to work, of course.
 
 ### Progress
-- [x] World generation
-    - [x] Trees
-    - [x] Mushrooms
-    - [ ] Biomes
-    - [ ] Caves
-- [x] The map actually looks like a giant island
-- [x] Player movement
-    - WASD
-- [ ] Player physics
-- [x] Map scaling
-    - Move your mouse wheel to zoom
-- [x] UI
-- [x] World saving/loading
-- [x] Placing blocks
-    - Hold F to place stone blocks under you
-- [x] Inventory
-    - Very basic as of now. You can hold only one item.
-    - Press P to pick block under the player
-- [ ] Items
-- [ ] Crafting
-- [ ] Animals
-- [ ] Farming
-
-### Plans for the future
-- [ ] Multiplayer
-- [ ] Lua scripting
+See [FEATURES.md](FEATURES.md)
 
 ## Naming conventions
 You may notice, that some functions are suffixed with `B` (example: `world.ChunkAtB`), and some are not.  
