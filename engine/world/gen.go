@@ -20,6 +20,7 @@ type WorldGenerator struct {
 	// Separate perlin noise generators for base blocks and vegetation/features
 	baseGenerator      *perlin.Perlin
 	secondaryGenerator *perlin.Perlin
+	mountainGenerator  *perlin.Perlin
 
 	// requestsPool keeps track of currently requested chunks,
 	// so that one same chunk can't be requested twice
@@ -36,11 +37,13 @@ func NewWorldGenerator(seed int64) *WorldGenerator {
 	var (
 		baseSeed      = world.Int63()
 		secondarySeed = world.Int63()
+		mountainSeed  = world.Int63()
 	)
 
 	return &WorldGenerator{
 		baseGenerator:      perlin.NewPerlin(2, 2, 16, baseSeed),
 		secondaryGenerator: perlin.NewPerlin(2, 2, 16, secondarySeed),
+		mountainGenerator:  perlin.NewPerlin(2, 2, 16, mountainSeed),
 
 		requestsPool: make(map[util.Coords2u]bool),
 		// for some reason, without buffering, it hangs
@@ -55,7 +58,7 @@ func (g *WorldGenerator) run() {
 		req := <-g.requests
 
 		c := NewChunk(req.X, req.Y)
-		if err := c.Generate(g.baseGenerator, g.secondaryGenerator); err != nil {
+		if err := c.Generate(g.baseGenerator, g.secondaryGenerator, g.mountainGenerator); err != nil {
 			log.Panicf("WorldGenerator.run() - error while generating chunk - %v", err)
 		}
 
@@ -161,13 +164,22 @@ func genBase(baseGenerator *perlin.Perlin, x, y uint64) Block {
 		return NewWaterBlock()
 	case baseHeight <= 1.1: // Sand
 		return NewSandBlock(false)
-	case baseHeight <= 1.45: // Grass
+	default: // Grass
 		return NewGrassBlock()
-	case baseHeight <= 1.65: // Stone
-		return NewStoneBlock()
-	default: // Snow
-		return NewSnowBlock()
 	}
+}
+
+func genMountain(previous Block, mountainGenerator *perlin.Perlin, x, y uint64) Block {
+	if previous.Type() != Grass {
+		return previous
+	}
+
+	mountainHeight := height(mountainGenerator, x/2, y/2, config.PerlinNoiseScaleFactor)
+
+	if mountainHeight > 1.25 {
+		return NewStoneBlock()
+	}
+	return previous
 }
 
 // Checks if 8 neighbors of the block are of the same type
@@ -237,20 +249,23 @@ func genFeatures(previous Block, baseGenerator *perlin.Perlin, secondaryGenerato
 }
 
 // generates ground block at given coordinates
-func gen(baseGenerator, secondaryGenerator *perlin.Perlin, x, y uint64) Block {
-	base := genBase(baseGenerator, x, y)
-	withFeatures := genFeatures(base, baseGenerator, secondaryGenerator, makeFeatures(secondaryGenerator, x, y), x, y)
+func gen(baseGenerator, secondaryGenerator, mountainGenerator *perlin.Perlin, x, y uint64) Block {
+	var generated Block
 
-	return withFeatures
+	generated = genBase(baseGenerator, x, y)
+	generated = genMountain(generated, mountainGenerator, x, y)
+	generated = genFeatures(generated, baseGenerator, secondaryGenerator, makeFeatures(secondaryGenerator, x, y), x, y)
+
+	return generated
 }
 
-func (c *Chunk) Generate(baseGenerator, secondaryGenerator *perlin.Perlin) error {
+func (c *Chunk) Generate(baseGenerator, secondaryGenerator, mountainGenerator *perlin.Perlin) error {
 	for x := uint(0); x < 16; x++ {
 		for y := uint(0); y < 16; y++ {
 			bx := c.x*16 + uint64(x)
 			by := c.y*16 + uint64(y)
 
-			if err := c.SetBlock(x, y, gen(baseGenerator, secondaryGenerator, bx, by)); err != nil {
+			if err := c.SetBlock(x, y, gen(baseGenerator, secondaryGenerator, mountainGenerator, bx, by)); err != nil {
 				return err
 			}
 		}
