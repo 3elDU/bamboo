@@ -4,6 +4,7 @@
 It is a little game, that I'm working on, as a hobby. I started it when I was learning Go.  
 It is a top-down sandbox game, where you are stranded on an island, and need to survive. Craft, kill, build, make yourself home.  
 Most of ideas and game mechanics were inspired by [Minecraft](https://minecraft.net/).  
+The game is in early development, so do not expect stability and backwards-compatibility for world saves.
 
 ### How to play it?
 Clone the repository, and run `go run .` in the terminal.   
