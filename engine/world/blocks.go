@@ -90,7 +90,7 @@ func NewGrassBlock() *connectedBlock {
 			blockType:   Grass,
 		},
 		tex:        asset_loader.ConnectedTexture("grass", true, true, true, true),
-		connectsTo: []BlockType{Grass, Short_Grass, Tall_Grass, Flowers, PineTree, RedMushroom, WhiteMushroom},
+		connectsTo: []BlockType{Grass, Short_Grass, Tall_Grass, Flowers, PineTree, RedMushroom, WhiteMushroom, Stone},
 	}
 }
 
