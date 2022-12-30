@@ -322,8 +322,9 @@ func (s *worldListScene) Update() error {
 	select {
 	case id := <-s.selectedWorld:
 		log.Printf("worldListScene - Selected world '%v'", id)
-		w, p := world.LoadWorld(id)
-		scene_manager.QSwitch(game.NewGameScene(w, p))
+		loadedWorld := world.LoadWorld(id)
+		loadedPlayer := player.LoadPlayer(id)
+		scene_manager.QSwitch(game.NewGameScene(loadedWorld, *loadedPlayer))
 	case <-s.newWorld:
 		log.Println("worldListScene - New world")
 		scene_manager.QSwitch(NewNewWorldScene())

@@ -159,7 +159,7 @@ func NewWaterBlock() *compositeBlock {
 	return &compositeBlock{
 		baseBlock: baseBlock{
 			collidable:  false,
-			playerSpeed: 0.4,
+			playerSpeed: 0.2,
 			blockType:   Water,
 		},
 		texturedBlock: texturedBlock{
@@ -189,7 +189,13 @@ func NewSnowBlock() *compositeBlock {
 func NewStoneBlock() *connectedBlock {
 	return &connectedBlock{
 		baseBlock: baseBlock{
-			collidable:  false,
+			collidable: true,
+			collisionPoints: [4]util.Coords2f{
+				{X: 0, Y: 0},
+				{X: 1, Y: 0},
+				{X: 0, Y: 1},
+				{X: 1, Y: 1},
+			},
 			playerSpeed: 0.3,
 			blockType:   Stone,
 		},

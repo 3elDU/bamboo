@@ -35,6 +35,9 @@ type Block interface {
 
 	// Whether the player should collide with the block
 	Collidable() bool
+	// Collision points go in order: top-left, top-right, bottom-left, bottom-right
+	CollisionPoints() [4]util.Coords2f
+	PlayerSpeed() float64
 
 	Update(world *World)
 	Render(world *World, screen *ebiten.Image, pos util.Coords2f)
@@ -45,9 +48,10 @@ type Block interface {
 }
 
 type BaseBlockState struct {
-	Collidable  bool
-	PlayerSpeed float64
-	BlockType   BlockType
+	Collidable      bool
+	CollisionPoints [4]util.Coords2f
+	PlayerSpeed     float64
+	BlockType       BlockType
 }
 
 // Base structure inherited by all blocks
@@ -59,8 +63,10 @@ type baseBlock struct {
 	// Block coordinates in world space
 	x, y uint
 
-	// Whether collision will work with this block
 	collidable bool
+	// Optional
+	// Each collision point is a coordinate in world space
+	collisionPoints [4]util.Coords2f
 
 	// How fast player could move through this block
 	// Calculated by basePlayerSpeed * playerSpeed
@@ -131,21 +137,36 @@ func (b *baseBlock) Collidable() bool {
 	return b.collidable
 }
 
+func (b *baseBlock) PlayerSpeed() float64 {
+	return b.playerSpeed
+}
+
+func (b *baseBlock) CollisionPoints() [4]util.Coords2f {
+	return [4]util.Coords2f{
+		{X: float64(b.x) + b.collisionPoints[0].X, Y: float64(b.y) + b.collisionPoints[0].Y},
+		{X: float64(b.x) + b.collisionPoints[1].X, Y: float64(b.y) + b.collisionPoints[1].Y},
+		{X: float64(b.x) + b.collisionPoints[2].X, Y: float64(b.y) + b.collisionPoints[2].Y},
+		{X: float64(b.x) + b.collisionPoints[3].X, Y: float64(b.y) + b.collisionPoints[3].Y},
+	}
+}
+
 func (b *baseBlock) Type() BlockType {
 	return b.blockType
 }
 
 func (b *baseBlock) State() interface{} {
 	return BaseBlockState{
-		Collidable:  b.collidable,
-		PlayerSpeed: b.playerSpeed,
-		BlockType:   b.blockType,
+		Collidable:      b.collidable,
+		CollisionPoints: b.collisionPoints,
+		PlayerSpeed:     b.playerSpeed,
+		BlockType:       b.blockType,
 	}
 }
 
 func (b *baseBlock) LoadState(state interface{}) error {
 	if state, ok := state.(BaseBlockState); ok {
 		b.collidable = state.Collidable
+		b.collisionPoints = state.CollisionPoints
 		b.playerSpeed = state.PlayerSpeed
 		b.blockType = state.BlockType
 	} else {

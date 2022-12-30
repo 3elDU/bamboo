@@ -61,12 +61,22 @@ func NewGameScene(gameWorld *world.World, player player.Player) *gameScene {
 	)
 
 	// perform a save immediately after the scene creation
-	err := game.world.Save(player)
+	err := game.world.Save()
 	if err != nil {
 		log.Panicf("NewGameScene() - World save failed - %v", err)
 	}
+	game.player.Save(game.world.Metadata.UUID)
 
 	return game
+}
+
+func (game *gameScene) Save() {
+	if err := game.world.Save(); err != nil {
+		log.Panicf("GameScene - world save failed - %v", err)
+	}
+	if err := game.player.Save(game.world.Metadata.UUID); err != nil {
+		log.Panicf("GameScene - player save failed - %v", err)
+	}
 }
 
 func (game *gameScene) Update() error {
@@ -76,9 +86,7 @@ func (game *gameScene) Update() error {
 
 		// trigger a world save, when entering pause menu
 		if game.paused {
-			if err := game.world.Save(*game.player); err != nil {
-				log.Panicf("GameScene - world save failed - %v", err)
-			}
+			game.Save()
 		}
 	}
 
@@ -111,7 +119,7 @@ func (game *gameScene) Update() error {
 			Right: ebiten.IsKeyPressed(ebiten.KeyD),
 			Up:    ebiten.IsKeyPressed(ebiten.KeyW),
 			Down:  ebiten.IsKeyPressed(ebiten.KeyS),
-		})
+		}, game.world)
 
 		game.world.Update(game.player.X, game.player.Y)
 
@@ -129,18 +137,14 @@ func (game *gameScene) Update() error {
 		case continueButtonPressed:
 			game.paused = false
 		case exitButtonPressed:
-			if err := game.world.Save(*game.player); err != nil {
-				log.Printf("GameScene - world save failed - %v", err)
-			}
+			game.Save()
 			scene_manager.End()
 		}
 	}
 
-	// perform world autosave each N ticks
+	// perform autosave each N ticks
 	if scene_manager.Ticks()%config.WorldAutosaveDelay == 0 {
-		if err := game.world.Save(*game.player); err != nil {
-			log.Panicf("GameScene - world save failed - %v", err)
-		}
+		game.Save()
 	}
 
 	return nil
@@ -205,7 +209,7 @@ func (game *gameScene) Draw(screen *ebiten.Image) {
 	}
 }
 
-func (g *gameScene) Destroy() {
-	g.world.Save(*g.player)
+func (game *gameScene) Destroy() {
+	game.Save()
 	log.Println("GameScene.Destroy() called")
 }
