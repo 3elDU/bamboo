@@ -7,13 +7,15 @@
 - [x] The map actually looks like a giant island
 - [x] Player movement
     - WASD
-- [ ] Player physics
+- [x] Player physics
+    - Collision
+    - Different speed with different blocks
 - [x] Map scaling
     - Move your mouse wheel to zoom
 - [x] UI
 - [x] World saving/loading
 - [x] Placing blocks
-    - Hold F to place stone blocks under you
+    - Hold F to place blocks under you
 - [x] Inventory
     - Very basic as of now. You can hold only one item.
     - Press P to pick block under the player
