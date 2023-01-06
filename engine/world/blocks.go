@@ -6,7 +6,6 @@ package world
 
 import (
 	"github.com/3elDU/bamboo/engine/asset_loader"
-	"github.com/3elDU/bamboo/engine/texture"
 	"github.com/3elDU/bamboo/util"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -155,20 +154,15 @@ func NewSandBlock(stones bool) *compositeBlock {
 	}
 }
 
-func NewWaterBlock() *compositeBlock {
-	return &compositeBlock{
+func NewWaterBlock() *connectedBlock {
+	return &connectedBlock{
 		baseBlock: baseBlock{
 			collidable:  false,
 			playerSpeed: 0.2,
 			blockType:   Water,
 		},
-		texturedBlock: texturedBlock{
-			tex: util.RandomChoice([]texture.Texture{
-				asset_loader.Texture("water1"),
-				asset_loader.Texture("water2"),
-			}),
-			rotation: 0,
-		},
+		tex:        asset_loader.ConnectedTexture("lake", false, false, false, false),
+		connectsTo: []BlockType{Water},
 	}
 }
 
