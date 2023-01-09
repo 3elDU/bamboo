@@ -54,7 +54,11 @@ func (c *Chunk) Update(world *World) {
 	if c.modified {
 		for x := 0; x < 16; x++ {
 			for y := 0; y < 16; y++ {
-				c.blocks[x][y].Update(world)
+				block, updateable := c.blocks[x][y].(UpdateableBlock)
+				if !updateable {
+					continue
+				}
+				block.Update(world)
 			}
 		}
 	}
@@ -68,12 +72,13 @@ func (c Chunk) Coords() util.Coords2u {
 	return util.Coords2u{X: c.x, Y: c.y}
 }
 
-func (c *Chunk) At(x, y uint) (Block, error) {
+// Returns an empty block in case of an error
+func (c *Chunk) At(x, y uint) Block {
 	if x > 16 || y > 16 {
-		return nil, fmt.Errorf("invalid coordinates: %v, %v", x, y)
+		return NewEmptyBlock()
 	}
 	c.lastAccessed = scene_manager.Ticks()
-	return c.blocks[x][y], nil
+	return c.blocks[x][y]
 }
 
 func (c *Chunk) SetBlock(x, y uint, block Block) error {

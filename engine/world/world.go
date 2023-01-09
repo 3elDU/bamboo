@@ -1,7 +1,6 @@
 package world
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/3elDU/bamboo/config"
@@ -131,12 +130,13 @@ func (world *World) ChunkAtB(bx, by uint64) *Chunk {
 }
 
 // There is no B suffix, because it's trivial that this function accepts block coordinates
-func (world *World) BlockAt(bx, by uint64) (Block, error) {
+// Always returns an empty block in case of an error
+func (world *World) BlockAt(bx, by uint64) Block {
 	cx, cy := bx/16, by/16
 
 	chunk, exists := world.chunks[util.Coords2u{X: cx, Y: cy}]
 	if !exists {
-		return nil, fmt.Errorf("chunk at %v, %v doesn't exist", cx, cy)
+		return NewEmptyBlock()
 	}
 
 	return chunk.At(uint(bx%16), uint(by%16))

@@ -59,7 +59,7 @@ func LoadPlayer(id uuid.UUID) *Player {
 
 // check collision between player and the blocks
 // returns collision value for each corner
-func collidePlayer(origin util.Coords2f, world *world.World) (collisions [4]bool) {
+func collidePlayer(origin util.Coords2f, w *world.World) (collisions [4]bool) {
 	playerCollisionPoints := [4]util.Coords2f{
 		{X: origin.X - .25, Y: origin.Y - .25},
 		{X: origin.X + .25, Y: origin.Y - .25},
@@ -68,12 +68,8 @@ func collidePlayer(origin util.Coords2f, world *world.World) (collisions [4]bool
 	}
 
 	for i, point := range playerCollisionPoints {
-		block, err := world.BlockAt(uint64(point.X), uint64(point.Y))
-		if err != nil {
-			continue
-		}
-
-		if !block.Collidable() {
+		block, collidable := w.BlockAt(uint64(point.X), uint64(point.Y)).(world.CollidableBlock)
+		if !collidable {
 			continue
 		}
 
@@ -112,24 +108,24 @@ func countCollisions(collisions [4]bool) (count uint) {
 }
 
 // FIXME: consider frame delta time in equations
-func (p *Player) Update(movement MovementVector, world *world.World) {
+func (p *Player) Update(movement MovementVector, w *world.World) {
 	dx, dy := movement.ToFloat()
 
 	p.xVelocity += dx * config.PlayerSpeed
 	p.yVelocity += dy * config.PlayerSpeed
 
 	// if player somehow got stuck in the block, skip collision check
-	if !anyOf(collidePlayer(util.Coords2f{X: p.X, Y: p.Y}, world)) {
+	if !anyOf(collidePlayer(util.Coords2f{X: p.X, Y: p.Y}, w)) {
 		// check for collisions on X axis
-		if anyOf(collidePlayer(util.Coords2f{X: p.X + p.xVelocity, Y: p.Y}, world)) {
+		if anyOf(collidePlayer(util.Coords2f{X: p.X + p.xVelocity, Y: p.Y}, w)) {
 			p.xVelocity = 0
 		}
 		// check for collisions on Y axis
-		if anyOf(collidePlayer(util.Coords2f{X: p.X, Y: p.Y + p.yVelocity}, world)) {
+		if anyOf(collidePlayer(util.Coords2f{X: p.X, Y: p.Y + p.yVelocity}, w)) {
 			p.yVelocity = 0
 		}
 		// check for corner collisions
-		if countCollisions(collidePlayer(util.Coords2f{X: p.X + p.xVelocity, Y: p.Y + p.yVelocity}, world)) == 1 {
+		if countCollisions(collidePlayer(util.Coords2f{X: p.X + p.xVelocity, Y: p.Y + p.yVelocity}, w)) == 1 {
 			// "bounce" off the corner
 			p.xVelocity = -p.xVelocity * 0.1
 			p.yVelocity = -p.yVelocity * 0.1
@@ -138,7 +134,7 @@ func (p *Player) Update(movement MovementVector, world *world.World) {
 
 	// multiply velocity by block speed modifier
 	speedModifier := 1.0
-	if block, err := world.BlockAt(uint64(p.X), uint64(p.Y)); err == nil {
+	if block, ok := w.BlockAt(uint64(p.X), uint64(p.Y)).(world.CollidableBlock); ok {
 		speedModifier = block.PlayerSpeed()
 	}
 

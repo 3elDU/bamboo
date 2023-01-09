@@ -22,6 +22,7 @@ func init() {
 	gob.Register(TexturedBlockState{})
 	gob.Register(CompositeBlockState{})
 	gob.Register(ConnectedBlockState{})
+	gob.Register(CollidableBlockState{})
 }
 
 type BlockType int
@@ -33,25 +34,29 @@ type Block interface {
 	SetParentChunk(chunk *Chunk)
 	Type() BlockType
 
-	// Whether the player should collide with the block
-	Collidable() bool
-	// Collision points go in order: top-left, top-right, bottom-left, bottom-right
-	CollisionPoints() [4]util.Coords2f
-	PlayerSpeed() float64
-
-	Update(world *World)
-	Render(world *World, screen *ebiten.Image, pos util.Coords2f)
-	TextureName() string
-
 	State() interface{}
 	LoadState(interface{}) error
 }
 
+type CollidableBlock interface {
+	Block
+	CollisionPoints() [4]util.Coords2f
+	PlayerSpeed() float64
+}
+
+type DrawableBlock interface {
+	Block
+	Render(world *World, screen *ebiten.Image, pos util.Coords2f)
+	TextureName() string
+}
+
+type UpdateableBlock interface {
+	Block
+	Update(world *World)
+}
+
 type BaseBlockState struct {
-	Collidable      bool
-	CollisionPoints [4]util.Coords2f
-	PlayerSpeed     float64
-	BlockType       BlockType
+	BlockType BlockType
 }
 
 // Base structure inherited by all blocks
@@ -62,16 +67,6 @@ type baseBlock struct {
 	parentChunk *Chunk
 	// Block coordinates in world space
 	x, y uint
-
-	collidable bool
-	// Optional
-	// Each collision point is a coordinate in world space
-	collisionPoints [4]util.Coords2f
-
-	// How fast player could move through this block
-	// Calculated by basePlayerSpeed * playerSpeed
-	// Applicable only if collidable is false
-	playerSpeed float64
 
 	// Block types are defined in (blocks.go):13
 	// Each block must specify it's type, so that we can actually know what the block it is
@@ -116,6 +111,21 @@ type connectedBlock struct {
 	tex        texture.ConnectedTexture
 }
 
+type CollidableBlockState struct {
+	CollisionPoints [4]util.Coords2f
+	PlayerSpeed     float64
+}
+
+type collidableBlock struct {
+	// Each collision point is local coordinate, where (0, 0) is block's top-left corner
+	collisionPoints [4]util.Coords2f
+
+	// How fast player could move through this block
+	// Calculated by basePlayerSpeed * playerSpeed
+	// Applicable only if collidable is false
+	playerSpeed float64
+}
+
 func (b *baseBlock) Coords() util.Coords2u {
 	return util.Coords2u{X: uint64(b.x), Y: uint64(b.y)}
 }
@@ -133,41 +143,18 @@ func (b *baseBlock) SetParentChunk(c *Chunk) {
 	b.parentChunk = c
 }
 
-func (b *baseBlock) Collidable() bool {
-	return b.collidable
-}
-
-func (b *baseBlock) PlayerSpeed() float64 {
-	return b.playerSpeed
-}
-
-func (b *baseBlock) CollisionPoints() [4]util.Coords2f {
-	return [4]util.Coords2f{
-		{X: float64(b.x) + b.collisionPoints[0].X, Y: float64(b.y) + b.collisionPoints[0].Y},
-		{X: float64(b.x) + b.collisionPoints[1].X, Y: float64(b.y) + b.collisionPoints[1].Y},
-		{X: float64(b.x) + b.collisionPoints[2].X, Y: float64(b.y) + b.collisionPoints[2].Y},
-		{X: float64(b.x) + b.collisionPoints[3].X, Y: float64(b.y) + b.collisionPoints[3].Y},
-	}
-}
-
 func (b *baseBlock) Type() BlockType {
 	return b.blockType
 }
 
 func (b *baseBlock) State() interface{} {
 	return BaseBlockState{
-		Collidable:      b.collidable,
-		CollisionPoints: b.collisionPoints,
-		PlayerSpeed:     b.playerSpeed,
-		BlockType:       b.blockType,
+		BlockType: b.blockType,
 	}
 }
 
 func (b *baseBlock) LoadState(state interface{}) error {
 	if state, ok := state.(BaseBlockState); ok {
-		b.collidable = state.Collidable
-		b.collisionPoints = state.CollisionPoints
-		b.playerSpeed = state.PlayerSpeed
 		b.blockType = state.BlockType
 	} else {
 		return fmt.Errorf("%T - invalid state type; expected %T, got %T", b, BaseBlockState{}, state)
@@ -252,11 +239,8 @@ func (b *connectedBlock) Render(world *World, screen *ebiten.Image, pos util.Coo
 	var sidesConnected [4]bool
 	for i, side := range [4]util.Coords2i{{X: -1, Y: 0}, {X: 1, Y: 0}, {X: 0, Y: -1}, {X: 0, Y: 1}} {
 		x, y := int64(b.x)+side.X, int64(b.y)+side.Y
-		neighbor, err := world.BlockAt(uint64(x), uint64(y))
-		if err != nil {
-			continue
-		}
 
+		neighbor := world.BlockAt(uint64(x), uint64(y))
 		if !b.shouldConnect(neighbor.Type()) {
 			continue
 		}
@@ -300,4 +284,12 @@ func (b *connectedBlock) LoadState(state interface{}) error {
 		return fmt.Errorf("%T - invalid state type; expected %T, got %T", b, CompositeBlockState{}, state)
 	}
 	return nil
+}
+
+func (b *collidableBlock) PlayerSpeed() float64 {
+	return b.playerSpeed
+}
+
+func (b *collidableBlock) CollisionPoints() [4]util.Coords2f {
+	return b.collisionPoints
 }

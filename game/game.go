@@ -105,7 +105,7 @@ func (game *gameScene) Update() error {
 
 		// Pick up the block under the player
 		case ebiten.IsKeyPressed(ebiten.KeyP):
-			if block, err := game.world.BlockAt(uint64(game.player.X), uint64(game.player.Y)); err == nil {
+			if block, ok := game.world.BlockAt(uint64(game.player.X), uint64(game.player.Y)).(world.DrawableBlock); ok {
 				game.blockInHand = world.NewCustomItem(asset_loader.Texture(block.TextureName()), block.Type(), 1)
 			}
 		}
