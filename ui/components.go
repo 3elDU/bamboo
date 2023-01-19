@@ -10,9 +10,9 @@ import (
 	"log"
 	"math/rand"
 
-	"github.com/3elDU/bamboo/engine"
-	"github.com/3elDU/bamboo/engine/asset_loader"
-	"github.com/3elDU/bamboo/engine/colors"
+	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/colors"
+	"github.com/3elDU/bamboo/font"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
@@ -310,7 +310,7 @@ func (l *labelComponent) Update() error {
 	return nil
 }
 func (l *labelComponent) Draw(screen *ebiten.Image, x, y float64) error {
-	engine.RenderFontWithOptions(screen, asset_loader.DefaultFont(), l.text, x, y, l.opts.Color, l.opts.Scaling)
+	font.RenderFontWithOptions(screen, asset_loader.DefaultFont(), l.text, x, y, l.opts.Color, l.opts.Scaling)
 	return nil
 }
 
@@ -646,7 +646,7 @@ func (i *inputComponent) Draw(screen *ebiten.Image, x, y float64) error {
 		screen.DrawImage(i.tex, i.opts)
 	}
 
-	engine.RenderFont(screen, i.input, x+Em, y+Em, colors.Black)
+	font.RenderFont(screen, i.input, x+Em, y+Em, colors.Black)
 
 	return nil
 }

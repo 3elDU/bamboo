@@ -1,7 +1,7 @@
 package world
 
 import (
-	"github.com/3elDU/bamboo/engine/texture"
+	"github.com/3elDU/bamboo/texture"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 

@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/config"
-	"github.com/3elDU/bamboo/engine/asset_loader"
-	"github.com/3elDU/bamboo/engine/scene_manager"
-	"github.com/3elDU/bamboo/engine/scenes"
+	"github.com/3elDU/bamboo/scene_manager"
+	"github.com/3elDU/bamboo/scenes"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 

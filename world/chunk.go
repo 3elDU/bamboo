@@ -3,7 +3,7 @@ package world
 import (
 	"fmt"
 
-	"github.com/3elDU/bamboo/engine/scene_manager"
+	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/util"
 	"github.com/hajimehoshi/ebiten/v2"
 )

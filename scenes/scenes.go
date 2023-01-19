@@ -15,14 +15,14 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/config"
-	"github.com/3elDU/bamboo/engine/asset_loader"
-	"github.com/3elDU/bamboo/engine/colors"
-	"github.com/3elDU/bamboo/engine/scene_manager"
-	"github.com/3elDU/bamboo/engine/world"
 	"github.com/3elDU/bamboo/game"
 	"github.com/3elDU/bamboo/game/player"
+	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/ui"
+	"github.com/3elDU/bamboo/world"
 	"github.com/google/uuid"
 	"github.com/hajimehoshi/ebiten/v2"
 )

@@ -4,8 +4,8 @@ import (
 	"image/color"
 	"log"
 
-	"github.com/3elDU/bamboo/engine"
-	"github.com/3elDU/bamboo/engine/asset_loader"
+	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/font"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
 )
@@ -105,7 +105,7 @@ func RenderTextWidget(screen *ebiten.Image, widget TextWidget) {
 
 	x, y := widgetPosition(bounds.Dx(), bounds.Dy(), ww, wh, t.Anchor)
 
-	engine.RenderFont(screen, t.Text, float64(x), float64(y), t.Color)
+	font.RenderFont(screen, t.Text, float64(x), float64(y), t.Color)
 }
 
 // Universal container for both types of widgets, with useful methods

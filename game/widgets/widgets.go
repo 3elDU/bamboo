@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"image/color"
 
-	"github.com/3elDU/bamboo/engine/widget"
+	"github.com/3elDU/bamboo/widget"
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/image/font"
 )

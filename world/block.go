@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/3elDU/bamboo/engine/asset_loader"
-	"github.com/3elDU/bamboo/engine/texture"
+	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/texture"
 	"github.com/3elDU/bamboo/util"
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/exp/slices"

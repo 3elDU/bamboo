@@ -5,7 +5,7 @@
 package world
 
 import (
-	"github.com/3elDU/bamboo/engine/asset_loader"
+	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/util"
 	"github.com/hajimehoshi/ebiten/v2"
 )

@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/config"
-	"github.com/3elDU/bamboo/engine"
-	"github.com/3elDU/bamboo/engine/asset_loader"
-	"github.com/3elDU/bamboo/engine/colors"
-	"github.com/3elDU/bamboo/engine/scene_manager"
-	"github.com/3elDU/bamboo/engine/widget"
-	"github.com/3elDU/bamboo/engine/world"
+	"github.com/3elDU/bamboo/font"
 	"github.com/3elDU/bamboo/game/player"
 	"github.com/3elDU/bamboo/game/widgets"
+	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/util"
+	"github.com/3elDU/bamboo/widget"
+	"github.com/3elDU/bamboo/world"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
@@ -186,16 +186,16 @@ func (game *gameScene) Draw(screen *ebiten.Image) {
 		// But that would require lots of architecture changed
 		// Because currently, there is no way to pass custom data to a widget
 
-		engine.RenderFont(screen,
+		font.RenderFont(screen,
 			fmt.Sprintf("player pos %.2f, %.2f", game.player.X, game.player.Y),
 			0, 0, colors.Black)
 
-		engine.RenderFont(screen,
+		font.RenderFont(screen,
 			fmt.Sprintf("world seed %v", game.world.Seed()),
 			0, 24, colors.Black,
 		)
 
-		engine.RenderFont(screen,
+		font.RenderFont(screen,
 			fmt.Sprintf("scaling %v", util.LimitFloatPrecision(game.scaling, 2)),
 			0, 48, colors.Black)
 	}

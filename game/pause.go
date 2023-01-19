@@ -6,7 +6,7 @@ import (
 	"image/color"
 	"log"
 
-	"github.com/3elDU/bamboo/engine/colors"
+	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/ui"
 	"github.com/hajimehoshi/ebiten/v2"
 )

@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/3elDU/bamboo/config"
-	"github.com/3elDU/bamboo/engine/world"
 	"github.com/3elDU/bamboo/util"
+	"github.com/3elDU/bamboo/world"
 	"github.com/google/uuid"
 )
 
