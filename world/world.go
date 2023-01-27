@@ -6,7 +6,7 @@ import (
 
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/scene_manager"
-	"github.com/3elDU/bamboo/util"
+	"github.com/3elDU/bamboo/types"
 	"github.com/google/uuid"
 )
 
@@ -18,7 +18,7 @@ type World struct {
 
 	// keys there are Chunk coordinates.
 	// so, actual Chunk coordinates are x*16 and y*16
-	chunks map[util.Coords2u]*Chunk
+	chunks map[types.Coords2u]*Chunk
 }
 
 // Creates a new world, using given name and seed
@@ -39,12 +39,12 @@ func NewWorld(name string, uuid uuid.UUID, seed int64) *World {
 
 		Metadata: metadata,
 
-		chunks: make(map[util.Coords2u]*Chunk),
+		chunks: make(map[types.Coords2u]*Chunk),
 	}
 }
 
 // Update - x and y are player coordinates
-func (world *World) Update(_, _ float64) {
+func (world *World) Update() {
 	// receive newly generated chunks from world generator
 	for {
 		if chunk := world.generator.Receive(); chunk != nil {
@@ -52,7 +52,7 @@ func (world *World) Update(_, _ float64) {
 			world.chunks[chunk.Coords()] = chunk
 			// Request redraw of each neighbor
 			for _, neighbor := range world.GetNeighbors(chunk.Coords().X, chunk.Coords().Y) {
-				neighbor.needsRedraw = true
+				neighbor.TriggerRedraw()
 			}
 		} else {
 			break
@@ -65,7 +65,7 @@ func (world *World) Update(_, _ float64) {
 			world.chunks[chunk.Coords()] = chunk
 			// Request redraw of each neighbor
 			for _, neighbor := range world.GetNeighbors(chunk.Coords().X, chunk.Coords().Y) {
-				neighbor.needsRedraw = true
+				neighbor.TriggerRedraw()
 			}
 		} else {
 			break
@@ -100,14 +100,14 @@ func (world *World) Update(_, _ float64) {
 	// log.Printf("World.Update() - chunk update took %v; loaded chunks - %v", updateEnd.Sub(updateStart).String(), len(world.chunks))
 }
 
-func (world *World) ChunkAt(cx, cy uint64) *Chunk {
+func (world *World) ChunkAt(cx, cy uint64) types.Chunk {
 	return world.ChunkAtB(cx*16, cy*16)
 }
 
-func (world *World) ChunkAtB(bx, by uint64) *Chunk {
+func (world *World) ChunkAtB(bx, by uint64) types.Chunk {
 	cx := bx / 16
 	cy := by / 16
-	chunkCoordinates := util.Coords2u{X: cx, Y: cy}
+	chunkCoordinates := types.Coords2u{X: cx, Y: cy}
 
 	_, exists := world.chunks[chunkCoordinates]
 
@@ -131,10 +131,10 @@ func (world *World) ChunkAtB(bx, by uint64) *Chunk {
 }
 
 // There is no B suffix, because it's trivial that this function accepts block coordinates
-func (world *World) BlockAt(bx, by uint64) (Block, error) {
+func (world *World) BlockAt(bx, by uint64) (types.Block, error) {
 	cx, cy := bx/16, by/16
 
-	chunk, exists := world.chunks[util.Coords2u{X: cx, Y: cy}]
+	chunk, exists := world.chunks[types.Coords2u{X: cx, Y: cy}]
 	if !exists {
 		return nil, fmt.Errorf("chunk at %v, %v doesn't exist", cx, cy)
 	}
@@ -143,19 +143,19 @@ func (world *World) BlockAt(bx, by uint64) (Block, error) {
 }
 
 func (world *World) ChunkExists(cx, cy uint64) bool {
-	_, exists := world.chunks[util.Coords2u{X: cx, Y: cy}]
+	_, exists := world.chunks[types.Coords2u{X: cx, Y: cy}]
 	return exists
 }
 
-func (world *World) GetNeighbors(cx, cy uint64) []*Chunk {
-	sides := [4]util.Coords2u{
+func (world *World) GetNeighbors(cx, cy uint64) []types.Chunk {
+	sides := [4]types.Coords2u{
 		{X: cx - 1, Y: cy}, // left
 		{X: cx + 1, Y: cy}, // right
 		{X: cx, Y: cy - 1}, // top
 		{X: cx, Y: cy + 1}, // bottom
 	}
 
-	neighbors := make([]*Chunk, 0)
+	neighbors := make([]types.Chunk, 0)
 
 	for _, side := range sides {
 		if !world.ChunkExists(side.X, side.Y) {

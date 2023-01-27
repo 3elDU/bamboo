@@ -5,12 +5,14 @@ import (
 	"log"
 
 	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/font"
 	"github.com/3elDU/bamboo/game/player"
 	"github.com/3elDU/bamboo/game/widgets"
 	"github.com/3elDU/bamboo/scene_manager"
+	"github.com/3elDU/bamboo/types"
 	"github.com/3elDU/bamboo/util"
 	"github.com/3elDU/bamboo/widget"
 	"github.com/3elDU/bamboo/world"
@@ -50,7 +52,7 @@ func NewGameScene(gameWorld *world.World, player player.Player) *gameScene {
 
 		scaling: 1.0,
 
-		blockInHand: world.NewCustomItem(asset_loader.Texture("pine-ffff"), world.PineTree, 1),
+		blockInHand: world.NewCustomItem(asset_loader.Texture("pine-ffff"), blocks.PineTree, 1),
 
 		debugInfoVisible: true,
 	}
@@ -101,12 +103,14 @@ func (game *gameScene) Update() error {
 		// Places block under the player
 		case ebiten.IsKeyPressed(ebiten.KeyF):
 			game.world.ChunkAtB(uint64(game.player.X), uint64(game.player.Y)).
-				SetBlock(uint(game.player.X)%16, uint(game.player.Y)%16, world.GetBlockByID(game.blockInHand.Type()))
+				SetBlock(uint(game.player.X)%16, uint(game.player.Y)%16, blocks.GetBlockByID(game.blockInHand.Type()))
 
 		// Pick up the block under the player
 		case ebiten.IsKeyPressed(ebiten.KeyP):
 			if block, err := game.world.BlockAt(uint64(game.player.X), uint64(game.player.Y)); err == nil {
-				game.blockInHand = world.NewCustomItem(asset_loader.Texture(block.TextureName()), block.Type(), 1)
+				if block, ok := block.(types.DrawableBlock); ok {
+					game.blockInHand = world.NewCustomItem(asset_loader.Texture(block.TextureName()), block.Type(), 1)
+				}
 			}
 		}
 
@@ -121,7 +125,7 @@ func (game *gameScene) Update() error {
 			Down:  ebiten.IsKeyPressed(ebiten.KeyS),
 		}, game.world)
 
-		game.world.Update(game.player.X, game.player.Y)
+		game.world.Update()
 
 		game.widgets.Update()
 

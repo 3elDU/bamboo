@@ -8,8 +8,9 @@ import (
 	"math"
 	"math/rand"
 
+	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/config"
-	"github.com/3elDU/bamboo/util"
+	"github.com/3elDU/bamboo/types"
 	"github.com/aquilax/go-perlin"
 )
 
@@ -24,8 +25,8 @@ type WorldGenerator struct {
 
 	// requestsPool keeps track of currently requested chunks,
 	// so that one same chunk can't be requested twice
-	requestsPool map[util.Coords2u]bool
-	requests     chan util.Coords2u
+	requestsPool map[types.Coords2u]bool
+	requests     chan types.Coords2u
 	generated    chan *Chunk
 }
 
@@ -45,9 +46,9 @@ func NewWorldGenerator(seed int64) *WorldGenerator {
 		secondaryGenerator: perlin.NewPerlin(2, 2, 16, secondarySeed),
 		mountainGenerator:  perlin.NewPerlin(2, 2, 16, mountainSeed),
 
-		requestsPool: make(map[util.Coords2u]bool),
+		requestsPool: make(map[types.Coords2u]bool),
 		// for some reason, without buffering, it hangs
-		requests:  make(chan util.Coords2u, 128),
+		requests:  make(chan types.Coords2u, 128),
 		generated: make(chan *Chunk, 128),
 	}
 }
@@ -75,7 +76,7 @@ func (g *WorldGenerator) Run() {
 // Requests a chunk generation
 // Chunk can be retrieved later through WorldGenerator.Receive()
 func (g *WorldGenerator) Generate(cx, cy uint64) {
-	coords := util.Coords2u{X: cx, Y: cy}
+	coords := types.Coords2u{X: cx, Y: cy}
 	if g.requestsPool[coords] {
 		return
 	}
@@ -154,36 +155,36 @@ func height(gen *perlin.Perlin, x, y uint64, scale float64) float64 {
 }
 
 // generates basic blocks ( sand, water, etc. )
-func genBase(baseGenerator *perlin.Perlin, x, y uint64) Block {
+func genBase(baseGenerator *perlin.Perlin, x, y uint64) types.Block {
 	baseHeight := applyCircularMask(float64(x), float64(y),
 		height(baseGenerator, x, y, config.PerlinNoiseScaleFactor),
 	)
 
 	switch {
 	case baseHeight <= 1: // Water
-		return NewWaterBlock()
+		return blocks.NewWaterBlock()
 	case baseHeight <= 1.1: // Sand
-		return NewSandBlock(false)
+		return blocks.NewSandBlock(false)
 	default: // Grass
-		return NewGrassBlock()
+		return blocks.NewGrassBlock()
 	}
 }
 
-func genMountain(previous Block, mountainGenerator *perlin.Perlin, x, y uint64) Block {
-	if previous.Type() != Grass {
+func genMountain(previous types.Block, mountainGenerator *perlin.Perlin, x, y uint64) types.Block {
+	if previous.Type() != blocks.Grass {
 		return previous
 	}
 
 	mountainHeight := height(mountainGenerator, x/2, y/2, config.PerlinNoiseScaleFactor)
 
 	if mountainHeight > 1.25 {
-		return NewStoneBlock()
+		return blocks.NewStoneBlock()
 	}
 	return previous
 }
 
 // Checks if 8 neighbors of the block are of the same type
-func checkNeighbors(desiredType BlockType, baseGenerator *perlin.Perlin, x, y uint64) bool {
+func checkNeighbors(desiredType types.BlockType, baseGenerator *perlin.Perlin, x, y uint64) bool {
 	sides := [8][2]uint64{
 		{x - 1, y},     // left
 		{x + 1, y},     // right
@@ -205,19 +206,19 @@ func checkNeighbors(desiredType BlockType, baseGenerator *perlin.Perlin, x, y ui
 }
 
 // generates block features, depending on previous block
-func genFeatures(previous Block, baseGenerator *perlin.Perlin, secondaryGenerator *perlin.Perlin, features BlockFeatures, x, y uint64) Block {
+func genFeatures(previous types.Block, baseGenerator *perlin.Perlin, secondaryGenerator *perlin.Perlin, features BlockFeatures, x, y uint64) types.Block {
 	// do not apply circular mask, while generating block features
 	secondaryHeight := height(secondaryGenerator, x, y, config.PerlinNoiseScaleFactor)
 
 	switch previous.Type() {
-	case Sand:
+	case blocks.Sand:
 		// With 3% change, generate sand with stones
 		if features.f1 <= 0.03 {
-			return NewSandBlock(true)
+			return blocks.NewSandBlock(true)
 		}
-	case Grass:
+	case blocks.Grass:
 		// generate features on grass, only if it is surrounded by grass on all sides
-		if !checkNeighbors(Grass, baseGenerator, x, y) {
+		if !checkNeighbors(blocks.Grass, baseGenerator, x, y) {
 			return previous
 		}
 
@@ -229,18 +230,18 @@ func genFeatures(previous Block, baseGenerator *perlin.Perlin, secondaryGenerato
 			// with 1.5% chance, generate mushroom
 			case features.f1 <= 0.015:
 				if features.f2 <= 0.5 {
-					return NewRedMushroomBlock()
+					return blocks.NewRedMushroomBlock()
 				} else {
-					return NewWhiteMushroomBlock()
+					return blocks.NewWhiteMushroomBlock()
 				}
 			// with 6% chance, generate flowers
 			case features.f1 <= 0.06:
-				return NewFlowersBlock()
+				return blocks.NewFlowersBlock()
 			}
 
-			return NewShortGrassBlock()
+			return blocks.NewShortGrassBlock()
 		default: // Tree
-			return NewPineTreeBlock()
+			return blocks.NewPineTreeBlock()
 		}
 	}
 
@@ -249,8 +250,8 @@ func genFeatures(previous Block, baseGenerator *perlin.Perlin, secondaryGenerato
 }
 
 // generates ground block at given coordinates
-func gen(baseGenerator, secondaryGenerator, mountainGenerator *perlin.Perlin, x, y uint64) Block {
-	var generated Block
+func gen(baseGenerator, secondaryGenerator, mountainGenerator *perlin.Perlin, x, y uint64) types.Block {
+	var generated types.Block
 
 	generated = genBase(baseGenerator, x, y)
 	generated = genMountain(generated, mountainGenerator, x, y)
@@ -278,7 +279,7 @@ func (c *Chunk) Generate(baseGenerator, secondaryGenerator, mountainGenerator *p
 func (c *Chunk) GenerateDummy() error {
 	for x := uint(0); x < 16; x++ {
 		for y := uint(0); y < 16; y++ {
-			if err := c.SetBlock(x, y, NewWaterBlock()); err != nil {
+			if err := c.SetBlock(x, y, blocks.NewWaterBlock()); err != nil {
 				return err
 			}
 		}

@@ -2,21 +2,22 @@ package world
 
 import (
 	"github.com/3elDU/bamboo/texture"
+	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Item interface {
 	Texture() *ebiten.Image
-	Type() BlockType
+	Type() types.BlockType
 }
 
 type item struct {
 	Tex      texture.Texture
-	ID       BlockType
+	ID       types.BlockType
 	Quantity uint
 }
 
-func NewCustomItem(tex texture.Texture, id BlockType, quantity uint) item {
+func NewCustomItem(tex texture.Texture, id types.BlockType, quantity uint) item {
 	return item{
 		Tex:      tex,
 		ID:       id,
@@ -28,6 +29,6 @@ func (i item) Texture() *ebiten.Image {
 	return i.Tex.Texture()
 }
 
-func (i item) Type() BlockType {
+func (i item) Type() types.BlockType {
 	return i.ID
 }

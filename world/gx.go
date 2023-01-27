@@ -5,11 +5,11 @@ import (
 	"math"
 
 	"github.com/3elDU/bamboo/config"
-	"github.com/3elDU/bamboo/util"
+	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-func (c *Chunk) Render(world *World) {
+func (c *Chunk) Render(world types.World) {
 	// do not redraw a chunk, when there is no need to
 	if !c.needsRedraw {
 		return
@@ -22,7 +22,12 @@ func (c *Chunk) Render(world *World) {
 				log.Panicf("Chunk.Render() - chunk.At() failed with %v", err)
 			}
 
-			block.Render(world, c.Texture, util.Coords2f{
+			drawableBlock, ok := block.(types.DrawableBlock)
+			if !ok {
+				continue
+			}
+
+			drawableBlock.Render(world, c.Texture(), types.Coords2f{
 				X: float64(x) * 16,
 				Y: float64(y) * 16,
 			})
@@ -62,7 +67,7 @@ func (world *World) Render(screen *ebiten.Image, playerX, playerY, scaling float
 			opts.GeoM.Reset()
 			opts.GeoM.Translate(screenX, screenY)
 			opts.GeoM.Scale(scaling, scaling)
-			screen.DrawImage(chunk.Texture, opts)
+			screen.DrawImage(chunk.Texture(), opts)
 		}
 	}
 }

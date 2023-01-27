@@ -9,8 +9,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/config"
-	"github.com/3elDU/bamboo/util"
+	"github.com/3elDU/bamboo/types"
 	"github.com/google/uuid"
 )
 
@@ -26,10 +27,10 @@ type WorldSaverLoader struct {
 	Metadata WorldSave
 
 	saveRequests     chan Chunk
-	loadRequestsPool map[util.Coords2u]bool
+	loadRequestsPool map[types.Coords2u]bool
 	// loadRequestsPool keeps track of currently requested chunks,
 	// so that one same chunk can't be requested twice
-	loadRequests chan util.Coords2u
+	loadRequests chan types.Coords2u
 	loaded       chan *Chunk
 }
 
@@ -38,8 +39,8 @@ func NewWorldSaverLoader(metadata WorldSave) *WorldSaverLoader {
 		Metadata: metadata,
 
 		saveRequests:     make(chan Chunk, 1024),
-		loadRequestsPool: make(map[util.Coords2u]bool),
-		loadRequests:     make(chan util.Coords2u, 256),
+		loadRequestsPool: make(map[types.Coords2u]bool),
+		loadRequests:     make(chan types.Coords2u, 256),
 		loaded:           make(chan *Chunk),
 	}
 }
@@ -94,7 +95,7 @@ func (sl *WorldSaverLoader) Save(chunk *Chunk) {
 
 // Pushes chunk load reuqest to the queue
 func (sl *WorldSaverLoader) Load(cx, cy uint64) {
-	coords := util.Coords2u{X: cx, Y: cy}
+	coords := types.Coords2u{X: cx, Y: cy}
 	if sl.loadRequestsPool[coords] {
 		return
 	}
@@ -117,7 +118,7 @@ type WorldSave struct {
 // it contains all required data
 // + optional metadata, that can be written individually by each block
 type SavedBlock struct {
-	Type  BlockType
+	Type  types.BlockType
 	State interface{}
 }
 
@@ -210,10 +211,8 @@ func LoadChunk(id uuid.UUID, x, y uint64) *Chunk {
 		// decode blocks
 		for x := uint(0); x < 16; x++ {
 			for y := uint(0); y < 16; y++ {
-				b := GetBlockByID(savedChunk.Data[x][y].Type)
-				if err := b.LoadState(savedChunk.Data[x][y].State); err != nil {
-					log.Panicf("LoadChunk() - Block.LoadState() failed - %v", err)
-				}
+				b := blocks.GetBlockByID(savedChunk.Data[x][y].Type)
+				b.LoadState(savedChunk.Data[x][y].State)
 				if err := c.SetBlock(x, y, b); err != nil {
 					log.Panicf("LoadChunk() - Chunkk.SetBlock() failed - %v", err)
 				}
