@@ -63,25 +63,17 @@ func NewGameScene(gameWorld *world.World, player player.Player) *gameScene {
 	)
 
 	// perform a save immediately after the scene creation
-	err := game.world.Save()
-	if err != nil {
-		log.Panicf("NewGameScene() - World save failed - %v", err)
-	}
-	game.player.Save(game.world.Metadata.UUID)
+	game.Save()
 
 	return game
 }
 
 func (game *gameScene) Save() {
-	if err := game.world.Save(); err != nil {
-		log.Panicf("GameScene - world save failed - %v", err)
-	}
-	if err := game.player.Save(game.world.Metadata.UUID); err != nil {
-		log.Panicf("GameScene - player save failed - %v", err)
-	}
+	game.world.Save()
+	game.player.Save(game.world.Metadata.UUID)
 }
 
-func (game *gameScene) Update() error {
+func (game *gameScene) Update() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		game.paused = !game.paused
 		log.Printf("Escape pressed. Toggled pause menu. (%v)", game.paused)
@@ -107,10 +99,8 @@ func (game *gameScene) Update() error {
 
 		// Pick up the block under the player
 		case ebiten.IsKeyPressed(ebiten.KeyP):
-			if block, err := game.world.BlockAt(uint64(game.player.X), uint64(game.player.Y)); err == nil {
-				if block, ok := block.(types.DrawableBlock); ok {
-					game.blockInHand = world.NewCustomItem(asset_loader.Texture(block.TextureName()), block.Type(), 1)
-				}
+			if block, ok := game.world.BlockAt(uint64(game.player.X), uint64(game.player.Y)).(types.DrawableBlock); ok {
+				game.blockInHand = world.NewCustomItem(asset_loader.Texture(block.TextureName()), block.Type(), 1)
 			}
 		}
 
@@ -150,8 +140,6 @@ func (game *gameScene) Update() error {
 	if scene_manager.Ticks()%config.WorldAutosaveDelay == 0 {
 		game.Save()
 	}
-
-	return nil
 }
 
 func (game *gameScene) Draw(screen *ebiten.Image) {

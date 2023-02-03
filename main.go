@@ -30,9 +30,7 @@ func init() {
 	rand.Seed(int64(time.Now().Nanosecond()))
 
 	// load assets
-	if err := asset_loader.LoadAssets(config.AssetDirectory); err != nil {
-		log.Panicf("LoadAssets() failed with %v", err)
-	}
+	asset_loader.LoadAssets(config.AssetDirectory)
 
 	// set window options
 	ebiten.SetWindowSize(640, 480)

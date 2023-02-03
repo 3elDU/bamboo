@@ -4,7 +4,6 @@ Functions related to world generation
 package world
 
 import (
-	"log"
 	"math"
 	"math/rand"
 
@@ -59,9 +58,7 @@ func (g *WorldGenerator) run() {
 		req := <-g.requests
 
 		c := NewChunk(req.X, req.Y)
-		if err := c.Generate(g.baseGenerator, g.secondaryGenerator, g.mountainGenerator); err != nil {
-			log.Panicf("WorldGenerator.run() - error while generating chunk - %v", err)
-		}
+		c.Generate(g.baseGenerator, g.secondaryGenerator, g.mountainGenerator)
 
 		// FIXME: This is probably not very safe to pass pointers between goroutines
 		g.generated <- c
@@ -260,30 +257,22 @@ func gen(baseGenerator, secondaryGenerator, mountainGenerator *perlin.Perlin, x,
 	return generated
 }
 
-func (c *Chunk) Generate(baseGenerator, secondaryGenerator, mountainGenerator *perlin.Perlin) error {
+func (c *Chunk) Generate(baseGenerator, secondaryGenerator, mountainGenerator *perlin.Perlin) {
 	for x := uint(0); x < 16; x++ {
 		for y := uint(0); y < 16; y++ {
 			bx := c.x*16 + uint64(x)
 			by := c.y*16 + uint64(y)
 
-			if err := c.SetBlock(x, y, gen(baseGenerator, secondaryGenerator, mountainGenerator, bx, by)); err != nil {
-				return err
-			}
+			c.SetBlock(x, y, gen(baseGenerator, secondaryGenerator, mountainGenerator, bx, by))
 		}
 	}
-
-	return nil
 }
 
 // simply fills a chunk with water
-func (c *Chunk) GenerateDummy() error {
+func (c *Chunk) GenerateDummy() {
 	for x := uint(0); x < 16; x++ {
 		for y := uint(0); y < 16; y++ {
-			if err := c.SetBlock(x, y, blocks.NewWaterBlock()); err != nil {
-				return err
-			}
+			c.SetBlock(x, y, blocks.NewWaterBlock())
 		}
 	}
-
-	return nil
 }

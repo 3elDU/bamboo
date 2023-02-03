@@ -1,9 +1,9 @@
 package world
 
 import (
-	"fmt"
 	"log"
 
+	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/types"
@@ -131,12 +131,12 @@ func (world *World) ChunkAtB(bx, by uint64) types.Chunk {
 }
 
 // There is no B suffix, because it's trivial that this function accepts block coordinates
-func (world *World) BlockAt(bx, by uint64) (types.Block, error) {
+func (world *World) BlockAt(bx, by uint64) types.Block {
 	cx, cy := bx/16, by/16
 
 	chunk, exists := world.chunks[types.Coords2u{X: cx, Y: cy}]
 	if !exists {
-		return nil, fmt.Errorf("chunk at %v, %v doesn't exist", cx, cy)
+		return blocks.NewEmptyBlock()
 	}
 
 	return chunk.At(uint(bx%16), uint(by%16))

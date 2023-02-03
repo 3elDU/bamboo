@@ -69,10 +69,9 @@ func NewMainMenuScene() *mainMenu {
 	}
 }
 
-func (s *mainMenu) Update() error {
-	err := s.view.Update()
-	if err != nil {
-		return err
+func (s *mainMenu) Update() {
+	if err := s.view.Update(); err != nil {
+		log.Panicf("failed to update a view: %v", err)
 	}
 
 	select {
@@ -90,8 +89,6 @@ func (s *mainMenu) Update() error {
 		}
 	default:
 	}
-
-	return nil
 }
 
 func (s *mainMenu) Destroy() {
@@ -129,10 +126,10 @@ func NewAboutScene() *aboutScene {
 	}
 }
 
-func (s *aboutScene) Update() error {
+func (s *aboutScene) Update() {
 	err := s.view.Update()
 	if err != nil {
-		return err
+		log.Panicf("failed to update a view: %v", err)
 	}
 
 	select {
@@ -140,7 +137,6 @@ func (s *aboutScene) Update() error {
 		scene_manager.End()
 	default:
 	}
-	return nil
 }
 
 func (s *aboutScene) Destroy() {
@@ -179,10 +175,9 @@ func NewNewWorldScene() *newWorldScene {
 	}
 }
 
-func (s *newWorldScene) Update() error {
-	err := s.view.Update()
-	if err != nil {
-		return err
+func (s *newWorldScene) Update() {
+	if err := s.view.Update(); err != nil {
+		log.Panicf("failed to update a viev: %v", err)
 	}
 
 	select {
@@ -199,7 +194,6 @@ func (s *newWorldScene) Update() error {
 		scene_manager.QSwitch(game.NewGameScene(w, player.Player{X: float64(config.PlayerStartX), Y: float64(config.PlayerStartY)}))
 	default:
 	}
-	return nil
 }
 
 func (*newWorldScene) Destroy() {
@@ -309,14 +303,14 @@ func (s *worldListScene) Destroy() {
 	log.Println("worldListScene.Destroy() called")
 }
 
-func (s *worldListScene) Update() error {
+func (s *worldListScene) Update() {
 	// Rescan the saves folder each 60 ticks ( 1 second )
 	if scene_manager.Ticks()%60 == 0 {
 		s.Scan()
 	}
 
 	if err := s.view.Update(); err != nil {
-		return err
+		log.Panicf("failed to update a view: %v", err)
 	}
 
 	select {
@@ -333,7 +327,6 @@ func (s *worldListScene) Update() error {
 		s.Scan()
 	default:
 	}
-	return nil
 }
 
 func (s *worldListScene) Draw(screen *ebiten.Image) {
@@ -368,16 +361,14 @@ func (s *notImplementedYetScene) Destroy() {
 	log.Println("notImplementedYetScene.Destroy() called")
 }
 
-func (s *notImplementedYetScene) Update() error {
+func (s *notImplementedYetScene) Update() {
 	if s.back.IsPressed() {
 		scene_manager.End()
 	}
 
 	if err := s.view.Update(); err != nil {
-		return err
+		log.Panicf("failed to update a view: %v", err)
 	}
-
-	return nil
 }
 
 func (s *notImplementedYetScene) Draw(screen *ebiten.Image) {

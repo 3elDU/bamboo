@@ -40,11 +40,7 @@ func (b *connectedBlock) Render(world types.World, screen *ebiten.Image, pos typ
 	var sidesConnected [4]bool
 	for i, side := range [4]types.Coords2i{{X: -1, Y: 0}, {X: 1, Y: 0}, {X: 0, Y: -1}, {X: 0, Y: 1}} {
 		x, y := int64(b.x)+side.X, int64(b.y)+side.Y
-		neighbor, err := world.BlockAt(uint64(x), uint64(y))
-		if err != nil {
-			continue
-		}
-
+		neighbor := world.BlockAt(uint64(x), uint64(y))
 		if !b.shouldConnect(neighbor.Type()) {
 			continue
 		}

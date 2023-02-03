@@ -80,11 +80,7 @@ func collidePlayer(origin types.Coords2f, world types.World) (collisions [4]bool
 	}
 
 	for i, point := range playerCollisionPoints {
-		b, err := world.BlockAt(uint64(point.X), uint64(point.Y))
-		if err != nil {
-			continue
-		}
-		block, ok := b.(types.CollidableBlock)
+		block, ok := world.BlockAt(uint64(point.X), uint64(point.Y)).(types.CollidableBlock)
 		if !ok {
 			continue
 		}
@@ -153,10 +149,8 @@ func (p *Player) Update(movement MovementVector, world *world.World) {
 
 	// multiply velocity by block speed modifier
 	speedModifier := 1.0
-	if block, err := world.BlockAt(uint64(p.X), uint64(p.Y)); err == nil {
-		if block, ok := block.(types.CollidableBlock); ok {
-			speedModifier = block.PlayerSpeed()
-		}
+	if block, ok := world.BlockAt(uint64(p.X), uint64(p.Y)).(types.CollidableBlock); ok {
+		speedModifier = block.PlayerSpeed()
 	}
 
 	p.X += p.xVelocity * speedModifier
@@ -169,7 +163,7 @@ func (p *Player) Update(movement MovementVector, world *world.World) {
 	p.yVelocity *= 0.90
 }
 
-func (p *Player) Save(id uuid.UUID) error {
+func (p *Player) Save(id uuid.UUID) {
 	saveDir := filepath.Join(config.WorldSaveDirectory, id.String())
 
 	// make a save directory, if it doesn't exist yet
@@ -178,14 +172,13 @@ func (p *Player) Save(id uuid.UUID) error {
 	// open world metadata file
 	f, err := os.Create(filepath.Join(saveDir, "player.gob"))
 	if err != nil {
-		return err
+		log.Panicf("failed to create player metadata file")
 	}
 	defer f.Close()
 
 	if err := gob.NewEncoder(f).Encode(p); err != nil {
-		return err
+		log.Panicf("failed to write player metadata")
 	}
 
 	log.Println("Player.Save() - saved")
-	return nil
 }

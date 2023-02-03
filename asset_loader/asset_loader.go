@@ -39,7 +39,7 @@ func cleanPath(path string) string {
 }
 
 // LoadAssets loads assets from directory dir to global variable GlobalAssets
-func LoadAssets(dir string) error {
+func LoadAssets(dir string) {
 	assetList := &AssetList{
 		Fonts:    make(map[string]font.Face),
 		Textures: make(map[string]*ebiten.Image),
@@ -121,11 +121,10 @@ func LoadAssets(dir string) error {
 		return nil
 	})
 	if err != nil {
-		return err
+		log.Panicln(err)
 	}
 
 	GlobalAssets = assetList
-	return nil
 }
 
 func DefaultFont() font.Face {

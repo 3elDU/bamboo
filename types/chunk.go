@@ -7,14 +7,15 @@ import (
 )
 
 type Chunk interface {
-	At(x uint, y uint) (Block, error)
+	// Returns a dummy block, in case of an error
+	At(x uint, y uint) Block
 	BlockCoords() Coords2u
 	Coords() Coords2u
-	Generate(baseGenerator *perlin.Perlin, secondaryGenerator *perlin.Perlin, mountainGenerator *perlin.Perlin) error
-	GenerateDummy() error
+	Generate(baseGenerator *perlin.Perlin, secondaryGenerator *perlin.Perlin, mountainGenerator *perlin.Perlin)
+	GenerateDummy()
 	Render(world World)
-	Save(id uuid.UUID) error
-	SetBlock(x uint, y uint, block Block) error
+	Save(id uuid.UUID)
+	SetBlock(x uint, y uint, block Block)
 	Update(world World)
 	TriggerRedraw()
 	Texture() *ebiten.Image

@@ -17,7 +17,7 @@ import (
 var manager *sceneManager
 
 type Scene interface {
-	Update() error
+	Update()
 	Draw(screen *ebiten.Image)
 
 	// called when the scene is about to be deleted
@@ -142,9 +142,7 @@ func (manager *sceneManager) Update() error {
 		}
 	}
 
-	if err := manager.currentScene.Update(); err != nil {
-		return err
-	}
+	manager.currentScene.Update()
 
 	manager.counter++
 

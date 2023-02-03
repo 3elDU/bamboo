@@ -1,7 +1,7 @@
 package world
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/scene_manager"
@@ -69,17 +69,17 @@ func (c Chunk) Coords() types.Coords2u {
 	return types.Coords2u{X: c.x, Y: c.y}
 }
 
-func (c *Chunk) At(x, y uint) (types.Block, error) {
+func (c *Chunk) At(x, y uint) types.Block {
 	if x > 16 || y > 16 {
-		return nil, fmt.Errorf("invalid coordinates: %v, %v", x, y)
+		log.Panicf("invalid coordinates: %v, %v", x, y)
 	}
 	c.lastAccessed = scene_manager.Ticks()
-	return c.blocks[x][y], nil
+	return c.blocks[x][y]
 }
 
-func (c *Chunk) SetBlock(x, y uint, block types.Block) error {
+func (c *Chunk) SetBlock(x, y uint, block types.Block) {
 	if x > 15 || y > 15 {
-		return fmt.Errorf("invalid coordinates: %v, %v", x, y)
+		log.Panicf("invalid coordinates: %v, %v", x, y)
 	}
 
 	block.SetParentChunk(c)
@@ -88,7 +88,6 @@ func (c *Chunk) SetBlock(x, y uint, block types.Block) error {
 	c.lastAccessed = scene_manager.Ticks()
 	c.modified = true
 	c.needsRedraw = true
-	return nil
 }
 
 func (c *Chunk) TriggerRedraw() {
