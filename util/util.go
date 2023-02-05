@@ -1,6 +1,7 @@
 package util
 
 import (
+	"log"
 	"math"
 	"math/rand"
 
@@ -24,7 +25,7 @@ func Clamp[T constraints.Integer | constraints.Float](val, min, max T) T {
 
 func RandomChoice[T any](objects []T) T {
 	if len(objects) == 0 {
-		panic("objects with zero length")
+		log.Panicln("array with zero length")
 	}
 	return objects[rand.Intn(len(objects))]
 }
