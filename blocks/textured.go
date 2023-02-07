@@ -5,7 +5,6 @@ import (
 	"math"
 
 	"github.com/3elDU/bamboo/asset_loader"
-	"github.com/3elDU/bamboo/texture"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -17,7 +16,7 @@ type TexturedBlockState struct {
 
 // Another base structure, to simplify things
 type texturedBlock struct {
-	tex      texture.Texture
+	tex      types.Texture
 	rotation float64 // in degrees
 }
 
@@ -39,12 +38,12 @@ func (b *texturedBlock) Render(_ types.World, screen *ebiten.Image, pos types.Co
 }
 
 func (b *texturedBlock) TextureName() string {
-	return b.tex.Name
+	return b.tex.Name()
 }
 
 func (b *texturedBlock) State() interface{} {
 	return TexturedBlockState{
-		Name:     b.tex.Name,
+		Name:     b.tex.Name(),
 		Rotation: b.rotation,
 	}
 }

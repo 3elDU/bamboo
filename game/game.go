@@ -12,7 +12,6 @@ import (
 	"github.com/3elDU/bamboo/game/player"
 	"github.com/3elDU/bamboo/game/widgets"
 	"github.com/3elDU/bamboo/scene_manager"
-	"github.com/3elDU/bamboo/types"
 	"github.com/3elDU/bamboo/util"
 	"github.com/3elDU/bamboo/widget"
 	"github.com/3elDU/bamboo/world"
@@ -52,7 +51,7 @@ func NewGameScene(gameWorld *world.World, player player.Player) *gameScene {
 
 		scaling: 1.0,
 
-		blockInHand: world.NewCustomItem(asset_loader.Texture("pine-ffff"), blocks.PineTree, 1),
+		blockInHand: world.NewCustomItem(asset_loader.ConnectedTexture("grass", false, false, false, false), blocks.Grass, 1),
 
 		debugInfoVisible: true,
 	}
@@ -99,9 +98,12 @@ func (game *gameScene) Update() {
 
 		// Pick up the block under the player
 		case ebiten.IsKeyPressed(ebiten.KeyP):
-			if block, ok := game.world.BlockAt(uint64(game.player.X), uint64(game.player.Y)).(types.DrawableBlock); ok {
-				game.blockInHand = world.NewCustomItem(asset_loader.Texture(block.TextureName()), block.Type(), 1)
-			}
+			// FIXME: this is completely broken, until items dropped by blocks are implemented properly
+			/*
+				if block, ok := game.world.BlockAt(uint64(game.player.X), uint64(game.player.Y)).(types.DrawableBlock); ok {
+					game.blockInHand = world.NewCustomItem(asset_loader.Texture(block.TextureName()), block.Type(), 1)
+				}
+			*/
 		}
 
 		// scale the map, using scroll wheel
