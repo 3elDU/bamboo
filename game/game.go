@@ -5,13 +5,15 @@ import (
 	"log"
 
 	"github.com/3elDU/bamboo/asset_loader"
-	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/font"
+	"github.com/3elDU/bamboo/game/inventory"
 	"github.com/3elDU/bamboo/game/player"
 	"github.com/3elDU/bamboo/game/widgets"
+	"github.com/3elDU/bamboo/items"
 	"github.com/3elDU/bamboo/scene_manager"
+	"github.com/3elDU/bamboo/types"
 	"github.com/3elDU/bamboo/util"
 	"github.com/3elDU/bamboo/widget"
 	"github.com/3elDU/bamboo/world"
@@ -29,11 +31,10 @@ type gameScene struct {
 	world                  *world.World
 	player                 *player.Player
 	playerRenderingOptions *ebiten.DrawImageOptions
+	inventory              *inventory.Inventory
 
 	scaling         float64
 	scalingVelocity float64 // for smooth scaling animation
-
-	blockInHand world.Item
 
 	debugInfoVisible bool
 }
@@ -48,10 +49,9 @@ func NewGameScene(gameWorld *world.World, player player.Player) *gameScene {
 		world:                  gameWorld,
 		player:                 &player,
 		playerRenderingOptions: &ebiten.DrawImageOptions{},
+		inventory:              inventory.NewInventory(),
 
-		scaling: 1.0,
-
-		blockInHand: world.NewCustomItem(asset_loader.ConnectedTexture("grass", false, false, false, false), blocks.Grass, 1),
+		scaling: 2.0,
 
 		debugInfoVisible: true,
 	}
@@ -91,19 +91,40 @@ func (game *gameScene) Update() {
 			game.debugInfoVisible = !game.debugInfoVisible
 			log.Printf("Toggled visibility of debug info. (%v)", game.debugInfoVisible)
 
-		// Places block under the player
-		case ebiten.IsKeyPressed(ebiten.KeyF):
-			game.world.ChunkAtB(uint64(game.player.X), uint64(game.player.Y)).
-				SetBlock(uint(game.player.X)%16, uint(game.player.Y)%16, blocks.GetBlockByID(game.blockInHand.Type()))
+		// Interact with the nearby block
+		case ebiten.IsKeyPressed(ebiten.KeyC):
+			block := game.world.BlockAt(uint64(game.player.X), uint64(game.player.Y))
+			drawable, ok := block.(types.DrawableBlock)
+			if !ok {
+				break
+			}
 
-		// Pick up the block under the player
-		case ebiten.IsKeyPressed(ebiten.KeyP):
-			// FIXME: this is completely broken, until items dropped by blocks are implemented properly
-			/*
-				if block, ok := game.world.BlockAt(uint64(game.player.X), uint64(game.player.Y)).(types.DrawableBlock); ok {
-					game.blockInHand = world.NewCustomItem(asset_loader.Texture(block.TextureName()), block.Type(), 1)
-				}
-			*/
+			item := items.NewItemFromBlock(drawable)
+			game.inventory.AddItem(item)
+
+		// Use the item in hand
+		case ebiten.IsKeyPressed(ebiten.KeyF):
+			itemInHand := game.inventory.Slots[game.inventory.SelectedSlot].Item
+			if itemInHand == nil {
+				break
+			}
+			itemInHand.Use(game.world, types.Coords2u{
+				X: uint64(game.player.X),
+				Y: uint64(game.player.Y),
+			})
+
+		// Inventory slots selection
+		case ebiten.IsKeyPressed(ebiten.Key1):
+			game.inventory.SelectSlot(0)
+		case ebiten.IsKeyPressed(ebiten.Key2):
+			game.inventory.SelectSlot(1)
+		case ebiten.IsKeyPressed(ebiten.Key3):
+			game.inventory.SelectSlot(2)
+		case ebiten.IsKeyPressed(ebiten.Key4):
+			game.inventory.SelectSlot(3)
+		case ebiten.IsKeyPressed(ebiten.Key5):
+			game.inventory.SelectSlot(4)
+
 		}
 
 		// scale the map, using scroll wheel
@@ -159,14 +180,7 @@ func (game *gameScene) Draw(screen *ebiten.Image) {
 	)
 	screen.DrawImage(asset_loader.Texture("person").Texture(), game.playerRenderingOptions)
 
-	// render block in hand
-	if game.blockInHand != nil {
-		opts := &ebiten.DrawImageOptions{}
-		game.blockInHand.Texture()
-		opts.GeoM.Scale(5, 5)
-		opts.GeoM.Translate(0, 80)
-		screen.DrawImage(game.blockInHand.Texture(), opts)
-	}
+	game.inventory.Render(screen)
 
 	// draw widgets
 	game.widgets.Render(screen)

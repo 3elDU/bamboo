@@ -1,7 +1,3 @@
-/*
-	Declarations of basic block types
-*/
-
 package types
 
 import (

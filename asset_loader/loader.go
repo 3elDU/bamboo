@@ -66,6 +66,11 @@ func parseConnectedTexture(assetList *AssetList, path string) error {
 		}
 	}
 
+	// also save a texture with no connected sides, as a regular texture
+	assetList.Textures[cleanPath(path)] = ebiten.NewImageFromImage(tex.SubImage(
+		image.Rect(0, 0, 16, 16),
+	))
+
 	return nil
 }
 
