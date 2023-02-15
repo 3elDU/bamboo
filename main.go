@@ -14,6 +14,8 @@ import (
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/scenes"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/pkg/profile"
+	"golang.org/x/exp/slices"
 )
 
 func init() {
@@ -39,6 +41,15 @@ func init() {
 }
 
 func main() {
+	if slices.Contains(os.Environ(), "CPUPROFILE=1") {
+		log.Println("Starting with CPU profiling enabled")
+		defer profile.Start(profile.CPUProfile, profile.ProfilePath(".")).Stop()
+	}
+	if slices.Contains(os.Environ(), "MEMPROFILE=1") {
+		log.Println("Starting with memory profiling enabled")
+		defer profile.Start(profile.MemProfile, profile.ProfilePath(".")).Stop()
+	}
+
 	// init scene manager, and scenes
 	scene_manager.Push(scenes.NewMainMenuScene())
 
