@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/font"
@@ -28,10 +27,9 @@ type gameScene struct {
 	paused    bool
 	pauseMenu *pauseMenu
 
-	world                  *world.World
-	player                 *player.Player
-	playerRenderingOptions *ebiten.DrawImageOptions
-	inventory              *inventory.Inventory
+	world     *world.World
+	player    *player.Player
+	inventory *inventory.Inventory
 
 	scaling         float64
 	scalingVelocity float64 // for smooth scaling animation
@@ -46,10 +44,9 @@ func NewGameScene(gameWorld *world.World, player player.Player) *gameScene {
 
 		pauseMenu: newPauseMenu(),
 
-		world:                  gameWorld,
-		player:                 &player,
-		playerRenderingOptions: &ebiten.DrawImageOptions{},
-		inventory:              inventory.NewInventory(),
+		world:     gameWorld,
+		player:    &player,
+		inventory: inventory.NewInventory(),
 
 		scaling: 2.0,
 
@@ -166,20 +163,8 @@ func (game *gameScene) Update() {
 }
 
 func (game *gameScene) Draw(screen *ebiten.Image) {
-	sw, sh := screen.Size()
-
-	// draw the world
 	game.world.Render(screen, game.player.X, game.player.Y, game.scaling)
-
-	// Render the player
-	game.playerRenderingOptions.GeoM.Reset()
-	game.playerRenderingOptions.GeoM.Scale(game.scaling, game.scaling)
-	game.playerRenderingOptions.GeoM.Translate(
-		float64(sw)/2-8*game.scaling,
-		float64(sh)/2-8*game.scaling,
-	)
-	screen.DrawImage(asset_loader.Texture("person").Texture(), game.playerRenderingOptions)
-
+	game.player.Render(screen, game.scaling)
 	game.inventory.Render(screen)
 
 	// draw widgets
