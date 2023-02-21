@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/3elDU/bamboo/config"
 	"github.com/google/uuid"
@@ -14,14 +15,16 @@ type Player struct {
 	// Note that these are block coordinates, not pixel coordinates
 	X, Y                 float64
 	xVelocity, yVelocity float64
-	movementDirection    MovementDirection
+
+	movementDirection MovementDirection
+	animationFrame    uint8
+	lastFrameChange   time.Time
 }
 
 type MovementDirection uint8
 
 const (
-	Still MovementDirection = iota
-	Left
+	Left MovementDirection = iota
 	Right
 	Up
 	Down

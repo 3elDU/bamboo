@@ -5,7 +5,7 @@ package config
 const (
 	AssetDirectory         string  = "./assets/"
 	PerlinNoiseScaleFactor float64 = 128
-	PlayerSpeed            float64 = 0.03
+	PlayerSpeed            float64 = 0.02
 
 	WorldWidth  uint64 = 1024
 	WorldHeight uint64 = 1024

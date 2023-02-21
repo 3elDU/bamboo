@@ -5,6 +5,9 @@
 package player
 
 import (
+	"image"
+	"time"
+
 	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -14,13 +17,16 @@ var texture_map = map[MovementDirection]string{
 	Right: "player_right",
 	Up:    "player_up",
 	Down:  "player_down",
-	Still: "player_still",
 }
 
-func (player Player) Render(screen *ebiten.Image, scaling float64) {
+func (player *Player) Render(screen *ebiten.Image, scaling float64) {
 	opts := &ebiten.DrawImageOptions{}
 	sw, sh := screen.Size()
-	tex := asset_loader.Texture(texture_map[player.movementDirection]).Texture()
+	tex := ebiten.NewImageFromImage(
+		asset_loader.Texture(texture_map[player.movementDirection]).Texture().SubImage(
+			image.Rect(int(player.animationFrame)*16, 0, int(player.animationFrame)*16+16, 32),
+		),
+	)
 
 	opts.GeoM.Reset()
 	opts.GeoM.Scale(scaling, scaling)
@@ -29,4 +35,27 @@ func (player Player) Render(screen *ebiten.Image, scaling float64) {
 		float64(sh)/2-16*scaling,
 	)
 	screen.DrawImage(tex, opts)
+
+	player.nextAnimationFrame()
+}
+
+func (player *Player) nextAnimationFrame() {
+	// run at precisely 5 fps
+	if time.Since(player.lastFrameChange).Seconds() < 0.2 {
+		return
+	}
+
+	// if the player is standing still, reset the frame to 0
+	if player.speed() < 0.01 {
+		player.animationFrame = 0
+		return
+	}
+
+	if player.animationFrame >= 3 {
+		player.animationFrame = 0
+	} else {
+		player.animationFrame++
+	}
+
+	player.lastFrameChange = time.Now()
 }

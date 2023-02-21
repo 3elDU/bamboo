@@ -9,9 +9,12 @@ import (
 	"github.com/3elDU/bamboo/world"
 )
 
+func (p *Player) speed() float64 {
+	return math.Max(math.Abs(p.xVelocity), math.Abs(p.yVelocity))
+}
+
 func (p *Player) updateMovementDirection() {
-	if math.Max(math.Abs(p.xVelocity), math.Abs(p.yVelocity)) < 0.1 {
-		p.movementDirection = Still
+	if p.speed() < 0.01 {
 		return
 	}
 
@@ -36,8 +39,6 @@ func (p *Player) updateMovementDirection() {
 		} else {
 			p.movementDirection = Up
 		}
-	default:
-		p.movementDirection = Still
 	}
 }
 
@@ -144,6 +145,6 @@ func (p *Player) Update(movement MovementVector, world *world.World) {
 
 	p.updateMovementDirection()
 
-	p.xVelocity *= 0.90
-	p.yVelocity *= 0.90
+	p.xVelocity *= 0.75
+	p.yVelocity *= 0.75
 }
