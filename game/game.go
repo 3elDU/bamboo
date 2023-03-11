@@ -80,73 +80,7 @@ func (game *gameScene) Update() {
 		}
 	}
 
-	if !game.paused {
-		// Check for key presses
-		switch {
-		// F3 toggles visibility of debug widgets
-		case inpututil.IsKeyJustPressed(ebiten.KeyF3):
-			game.debugInfoVisible = !game.debugInfoVisible
-			log.Printf("Toggled visibility of debug info. (%v)", game.debugInfoVisible)
-
-		// Interact with the nearby block
-		case ebiten.IsKeyPressed(ebiten.KeyC):
-			block := game.world.BlockAt(uint64(game.player.X), uint64(game.player.Y))
-			drawable, ok := block.(types.DrawableBlock)
-			if !ok {
-				break
-			}
-
-			item := items.NewItemFromBlock(drawable)
-			game.inventory.AddItem(item)
-
-		// Use the item in hand
-		case ebiten.IsKeyPressed(ebiten.KeyF):
-			itemInHand := game.inventory.Slots[game.inventory.SelectedSlot].Item
-			if itemInHand == nil {
-				break
-			}
-			itemInHand.Use(game.world, types.Coords2u{
-				X: uint64(game.player.X),
-				Y: uint64(game.player.Y),
-			})
-
-		// Inventory slots selection
-		case ebiten.IsKeyPressed(ebiten.Key1):
-			game.inventory.SelectSlot(0)
-		case ebiten.IsKeyPressed(ebiten.Key2):
-			game.inventory.SelectSlot(1)
-		case ebiten.IsKeyPressed(ebiten.Key3):
-			game.inventory.SelectSlot(2)
-		case ebiten.IsKeyPressed(ebiten.Key4):
-			game.inventory.SelectSlot(3)
-		case ebiten.IsKeyPressed(ebiten.Key5):
-			game.inventory.SelectSlot(4)
-
-		}
-
-		// scale the map, using scroll wheel
-		_, yvel := ebiten.Wheel()
-		game.scalingVelocity += yvel * 0.004
-
-		game.player.Update(player.MovementVector{
-			Left:  ebiten.IsKeyPressed(ebiten.KeyA),
-			Right: ebiten.IsKeyPressed(ebiten.KeyD),
-			Up:    ebiten.IsKeyPressed(ebiten.KeyW),
-			Down:  ebiten.IsKeyPressed(ebiten.KeyS),
-		}, game.world)
-
-		game.world.Update()
-
-		game.widgets.Update()
-
-		if game.debugInfoVisible {
-			game.debugWidgets.Update()
-		}
-
-		game.scaling += game.scalingVelocity
-		game.scaling = util.Clamp(game.scaling, 1.00, 6.00)
-		game.scalingVelocity *= 0.95
-	} else {
+	if game.paused {
 		switch game.pauseMenu.ButtonPressed() {
 		case continueButtonPressed:
 			game.paused = false
@@ -154,7 +88,74 @@ func (game *gameScene) Update() {
 			game.Save()
 			scene_manager.End()
 		}
+		return
 	}
+
+	// Check for key presses
+	switch {
+	// F3 toggles visibility of debug widgets
+	case inpututil.IsKeyJustPressed(ebiten.KeyF3):
+		game.debugInfoVisible = !game.debugInfoVisible
+		log.Printf("Toggled visibility of debug info. (%v)", game.debugInfoVisible)
+
+	// Interact with the nearby block
+	case ebiten.IsKeyPressed(ebiten.KeyC):
+		block := game.world.BlockAt(uint64(game.player.X), uint64(game.player.Y))
+		drawable, ok := block.(types.DrawableBlock)
+		if !ok {
+			break
+		}
+
+		item := items.NewItemFromBlock(drawable)
+		game.inventory.AddItem(item)
+
+	// Use the item in hand
+	case ebiten.IsKeyPressed(ebiten.KeyF):
+		itemInHand := game.inventory.Slots[game.inventory.SelectedSlot].Item
+		if itemInHand == nil {
+			break
+		}
+		itemInHand.Use(game.world, types.Coords2u{
+			X: uint64(game.player.X),
+			Y: uint64(game.player.Y),
+		})
+
+	// Inventory slots selection
+	case ebiten.IsKeyPressed(ebiten.KeyDigit1):
+		game.inventory.SelectSlot(0)
+	case ebiten.IsKeyPressed(ebiten.KeyDigit2):
+		game.inventory.SelectSlot(1)
+	case ebiten.IsKeyPressed(ebiten.KeyDigit3):
+		game.inventory.SelectSlot(2)
+	case ebiten.IsKeyPressed(ebiten.KeyDigit4):
+		game.inventory.SelectSlot(3)
+	case ebiten.IsKeyPressed(ebiten.KeyDigit5):
+		game.inventory.SelectSlot(4)
+
+	}
+
+	// scale the map, using scroll wheel
+	_, yvel := ebiten.Wheel()
+	game.scalingVelocity += yvel * 0.004
+
+	game.player.Update(player.MovementVector{
+		Left:  ebiten.IsKeyPressed(ebiten.KeyA),
+		Right: ebiten.IsKeyPressed(ebiten.KeyD),
+		Up:    ebiten.IsKeyPressed(ebiten.KeyW),
+		Down:  ebiten.IsKeyPressed(ebiten.KeyS),
+	}, game.world)
+
+	game.world.Update()
+
+	game.widgets.Update()
+
+	if game.debugInfoVisible {
+		game.debugWidgets.Update()
+	}
+
+	game.scaling += game.scalingVelocity
+	game.scaling = util.Clamp(game.scaling, 1.00, 6.00)
+	game.scalingVelocity *= 0.95
 
 	// perform autosave each N ticks
 	if scene_manager.Ticks()%config.WorldAutosaveDelay == 0 {
@@ -167,18 +168,12 @@ func (game *gameScene) Draw(screen *ebiten.Image) {
 	game.player.Render(screen, game.scaling)
 	game.inventory.Render(screen)
 
-	// draw widgets
 	game.widgets.Render(screen)
 	if game.debugInfoVisible {
 		game.debugWidgets.Render(screen)
 	}
 
-	// draw debug info
 	if game.debugInfoVisible {
-		// TODO: extract this to separate widgets
-		// But that would require lots of architecture changed
-		// Because currently, there is no way to pass custom data to a widget
-
 		font.RenderFont(screen,
 			fmt.Sprintf("player pos %.2f, %.2f", game.player.X, game.player.Y),
 			0, 0, colors.Black)
