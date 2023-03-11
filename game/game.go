@@ -50,7 +50,7 @@ func NewGameScene(gameWorld *world.World, player player.Player) *gameScene {
 
 		scaling: 2.0,
 
-		debugInfoVisible: true,
+		debugInfoVisible: false,
 	}
 
 	game.debugWidgets.AddTextWidget(
