@@ -31,6 +31,8 @@ type worldListScene struct {
 	// when the "New world" button will be pressed
 	// the event will be transmitted through this channel
 	newWorld chan bool
+	// same idead as for newWorld
+	goBack chan bool
 }
 
 // Scans the save folder for worlds
@@ -75,6 +77,11 @@ func (s *worldListScene) Scan() {
 func (s *worldListScene) UpdateUI() {
 	view := ui.Stack(ui.StackOptions{
 		Direction: ui.VerticalStack,
+		Spacing:   3,
+	})
+
+	worldList := ui.Stack(ui.StackOptions{
+		Direction: ui.VerticalStack,
 		Spacing:   1,
 	})
 	for _, world := range s.worldList {
@@ -82,7 +89,7 @@ func (s *worldListScene) UpdateUI() {
 		worldUUID := world.UUID
 
 		// assemble a view for each world
-		view.AddChild(ui.Stack(ui.StackOptions{Direction: ui.VerticalStack, Spacing: 0.5},
+		worldList.AddChild(ui.Stack(ui.StackOptions{Direction: ui.VerticalStack, Spacing: 0.5},
 			ui.Stack(ui.StackOptions{Direction: ui.HorizontalStack, Spacing: 1},
 				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Name: %v", world.Name)),
 				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Seed: %v", world.Seed)),
@@ -94,8 +101,11 @@ func (s *worldListScene) UpdateUI() {
 			),
 		))
 	}
-	view.AddChild(ui.Center(
+	view.AddChild(worldList)
+
+	view.AddChild(ui.Stack(ui.StackOptions{Direction: ui.HorizontalStack, Spacing: 1},
 		ui.Button(func() { s.newWorld <- true }, ui.Label(ui.DefaultLabelOptions(), "New world")),
+		ui.Button(func() { s.goBack <- true }, ui.Label(ui.DefaultLabelOptions(), "Go back")),
 	))
 
 	s.view = ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(), view))
@@ -106,6 +116,7 @@ func NewWorldListScene() *worldListScene {
 		selectedWorld: make(chan uuid.UUID, 1),
 		deleteWorld:   make(chan uuid.UUID, 1),
 		newWorld:      make(chan bool, 1),
+		goBack:        make(chan bool, 1),
 	}
 	scene.Scan()
 	return scene
@@ -134,6 +145,8 @@ func (s *worldListScene) Update() {
 	case <-s.newWorld:
 		log.Println("worldListScene - New world")
 		scene_manager.QSwitch(NewNewWorldScene())
+	case <-s.goBack:
+		scene_manager.End()
 	case id := <-s.deleteWorld:
 		world.DeleteWorld(id)
 		s.Scan()
