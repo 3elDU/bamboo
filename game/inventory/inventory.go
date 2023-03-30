@@ -11,7 +11,7 @@ const InventorySize = 5
 
 type Inventory struct {
 	Slots        [InventorySize]*types.ItemSlot
-	SelectedSlot uint8
+	SelectedSlot int
 }
 
 func NewInventory() *Inventory {
@@ -34,9 +34,11 @@ func (inv *Inventory) AddItem(item types.Item) bool {
 	return false
 }
 
-func (inv *Inventory) SelectSlot(slot uint8) {
-	if slot > InventorySize {
-		inv.SelectedSlot = InventorySize - 1
+func (inv *Inventory) SelectSlot(slot int) {
+	if slot >= InventorySize {
+		slot = 0
+	} else if slot < 0 {
+		slot = InventorySize - 1
 	}
 
 	inv.SelectedSlot = slot

@@ -2,6 +2,8 @@ package game
 
 import (
 	"fmt"
+	"github.com/3elDU/bamboo/items"
+	"github.com/3elDU/bamboo/types"
 	"log"
 
 	"github.com/3elDU/bamboo/colors"
@@ -10,9 +12,7 @@ import (
 	"github.com/3elDU/bamboo/game/inventory"
 	"github.com/3elDU/bamboo/game/player"
 	"github.com/3elDU/bamboo/game/widgets"
-	"github.com/3elDU/bamboo/items"
 	"github.com/3elDU/bamboo/scene_manager"
-	"github.com/3elDU/bamboo/types"
 	"github.com/3elDU/bamboo/widget"
 	"github.com/3elDU/bamboo/world"
 	"github.com/MakeNowJust/heredoc"
@@ -64,12 +64,12 @@ func (game *gameScene) Save() {
 	game.player.Save(game.world.Metadata.UUID)
 }
 
-func (game *gameScene) Update() {
+func (game *gameScene) processInput() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		game.paused = !game.paused
 		log.Printf("Escape pressed. Toggled pause menu. (%v)", game.paused)
 
-		// trigger a world save, when entering pause menu
+		// trigger a world save when entering pause menu
 		if game.paused {
 			game.Save()
 		}
@@ -126,9 +126,17 @@ func (game *gameScene) Update() {
 		game.inventory.SelectSlot(3)
 	case ebiten.IsKeyPressed(ebiten.KeyDigit5):
 		game.inventory.SelectSlot(4)
-
 	}
 
+	_, yoff := ebiten.Wheel()
+	if yoff < 0 {
+		game.inventory.SelectSlot(game.inventory.SelectedSlot - 1)
+	} else if yoff > 0 {
+		game.inventory.SelectSlot(game.inventory.SelectedSlot + 1)
+	}
+}
+
+func (game *gameScene) updateLogic() {
 	game.player.Update(player.MovementVector{
 		Left:  ebiten.IsKeyPressed(ebiten.KeyA),
 		Right: ebiten.IsKeyPressed(ebiten.KeyD),
@@ -148,6 +156,11 @@ func (game *gameScene) Update() {
 	if scene_manager.Ticks()%config.WorldAutosaveDelay == 0 {
 		game.Save()
 	}
+}
+
+func (game *gameScene) Update() {
+	game.processInput()
+	game.updateLogic()
 }
 
 func (game *gameScene) Draw(screen *ebiten.Image) {
