@@ -13,7 +13,6 @@ import (
 	"github.com/3elDU/bamboo/items"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/types"
-	"github.com/3elDU/bamboo/util"
 	"github.com/3elDU/bamboo/widget"
 	"github.com/3elDU/bamboo/world"
 	"github.com/MakeNowJust/heredoc"
@@ -32,9 +31,6 @@ type gameScene struct {
 	player    *player.Player
 	inventory *inventory.Inventory
 
-	scaling         float64
-	scalingVelocity float64 // for smooth scaling animation
-
 	debugInfoVisible bool
 }
 
@@ -48,8 +44,6 @@ func NewGameScene(gameWorld *world.World, player player.Player) *gameScene {
 		world:     gameWorld,
 		player:    &player,
 		inventory: inventory.NewInventory(),
-
-		scaling: 2.0,
 
 		debugInfoVisible: false,
 	}
@@ -135,10 +129,6 @@ func (game *gameScene) Update() {
 
 	}
 
-	// scale the map, using scroll wheel
-	_, yvel := ebiten.Wheel()
-	game.scalingVelocity += yvel * 0.004
-
 	game.player.Update(player.MovementVector{
 		Left:  ebiten.IsKeyPressed(ebiten.KeyA),
 		Right: ebiten.IsKeyPressed(ebiten.KeyD),
@@ -154,10 +144,6 @@ func (game *gameScene) Update() {
 		game.debugWidgets.Update()
 	}
 
-	game.scaling += game.scalingVelocity
-	game.scaling = util.Clamp(game.scaling, 1.00, 6.00)
-	game.scalingVelocity *= 0.95
-
 	// perform autosave each N ticks
 	if scene_manager.Ticks()%config.WorldAutosaveDelay == 0 {
 		game.Save()
@@ -165,8 +151,8 @@ func (game *gameScene) Update() {
 }
 
 func (game *gameScene) Draw(screen *ebiten.Image) {
-	game.world.Render(screen, game.player.X, game.player.Y, game.scaling)
-	game.player.Render(screen, game.scaling)
+	game.world.Render(screen, game.player.X, game.player.Y, float64(config.UIScaling))
+	game.player.Render(screen, float64(config.UIScaling))
 	game.inventory.Render(screen)
 
 	game.widgets.Render(screen)
@@ -180,9 +166,9 @@ func (game *gameScene) Draw(screen *ebiten.Image) {
 				heredoc.Doc(`
 					player pos:		%.2f, %.2f
 					world seed:		%v
-					map scaling:	%v
+					UI scaling:		%v
 				`),
-				game.player.X, game.player.Y, game.world.Seed(), util.LimitFloatPrecision(game.scaling, 2),
+				game.player.X, game.player.Y, game.world.Seed(), config.UIScaling,
 			),
 			0, 0, colors.Black,
 		)
