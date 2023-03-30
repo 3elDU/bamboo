@@ -108,7 +108,11 @@ func (s *worldListScene) UpdateUI() {
 		ui.Button(func() { s.goBack <- true }, ui.Label(ui.DefaultLabelOptions(), "Go back")),
 	))
 
-	s.view = ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(), view))
+	s.view = ui.Screen(
+		ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(),
+			ui.Center(view),
+		),
+	)
 }
 
 func NewWorldListScene() *worldListScene {
