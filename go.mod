@@ -3,8 +3,8 @@ module github.com/3elDU/bamboo
 go 1.18
 
 require (
+	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/aquilax/go-perlin v1.1.0
-	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/hajimehoshi/ebiten/v2 v2.4.7
 	github.com/pkg/profile v1.7.0
 	github.com/teacat/noire v1.1.0

@@ -18,8 +18,6 @@ const (
 	WorldInfoFile      string = "world.gob"
 	WorldAutosaveDelay uint64 = 3600
 	ChunkUnloadDelay   uint64 = 600
-)
 
-var (
-	FontSize float64 = 32
+	UIScaling int = 3
 )

@@ -6,6 +6,7 @@ import (
 	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/ui"
+	"github.com/MakeNowJust/heredoc"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -21,9 +22,11 @@ func NewAboutScene() *aboutScene {
 		goBackEvent: goBackEvent,
 		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(),
 			ui.Center(ui.Stack(ui.StackOptions{Direction: ui.VerticalStack, Spacing: 1},
-				ui.Label(ui.DefaultLabelOptions(), "Very important text..."),
-				ui.Label(ui.DefaultLabelOptions(), "Blah blah blah..."),
-				ui.Label(ui.DefaultLabelOptions(), "// TODO: Actually write something here"),
+				ui.Label(ui.DefaultLabelOptions(), heredoc.Doc(`
+					Very important text...
+					Blah blah blah...
+					// TODO: Actually write something here
+				`)),
 				ui.Button(
 					func() { goBackEvent <- 1 },
 					ui.Label(ui.DefaultLabelOptions(), "Back"),

@@ -9,13 +9,13 @@ import (
 	"image/color"
 	"log"
 	"math/rand"
+	"unicode/utf8"
 
 	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/font"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/hajimehoshi/ebiten/v2/text"
 )
 
 // screen is the root component
@@ -269,14 +269,14 @@ func (c *centerComponent) Draw(screen *ebiten.Image, x, y float64) error {
 
 type LabelOptions struct {
 	Color color.Color
-	// How much the resulting texture will be scaled
+	// Font size, relative to UI scaling
 	Scaling float64
 }
 
 func DefaultLabelOptions() LabelOptions {
 	return LabelOptions{
 		Color:   colors.Black,
-		Scaling: 1.0,
+		Scaling: 1,
 	}
 }
 
@@ -297,8 +297,8 @@ func (l *labelComponent) MaxSize() (float64, float64) {
 	return l.parent.CapacityForChild(l)
 }
 func (l *labelComponent) ComputedSize() (float64, float64) {
-	bounds := text.BoundString(asset_loader.DefaultFont(), l.text)
-	return float64(bounds.Dx())*l.opts.Scaling + 2*l.opts.Scaling, float64(bounds.Dy())*l.opts.Scaling + 2*l.opts.Scaling
+	w, h := font.GetStringSize(l.text, l.opts.Scaling)
+	return float64(w), float64(h)
 }
 func (l labelComponent) CapacityForChild(_ View) (float64, float64) {
 	return 0, 0
@@ -554,6 +554,8 @@ type inputComponent struct {
 	texFocused *ebiten.Image
 	opts       *ebiten.DrawImageOptions
 
+	label *labelComponent
+
 	enterKey ebiten.Key
 	input    string
 	handler  func(string)
@@ -569,6 +571,8 @@ func Input(handler func(string), enterKey ebiten.Key, initialFocus bool) *inputC
 		tex:        asset_loader.Texture("inputfield").Texture(),
 		texFocused: asset_loader.Texture("inputfield-focused").Texture(),
 		opts:       &ebiten.DrawImageOptions{},
+
+		label: Label(DefaultLabelOptions(), ""),
 
 		enterKey: enterKey,
 		input:    "",
@@ -603,21 +607,23 @@ func (i *inputComponent) Update() error {
 		i.input = ""
 
 	// handle backspace key
-	case (inpututil.IsKeyJustPressed(ebiten.KeyBackspace) || inpututil.KeyPressDuration(ebiten.KeyBackspace) > 30) && len(i.input) > 0:
+	case (inpututil.IsKeyJustPressed(ebiten.KeyBackspace) ||
+		inpututil.KeyPressDuration(ebiten.KeyBackspace) > 30) &&
+		utf8.RuneCountInString(i.input) > 0:
 		i.input = i.input[:len(i.input)-1]
 
 	default:
 		// if the input string doesn't fit in the texture, don't accept any more keys
 		texCapacity, _ := i.CapacityForChild(nil)
-		textSize := text.BoundString(asset_loader.DefaultFont(), i.input)
-		if textSize.Dx() > int(texCapacity) {
+		textSize := font.GetStringWidth(i.input, i.label.opts.Scaling)
+		if textSize > int(texCapacity) {
 			break
 		}
 
 		// check for pressed keys, and append them to the input string
 		i.pressedKeys = ebiten.AppendInputChars(i.pressedKeys[:0])
 		for _, char := range i.pressedKeys {
-			i.input = fmt.Sprintf("%s%c", i.input, char) // HACK: Somewhat hacky, but works
+			i.input = fmt.Sprintf("%s%c", i.input, char) // Somewhat hacky, but works
 		}
 	}
 
@@ -646,7 +652,8 @@ func (i *inputComponent) Draw(screen *ebiten.Image, x, y float64) error {
 		screen.DrawImage(i.tex, i.opts)
 	}
 
-	font.RenderFont(screen, i.input, x+Em, y+Em, colors.Black)
+	i.label.text = i.input
+	i.label.Draw(screen, x+Em, y+Em)
 
 	return nil
 }

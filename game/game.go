@@ -16,6 +16,7 @@ import (
 	"github.com/3elDU/bamboo/util"
 	"github.com/3elDU/bamboo/widget"
 	"github.com/3elDU/bamboo/world"
+	"github.com/MakeNowJust/heredoc"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
@@ -175,17 +176,16 @@ func (game *gameScene) Draw(screen *ebiten.Image) {
 
 	if game.debugInfoVisible {
 		font.RenderFont(screen,
-			fmt.Sprintf("player pos %.2f, %.2f", game.player.X, game.player.Y),
-			0, 0, colors.Black)
-
-		font.RenderFont(screen,
-			fmt.Sprintf("world seed %v", game.world.Seed()),
-			0, 24, colors.Black,
+			fmt.Sprintf(
+				heredoc.Doc(`
+					player pos:		%.2f, %.2f
+					world seed:		%v
+					map scaling:	%v
+				`),
+				game.player.X, game.player.Y, game.world.Seed(), util.LimitFloatPrecision(game.scaling, 2),
+			),
+			0, 0, colors.Black,
 		)
-
-		font.RenderFont(screen,
-			fmt.Sprintf("scaling %v", util.LimitFloatPrecision(game.scaling, 2)),
-			0, 48, colors.Black)
 	}
 
 	// draw pause menu

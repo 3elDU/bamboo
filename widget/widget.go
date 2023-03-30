@@ -4,10 +4,9 @@ import (
 	"image/color"
 	"log"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/font"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/text"
 )
 
 type Anchor int
@@ -101,9 +100,12 @@ func RenderWidget(screen *ebiten.Image, widget Widget) {
 func RenderTextWidget(screen *ebiten.Image, widget TextWidget) {
 	ww, wh := screen.Size()
 	t := widget.Render()
-	bounds := text.BoundString(asset_loader.DefaultFont(), t.Text)
 
-	x, y := widgetPosition(bounds.Dx(), bounds.Dy(), ww, wh, t.Anchor)
+	x, y := widgetPosition(
+		font.GetStringWidth(t.Text, float64(config.UIScaling)),
+		font.GetStringHeight(t.Text, float64(config.UIScaling)),
+		ww, wh, t.Anchor,
+	)
 
 	font.RenderFont(screen, t.Text, float64(x), float64(y), t.Color)
 }

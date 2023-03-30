@@ -13,7 +13,6 @@ import (
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
-	"golang.org/x/image/font"
 )
 
 func init() {
@@ -21,11 +20,10 @@ func init() {
 }
 
 type AssetList struct {
-	Fonts             map[string]font.Face
 	Textures          map[string]*ebiten.Image
 	ConnectedTextures map[connectedTexture]*ebiten.Image
 
-	defaultFont font.Face
+	Font *ebiten.Image
 }
 
 var (
@@ -38,8 +36,8 @@ func cleanPath(path string) string {
 	return strings.Replace(filepath.Base(path), filepath.Ext(path), "", 1)
 }
 
-func DefaultFont() font.Face {
-	return GlobalAssets.defaultFont
+func DefaultFont() *ebiten.Image {
+	return GlobalAssets.Font
 }
 
 // Texture panicks when a specified texture doesn't exist
@@ -69,13 +67,4 @@ func ConnectedTexture(baseName string, left, right, top, bottom bool) types.Conn
 // Same as ConnectedTexture, but accepts an array of four booleans
 func ConnectedTextureFromArray(baseName string, sidesConnected [4]bool) types.ConnectedTexture {
 	return ConnectedTexture(baseName, sidesConnected[0], sidesConnected[1], sidesConnected[2], sidesConnected[3])
-}
-
-// Font panicks when a specified font doesn't exist
-func Font(name string) font.Face {
-	face, exists := GlobalAssets.Fonts[name]
-	if !exists {
-		log.Panicf("font %v doesn't exist", name)
-	}
-	return face
 }

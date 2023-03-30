@@ -7,12 +7,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"github.com/3elDU/bamboo/config"
-	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten/v2"
-	"golang.org/x/image/font"
 )
 
 func parseTexture(assetList *AssetList, path string) error {
@@ -74,36 +70,9 @@ func parseConnectedTexture(assetList *AssetList, path string) error {
 	return nil
 }
 
-func parseFont(assetList *AssetList, path string) error {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	f, err := truetype.Parse(data)
-	if err != nil {
-		return err
-	}
-
-	fFace := truetype.NewFace(f, &truetype.Options{
-		Size:    config.FontSize,
-		Hinting: font.HintingFull,
-	})
-
-	assetList.Fonts[strings.Replace(cleanPath(path), "_default", "", 1)] = fFace
-
-	// if filename (without extension) ends in _default, then set this font as default
-	if strings.HasSuffix(cleanPath(path), "_default") {
-		assetList.defaultFont = fFace
-	}
-
-	return nil
-}
-
 // LoadAssets loads assets from directory dir to global variable GlobalAssets
 func LoadAssets(dir string) {
 	assetList := &AssetList{
-		Fonts:             make(map[string]font.Face),
 		Textures:          make(map[string]*ebiten.Image),
 		ConnectedTextures: make(map[connectedTexture]*ebiten.Image),
 	}
@@ -121,8 +90,6 @@ func LoadAssets(dir string) {
 		switch filepath.Ext(path) {
 		case ".png":
 			return parseTexture(assetList, path)
-		case ".ttf":
-			return parseFont(assetList, path)
 		}
 
 		return nil
@@ -130,6 +97,12 @@ func LoadAssets(dir string) {
 	if err != nil {
 		log.Panicln(err)
 	}
+
+	font, exists := assetList.Textures["font"]
+	if !exists {
+		log.Panicln("cannot find the font texture")
+	}
+	assetList.Font = font
 
 	GlobalAssets = assetList
 }
