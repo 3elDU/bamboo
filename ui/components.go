@@ -13,7 +13,9 @@ import (
 
 	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/colors"
+	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/font"
+	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
@@ -133,25 +135,24 @@ func (s *stackComponent) ComputedSize() (w, h float64) {
 	for i, child := range s.children {
 		cw, ch := child.ComputedSize()
 
-		if s.opts.Direction == VerticalStack {
-			// if it's a vstack, then width is equal to the longest child's width
+		switch s.opts.Direction {
+		case VerticalStack:
+			// vertical stack's width is equal to the widest child
 			if cw > w {
 				w = cw
 			}
-		} else {
-			// if it's a hstack, then height is equal to the longest child's height
-			if ch > h {
-				h = ch
-			}
-		}
-
-		if s.opts.Direction == VerticalStack {
 			h += ch
+			// add spacing
 			if i < len(s.children)-1 {
 				h += s.opts.Spacing * Em
 			}
-		} else {
-			w += ch
+		case HorizontalStack:
+			// horizontal stack's height is equal to the highest child
+			if ch > h {
+				h = ch
+			}
+			w += cw
+			// add spacing
 			if i < len(s.children)-1 {
 				w += s.opts.Spacing * Em
 			}
@@ -217,8 +218,8 @@ func (s *stackComponent) Update() error {
 }
 func (s *stackComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	for _, child := range s.children {
-		// there is multiple children in a stack
-		// but we can't return multiple errors
+		// there is multiple children in a stack,
+		// but we can't return multiple errors.
 		// instead, we return the first error, that we encountered
 		err := child.Draw(screen, x, y)
 		if err != nil {
@@ -262,9 +263,8 @@ func (c *centerComponent) Update() error {
 }
 func (c *centerComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	w, h := c.parent.CapacityForChild(c)
-	// ebitenutil.DrawRect(screen, x, y, w, h, colors.Blue)
 	cw, ch := c.child.ComputedSize()
-	return c.child.Draw(screen, (x+x+w)/2-cw/2, (y+y+h)/2-ch/2)
+	return c.child.Draw(screen, x+w/2-cw/2, y+h/2-ch/2)
 }
 
 type LabelOptions struct {
@@ -317,8 +317,8 @@ func (l *labelComponent) Draw(screen *ebiten.Image, x, y float64) error {
 type buttonComponent struct {
 	baseView
 
-	tex       *ebiten.Image
-	tex_hover *ebiten.Image
+	tex       types.Texture
+	tex_hover types.Texture
 
 	child View
 
@@ -330,8 +330,8 @@ type buttonComponent struct {
 
 func Button(handler func(), child View) *buttonComponent {
 	b := &buttonComponent{
-		tex:       asset_loader.Texture("button").Texture(),
-		tex_hover: asset_loader.Texture("button-hover").Texture(),
+		tex:       asset_loader.Texture("button"),
+		tex_hover: asset_loader.Texture("button-hover"),
 
 		child:   child,
 		handler: handler,
@@ -343,12 +343,11 @@ func (b *buttonComponent) MaxSize() (float64, float64) {
 	return b.ComputedSize()
 }
 func (b *buttonComponent) ComputedSize() (float64, float64) {
-	w, h := b.tex.Size()
+	w, h := b.tex.ScaledSize()
 	return float64(w), float64(h)
 }
 func (b *buttonComponent) CapacityForChild(_ View) (float64, float64) {
-	w, h := b.MaxSize()
-	return w - Em*2, h - Em*2
+	return b.ComputedSize()
 }
 func (b *buttonComponent) Children() []View {
 	return []View{b.child}
@@ -361,8 +360,8 @@ func (b *buttonComponent) Update() error {
 	return nil
 }
 func (b *buttonComponent) Draw(screen *ebiten.Image, x, y float64) error {
-	// TODO: implement scaling
 	opts := &ebiten.DrawImageOptions{}
+	opts.GeoM.Scale(float64(config.UIScaling), float64(config.UIScaling))
 	opts.GeoM.Translate(x, y)
 
 	w, h := b.ComputedSize()
@@ -371,9 +370,9 @@ func (b *buttonComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	// check if the cursor is hovering over the button
 	mouseOver := float64(cx) > x && float64(cy) > y && float64(cx) < x+w && float64(cy) < y+h
 	if mouseOver {
-		screen.DrawImage(b.tex_hover, opts)
+		screen.DrawImage(b.tex_hover.Texture(), opts)
 	} else {
-		screen.DrawImage(b.tex, opts)
+		screen.DrawImage(b.tex.Texture(), opts)
 	}
 
 	// check if button is pressed
@@ -381,7 +380,9 @@ func (b *buttonComponent) Draw(screen *ebiten.Image, x, y float64) error {
 		b.pressed = true
 	}
 
-	return b.child.Draw(screen, x+Em, y+Em)
+	// draw child in the center
+	cw, ch := b.child.ComputedSize()
+	return b.child.Draw(screen, x+w/2-cw/2, y+h/2-ch/2)
 }
 func (b *buttonComponent) IsPressed() bool {
 	return b.pressed
@@ -550,8 +551,8 @@ type inputComponent struct {
 	baseView
 	baseFocusView
 
-	tex        *ebiten.Image
-	texFocused *ebiten.Image
+	tex        types.Texture
+	texFocused types.Texture
 	opts       *ebiten.DrawImageOptions
 
 	label *labelComponent
@@ -568,8 +569,8 @@ func Input(handler func(string), enterKey ebiten.Key, initialFocus bool) *inputC
 		baseView:      newBaseView(),
 		baseFocusView: baseFocusView{focused: initialFocus},
 
-		tex:        asset_loader.Texture("inputfield").Texture(),
-		texFocused: asset_loader.Texture("inputfield-focused").Texture(),
+		tex:        asset_loader.Texture("inputfield"),
+		texFocused: asset_loader.Texture("inputfield-focused"),
 		opts:       &ebiten.DrawImageOptions{},
 
 		label: Label(DefaultLabelOptions(), ""),
@@ -586,12 +587,11 @@ func (i *inputComponent) MaxSize() (float64, float64) {
 	return i.ComputedSize()
 }
 func (i *inputComponent) ComputedSize() (float64, float64) {
-	w, h := i.tex.Size()
+	w, h := i.tex.ScaledSize()
 	return float64(w), float64(h)
 }
 func (i *inputComponent) CapacityForChild(child View) (float64, float64) {
-	w, h := i.ComputedSize()
-	return w - Em*2, h - Em*2
+	return i.ComputedSize()
 }
 func (i *inputComponent) Update() error {
 	// if the element isn't focused, skip
@@ -645,15 +645,20 @@ func (i *inputComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	}
 
 	i.opts.GeoM.Reset()
+	i.opts.GeoM.Scale(float64(config.UIScaling), float64(config.UIScaling))
 	i.opts.GeoM.Translate(x, y)
+
 	if i.baseFocusView.focused {
-		screen.DrawImage(i.texFocused, i.opts)
+		screen.DrawImage(i.texFocused.Texture(), i.opts)
 	} else {
-		screen.DrawImage(i.tex, i.opts)
+		screen.DrawImage(i.tex.Texture(), i.opts)
 	}
 
 	i.label.text = i.input
-	i.label.Draw(screen, x+Em, y+Em)
+
+	w, h := i.ComputedSize()
+	cw, ch := i.label.ComputedSize()
+	i.label.Draw(screen, x+w/2-cw/2, y+h/2-ch/2)
 
 	return nil
 }
