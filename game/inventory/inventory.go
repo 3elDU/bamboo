@@ -2,6 +2,7 @@ package inventory
 
 import (
 	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -46,19 +47,19 @@ func (inv *Inventory) ItemInHand() types.Item {
 }
 
 func (inv *Inventory) Render(screen *ebiten.Image) {
-	tex := asset_loader.Texture("inventory").Texture()
-	badge_tex := asset_loader.Texture("inventory_badges").Texture()
-	w, h := tex.Size()
-	opts := &ebiten.DrawImageOptions{}
+	inventoryTexture := asset_loader.Texture("inventory")
+	w, h := inventoryTexture.ScaledSize()
+	inventoryDrawOpts := &ebiten.DrawImageOptions{}
 	sw, sh := screen.Size()
 
 	// position of inventory texture on the screen
-	ix := float64(sw)/2 - float64(w)/2
-	iy := float64(sh) - float64(h)
+	ix := float64(sw)/2 - float64(w)/2 // horizontally centered
+	iy := float64(sh) - float64(h)     // bottom of the screen
 
-	opts.GeoM.Translate(ix, iy)
+	inventoryDrawOpts.GeoM.Scale(float64(config.UIScaling), float64(config.UIScaling))
+	inventoryDrawOpts.GeoM.Translate(ix, iy)
 
-	screen.DrawImage(tex, opts)
+	screen.DrawImage(inventoryTexture.Texture(), inventoryDrawOpts)
 
 	for i, slot := range inv.Slots {
 		if slot.Empty {
@@ -68,16 +69,25 @@ func (inv *Inventory) Render(screen *ebiten.Image) {
 		itemTex := slot.Item.Texture()
 		itemTexOpts := &ebiten.DrawImageOptions{}
 
-		itemTexOpts.GeoM.Scale(2, 2)
-		itemTexOpts.GeoM.Translate(ix+6+36*float64(i), iy+4)
+		itemTexOpts.GeoM.Scale(float64(config.UIScaling), float64(config.UIScaling))
+		itemTexOpts.GeoM.Translate(
+			ix+4*float64(config.UIScaling)+(20*float64(i)*float64(config.UIScaling)),
+			iy+3*float64(config.UIScaling),
+		)
 
 		screen.DrawImage(itemTex, itemTexOpts)
 	}
 
 	selectedSlotTex := asset_loader.Texture("selected_slot").Texture()
 	selectedSlotTexOpts := &ebiten.DrawImageOptions{}
-	selectedSlotTexOpts.GeoM.Translate(ix+2+36*float64(inv.SelectedSlot), iy)
+	selectedSlotTexOpts.GeoM.Scale(float64(config.UIScaling), float64(config.UIScaling))
+	selectedSlotTexOpts.GeoM.Translate(
+		ix+float64(config.UIScaling)+(20*float64(inv.SelectedSlot)*float64(config.UIScaling)),
+		iy,
+	)
 	screen.DrawImage(selectedSlotTex, selectedSlotTexOpts)
 
-	screen.DrawImage(badge_tex, opts)
+	// draw inventory badges on top of everything, so they will be always visible
+	inventoryBadgesTex := asset_loader.Texture("inventory_badges").Texture()
+	screen.DrawImage(inventoryBadgesTex, inventoryDrawOpts)
 }

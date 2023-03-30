@@ -1,6 +1,7 @@
 package asset_loader
 
 import (
+	"github.com/3elDU/bamboo/config"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -14,6 +15,12 @@ func (t *texture) Texture() *ebiten.Image {
 
 func (t texture) Name() string {
 	return t.name
+}
+
+func (t texture) ScaledSize() (int, int) {
+	tex := t.Texture()
+	w, h := tex.Size()
+	return w * config.UIScaling, h * config.UIScaling
 }
 
 type connectedTexture struct {
