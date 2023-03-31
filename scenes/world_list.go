@@ -123,6 +123,7 @@ func NewWorldListScene() *worldListScene {
 		goBack:        make(chan bool, 1),
 	}
 	scene.Scan()
+	scene.UpdateUI()
 	return scene
 }
 
