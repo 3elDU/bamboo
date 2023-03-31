@@ -130,9 +130,9 @@ func (game *gameScene) processInput() {
 
 	_, yoff := ebiten.Wheel()
 	if yoff < 0 {
-		game.inventory.SelectSlot(game.inventory.SelectedSlot - 1)
-	} else if yoff > 0 {
 		game.inventory.SelectSlot(game.inventory.SelectedSlot + 1)
+	} else if yoff > 0 {
+		game.inventory.SelectSlot(game.inventory.SelectedSlot - 1)
 	}
 }
 
