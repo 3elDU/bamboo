@@ -42,6 +42,12 @@ func NewNewWorldScene() *NewWorldScene {
 	}
 }
 
+func seedFromString(s string) (seed int64) {
+	hash := fnv.New64a().Sum([]byte(s))
+	binary.Read(bytes.NewReader(hash), binary.BigEndian, &seed)
+	return
+}
+
 func (s *NewWorldScene) Update() {
 	if err := s.view.Update(); err != nil {
 		log.Panicf("failed to update a viev: %v", err)
@@ -50,12 +56,7 @@ func (s *NewWorldScene) Update() {
 	select {
 	case formData := <-s.formData:
 		worldName, seedString := formData[0], formData[1]
-
-		// convert string to bytes -> compute hash -> convert hash to int64
-		seedBytes := []byte(seedString)
-		seedHashBytes := fnv.New64a().Sum(seedBytes)
-		var seed int64
-		binary.Read(bytes.NewReader(seedHashBytes), binary.BigEndian, &seed)
+		seed := seedFromString(seedString)
 
 		w := world.NewWorld(worldName, uuid.New(), seed)
 		scene_manager.QSwitch(game.NewGameScene(w, player.Player{X: float64(config.PlayerStartX), Y: float64(config.PlayerStartY)}))
