@@ -10,31 +10,31 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// base interface for all components
+// View is the base interface for all components
 type View interface {
 	SetParent(parent View)
 	Children() []View
 
-	// maximum space that the component could theoretically occupy in their container
+	// MaxSize returns maximum space that the component could theoretically occupy
 	MaxSize() (float64, float64)
-	// how much space the component takes in practice
+	// ComputedSize returns how much space the component takes in practice
 	ComputedSize() (float64, float64)
-	// practical maximum space, that provided child could take in the container
+	// CapacityForChild returns practical maximum space, that the child could take in its parent
 	CapacityForChild(child View) (float64, float64)
 
-	// Update is pretty much useless
-	// Because for many widgets to update, we need to know their size
-	// And their size can't be calculated without access to graphics
-	// So, instead, all those operations are done in Draw() function
+	// Update is pretty much useless,
+	// because for many widgets to update, we need to know their size,
+	// and their size can't be calculated without access to graphics.
+	// So, instead, all those operations are done in Draw() function.
 	// But, things not dependent on graphics can be done there
 	Update() error
 	Draw(screen *ebiten.Image, x, y float64) error
 
-	// returns unique identifier of the component, so it can be compared to others
+	// ID returns unique identifier of the component, so it can be compared to others
 	ID() uint64
 }
 
-// interface for various elements, that do have a focus
+// FocusView is an interface for components that can be focused
 type FocusView interface {
 	View
 
@@ -42,13 +42,15 @@ type FocusView interface {
 	Focused() bool
 }
 
+// ButtonView is an interface for components that can be clicked
 type ButtonView interface {
 	View
 
 	IsPressed() bool
-	Press() // Simulates virtual button press
+	Press()
 }
 
+// InputView is an interface for components that accept keyboard input
 type InputView interface {
 	FocusView
 
@@ -56,6 +58,7 @@ type InputView interface {
 	SetInput(input string)
 }
 
+// baseView implements some common methods of View to reduce repeating code
 type baseView struct {
 	parent View
 	id     uint64
@@ -68,13 +71,14 @@ func newBaseView() baseView {
 	}
 	return v
 }
-func (b baseView) ID() uint64 {
+func (b *baseView) ID() uint64 {
 	return b.id
 }
 func (b *baseView) SetParent(parent View) {
 	b.parent = parent
 }
 
+// baseFocusView implements some common methods of FocusView to reduce repeating code
 type baseFocusView struct {
 	focused bool
 }

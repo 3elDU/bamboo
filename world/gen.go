@@ -13,10 +13,10 @@ import (
 	"github.com/aquilax/go-perlin"
 )
 
-// WorldGenerator maintains chunk generation queue
+// Generator maintains chunk generation queue
 // Actual generation happens in separate goroutine,
 // so we don't have any freezes on the main thread
-type WorldGenerator struct {
+type Generator struct {
 	// Separate perlin noise generators for base blocks and vegetation/features
 	baseGenerator      *perlin.Perlin
 	secondaryGenerator *perlin.Perlin
@@ -29,7 +29,7 @@ type WorldGenerator struct {
 	generated    chan *Chunk
 }
 
-func NewWorldGenerator(seed int64) *WorldGenerator {
+func NewWorldGenerator(seed int64) *Generator {
 	// make a random generator using global world seed
 	world := rand.New(rand.NewSource(seed))
 
@@ -40,7 +40,7 @@ func NewWorldGenerator(seed int64) *WorldGenerator {
 		mountainSeed  = world.Int63()
 	)
 
-	return &WorldGenerator{
+	return &Generator{
 		baseGenerator:      perlin.NewPerlin(2, 2, 16, baseSeed),
 		secondaryGenerator: perlin.NewPerlin(2, 2, 16, secondarySeed),
 		mountainGenerator:  perlin.NewPerlin(2, 2, 16, mountainSeed),
@@ -52,7 +52,7 @@ func NewWorldGenerator(seed int64) *WorldGenerator {
 	}
 }
 
-func (g *WorldGenerator) run() {
+func (g *Generator) run() {
 	for {
 		// listen for incoming requests
 		req := <-g.requests
@@ -66,13 +66,13 @@ func (g *WorldGenerator) run() {
 }
 
 // starts chunk generator in separate goroutine
-func (g *WorldGenerator) Run() {
+func (g *Generator) Run() {
 	go g.run()
 }
 
 // Requests a chunk generation
-// Chunk can be retrieved later through WorldGenerator.Receive()
-func (g *WorldGenerator) Generate(cx, cy uint64) {
+// Chunk can be retrieved later through Generator.Receive()
+func (g *Generator) Generate(cx, cy uint64) {
 	coords := types.Coords2u{X: cx, Y: cy}
 	if g.requestsPool[coords] {
 		return
@@ -83,7 +83,7 @@ func (g *WorldGenerator) Generate(cx, cy uint64) {
 
 // Returns newly generated chunk
 // If none are pending, returns nil
-func (g *WorldGenerator) Receive() *Chunk {
+func (g *Generator) Receive() *Chunk {
 	select {
 	case c := <-g.generated:
 		// remove chunk from request pool
@@ -133,12 +133,12 @@ func applyCircularMask(x, y float64, val float64) float64 {
 		centerY = float64(config.WorldHeight) / 2
 	)
 
-	pointInsideCircle := math.Pow(float64(x)-centerX, 2)+math.Pow(float64(y)-centerY, 2) < math.Pow(radius, 2)
+	pointInsideCircle := math.Pow(x-centerX, 2)+math.Pow(y-centerY, 2) < math.Pow(radius, 2)
 	if !pointInsideCircle {
 		return 0
 	}
 
-	distanceToCenter := math.Sqrt(math.Pow(float64(x)-centerX, 2) + math.Pow(float64(y)-centerY, 2))
+	distanceToCenter := math.Sqrt(math.Pow(x-centerX, 2) + math.Pow(y-centerY, 2))
 	// Divide the mask by 1.5, so it won't be too big
 	mask := distanceToCenter / radius / 1.5
 	return val - mask

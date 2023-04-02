@@ -10,15 +10,15 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type aboutScene struct {
+type AboutScene struct {
 	view        ui.View
 	goBackEvent chan int
 }
 
-func NewAboutScene() *aboutScene {
+func NewAboutScene() *AboutScene {
 	goBackEvent := make(chan int, 1)
 
-	return &aboutScene{
+	return &AboutScene{
 		goBackEvent: goBackEvent,
 		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(),
 			ui.Center(ui.Stack(ui.StackOptions{Direction: ui.VerticalStack, Spacing: 1},
@@ -36,7 +36,7 @@ func NewAboutScene() *aboutScene {
 	}
 }
 
-func (s *aboutScene) Update() {
+func (s *AboutScene) Update() {
 	err := s.view.Update()
 	if err != nil {
 		log.Panicf("failed to update a view: %v", err)
@@ -49,11 +49,11 @@ func (s *aboutScene) Update() {
 	}
 }
 
-func (s *aboutScene) Destroy() {
-	log.Println("aboutScene.Destroy() called")
+func (s *AboutScene) Destroy() {
+	log.Println("AboutScene.Destroy() called")
 }
 
-func (s *aboutScene) Draw(screen *ebiten.Image) {
+func (s *AboutScene) Draw(screen *ebiten.Image) {
 	err := s.view.Draw(screen, 0, 0)
 	if err != nil {
 		log.Panicln(err)

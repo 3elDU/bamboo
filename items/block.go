@@ -16,14 +16,14 @@ type ItemFromBlockState struct {
 	BlockType types.BlockType
 }
 
-type itemFromBlock struct {
+type ItemFromBlock struct {
 	baseItem
 	blockType types.BlockType
 	texture   types.Texture
 }
 
-func NewItemFromBlock(block types.DrawableBlock) *itemFromBlock {
-	return &itemFromBlock{
+func NewItemFromBlock(block types.DrawableBlock) *ItemFromBlock {
+	return &ItemFromBlock{
 		baseItem: baseItem{
 			id: types.ItemType(block.Type()),
 		},
@@ -32,23 +32,23 @@ func NewItemFromBlock(block types.DrawableBlock) *itemFromBlock {
 	}
 }
 
-func (i itemFromBlock) Texture() *ebiten.Image {
+func (i *ItemFromBlock) Texture() *ebiten.Image {
 	return i.texture.Texture()
 }
 
-func (i itemFromBlock) Use(world types.World, pos types.Coords2u) {
+func (i *ItemFromBlock) Use(world types.World, pos types.Coords2u) {
 	world.ChunkAtB(pos.X, pos.Y).
 		SetBlock(uint(pos.X%16), uint(pos.Y%16), blocks.GetBlockByID(i.blockType))
 }
 
-func (i itemFromBlock) State() interface{} {
+func (i *ItemFromBlock) State() interface{} {
 	return ItemFromBlockState{
 		Texture:   i.texture.Name(),
 		BlockType: i.blockType,
 	}
 }
 
-func (i *itemFromBlock) LoadState(s interface{}) {
+func (i *ItemFromBlock) LoadState(s interface{}) {
 	state := s.(ItemFromBlockState)
 	i.texture = asset_loader.Texture(state.Texture)
 	i.blockType = state.BlockType

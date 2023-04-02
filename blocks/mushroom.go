@@ -15,13 +15,13 @@ type MushroomState struct {
 	TexturedBlockState
 }
 
-type mushroom struct {
+type MushroomBlock struct {
 	baseBlock
 	texturedBlock
 }
 
-func NewRedMushroomBlock() *mushroom {
-	return &mushroom{
+func NewRedMushroomBlock() *MushroomBlock {
+	return &MushroomBlock{
 		baseBlock: baseBlock{
 			blockType: RedMushroom,
 		},
@@ -31,8 +31,8 @@ func NewRedMushroomBlock() *mushroom {
 	}
 }
 
-func NewWhiteMushroomBlock() *mushroom {
-	return &mushroom{
+func NewWhiteMushroomBlock() *MushroomBlock {
+	return &MushroomBlock{
 		baseBlock: baseBlock{
 			blockType: WhiteMushroom,
 		},
@@ -42,14 +42,14 @@ func NewWhiteMushroomBlock() *mushroom {
 	}
 }
 
-func (b mushroom) State() interface{} {
+func (b *MushroomBlock) State() interface{} {
 	return MushroomState{
 		BaseBlockState:     b.baseBlock.State().(BaseBlockState),
 		TexturedBlockState: b.texturedBlock.State().(TexturedBlockState),
 	}
 }
 
-func (b *mushroom) LoadState(s interface{}) {
+func (b *MushroomBlock) LoadState(s interface{}) {
 	state := s.(MushroomState)
 	b.baseBlock.LoadState(state.BaseBlockState)
 	b.texturedBlock.LoadState(state.TexturedBlockState)

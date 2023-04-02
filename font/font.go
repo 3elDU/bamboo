@@ -19,11 +19,11 @@ import (
 
 // Do not change this unless you really know what you are doing
 const (
-	FontWidth  = 5
-	FontHeight = 7
+	CharWidth  = 5
+	CharHeight = 7
 )
 
-var CharMap map[rune]types.Coords2u = map[rune]types.Coords2u{
+var charMap = map[rune]types.Coords2u{
 	'A': {X: 0, Y: 0},
 	'B': {X: 5, Y: 0},
 	'C': {X: 10, Y: 0},
@@ -115,7 +115,7 @@ func init() {
 	cacheMap = make(map[rune]*ebiten.Image)
 }
 
-func RenderFontWithOptions(dest *ebiten.Image, face *ebiten.Image, s string, x, y float64, clr color.Color, scaling float64) {
+func RenderFontWithOptions(dest *ebiten.Image, s string, x, y float64, clr color.Color, scaling float64) {
 	scaling *= float64(config.UIScaling)
 
 	lines := strings.Split(s, "\n")
@@ -129,9 +129,8 @@ func RenderFontWithOptions(dest *ebiten.Image, face *ebiten.Image, s string, x, 
 			img, exists := cacheMap[char]
 
 			if !exists {
-				coords, exists := CharMap[char]
+				coords, exists := charMap[char]
 				if !exists {
-					// log.Panicf("char doesn't exist: %v", char)
 					continue
 				}
 
@@ -164,11 +163,10 @@ func RenderFontWithOptions(dest *ebiten.Image, face *ebiten.Image, s string, x, 
 	}
 }
 
-// The same as RenderFontWithOptions, but with fewer options
+// RenderFont is the same as RenderFontWithOptions, but with fewer options
 func RenderFont(dest *ebiten.Image, s string, x, y float64, clr color.Color) {
 	RenderFontWithOptions(
 		dest,
-		asset_loader.DefaultFont(),
 		s,
 		x, y,
 		clr,
@@ -176,12 +174,12 @@ func RenderFont(dest *ebiten.Image, s string, x, y float64, clr color.Color) {
 	)
 }
 
-// Returns width of the given string in pixels
-// Handles multi-line strings properly
+// GetStringWidth Returns width of the given string in pixels
+// Also handles multi-line strings properly
 func GetStringWidth(s string, scaling float64) int {
 	lines := strings.Split(s, "\n")
 	if len(lines) == 1 {
-		return int(float64(utf8.RuneCountInString(s)*(FontWidth+1)*config.UIScaling) * scaling)
+		return int(float64(utf8.RuneCountInString(s)*(CharWidth+1)*config.UIScaling) * scaling)
 	} else if len(lines) > 1 {
 		max := 0
 		for _, line := range lines {
@@ -190,21 +188,21 @@ func GetStringWidth(s string, scaling float64) int {
 				max = runeCount
 			}
 		}
-		return max * (FontWidth + 1) * int(config.UIScaling)
+		return max * (CharWidth + 1) * config.UIScaling
 	}
 
 	return 0
 }
 
-// Returns height of the given string in pixels
-// Handles multi-line stirngs properly
+// GetStringHeight returns height of the given string in pixels
+// Also handles multi-line stirngs properly
 func GetStringHeight(s string, scaling float64) int {
 	nLines := len(strings.Split(s, "\n"))
-	return int(float64(nLines*(FontHeight+1)*int(config.UIScaling)) * scaling)
+	return int(float64(nLines*(CharHeight+1)*config.UIScaling) * scaling)
 }
 
-// Returns width and height of given string in pixels
-// Handles multi-line strings properly
+// GetStringSize returns width and height of given string in pixels
+// Also handles multi-line strings properly
 func GetStringSize(s string, scaling float64) (width int, height int) {
 	width = GetStringWidth(s, scaling)
 	height = GetStringHeight(s, scaling)

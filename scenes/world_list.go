@@ -19,8 +19,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type worldListScene struct {
-	worldList []world.WorldSave
+type WorldListScene struct {
+	worldList []world.Save
 	view      ui.View
 
 	// when the world will be selected by the user,
@@ -35,11 +35,11 @@ type worldListScene struct {
 	goBack chan bool
 }
 
-// Scans the save folder for worlds
-func (s *worldListScene) Scan() {
+// Scan scans the save folder for worlds
+func (s *WorldListScene) Scan() {
 	log.Printf("worldListScene.Scan()")
 
-	worldList := make([]world.WorldSave, 0)
+	worldList := make([]world.Save, 0)
 	filepath.WalkDir(config.WorldSaveDirectory, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -61,7 +61,7 @@ func (s *worldListScene) Scan() {
 		defer worldInfo.Close()
 
 		decoder := gob.NewDecoder(worldInfo)
-		worldMetadata := new(world.WorldSave)
+		worldMetadata := new(world.Save)
 		if err = decoder.Decode(worldMetadata); err != nil {
 			return err
 		}
@@ -74,7 +74,7 @@ func (s *worldListScene) Scan() {
 	s.worldList = worldList
 }
 
-func (s *worldListScene) UpdateUI() {
+func (s *WorldListScene) UpdateUI() {
 	view := ui.Stack(ui.StackOptions{
 		Direction: ui.VerticalStack,
 		Spacing:   3,
@@ -84,16 +84,16 @@ func (s *worldListScene) UpdateUI() {
 		Direction: ui.VerticalStack,
 		Spacing:   1,
 	})
-	for _, world := range s.worldList {
+	for _, currentWorld := range s.worldList {
 		// extract world UUID here, to use it later in button handler
-		worldUUID := world.UUID
+		worldUUID := currentWorld.UUID
 
 		// assemble a view for each world
 		worldList.AddChild(ui.Stack(ui.StackOptions{Direction: ui.VerticalStack, Spacing: 0.5},
 			ui.Stack(ui.StackOptions{Direction: ui.HorizontalStack, Spacing: 1},
-				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Name: %v", world.Name)),
-				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Seed: %v", world.Seed)),
-				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Size: %v", world.Size)),
+				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Name: %v", currentWorld.Name)),
+				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Seed: %v", currentWorld.Seed)),
+				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Size: %v", currentWorld.Size)),
 			),
 			ui.Stack(ui.StackOptions{Direction: ui.HorizontalStack, Spacing: 1},
 				ui.Button(func() { s.selectedWorld <- worldUUID }, ui.Label(ui.DefaultLabelOptions(), "Play")),
@@ -115,8 +115,8 @@ func (s *worldListScene) UpdateUI() {
 	)
 }
 
-func NewWorldListScene() *worldListScene {
-	scene := &worldListScene{
+func NewWorldListScene() *WorldListScene {
+	scene := &WorldListScene{
 		selectedWorld: make(chan uuid.UUID, 1),
 		deleteWorld:   make(chan uuid.UUID, 1),
 		newWorld:      make(chan bool, 1),
@@ -127,11 +127,11 @@ func NewWorldListScene() *worldListScene {
 	return scene
 }
 
-func (s *worldListScene) Destroy() {
+func (s *WorldListScene) Destroy() {
 	log.Println("worldListScene.Destroy() called")
 }
 
-func (s *worldListScene) Update() {
+func (s *WorldListScene) Update() {
 	// Rescan the saves folder each 60 ticks ( 1 second )
 	if scene_manager.Ticks()%60 == 0 {
 		s.Scan()
@@ -159,7 +159,7 @@ func (s *worldListScene) Update() {
 	}
 }
 
-func (s *worldListScene) Draw(screen *ebiten.Image) {
+func (s *WorldListScene) Draw(screen *ebiten.Image) {
 	if scene_manager.Ticks()%60 == 0 || s.view == nil {
 		s.UpdateUI()
 	}

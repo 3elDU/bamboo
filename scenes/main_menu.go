@@ -10,17 +10,17 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type mainMenu struct {
+type MainMenu struct {
 	view ui.View
 
 	// through this channel we will receive button ID, that was pressed
 	buttonPressed chan int
 }
 
-func NewMainMenuScene() *mainMenu {
+func NewMainMenuScene() *MainMenu {
 	buttonPressed := make(chan int, 1)
 
-	return &mainMenu{
+	return &MainMenu{
 		buttonPressed: buttonPressed,
 		view: ui.Screen(
 			ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(), ui.Padding(1,
@@ -52,7 +52,7 @@ func NewMainMenuScene() *mainMenu {
 	}
 }
 
-func (s *mainMenu) Update() {
+func (s *MainMenu) Update() {
 	if err := s.view.Update(); err != nil {
 		log.Panicf("failed to update a view: %v", err)
 	}
@@ -74,11 +74,11 @@ func (s *mainMenu) Update() {
 	}
 }
 
-func (s *mainMenu) Destroy() {
-	log.Println("mainMenu.Destroy() called")
+func (s *MainMenu) Destroy() {
+	log.Println("MainMenu.Destroy() called")
 }
 
-func (s *mainMenu) Draw(screen *ebiten.Image) {
+func (s *MainMenu) Draw(screen *ebiten.Image) {
 	err := s.view.Draw(screen, 0, 0)
 	if err != nil {
 		log.Panicln(err)

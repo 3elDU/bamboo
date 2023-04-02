@@ -20,9 +20,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-type gameScene struct {
-	widgets      *widget.WidgetContainer
-	debugWidgets *widget.WidgetContainer
+type Game struct {
+	widgets      *widget.Container
+	debugWidgets *widget.Container
 
 	paused    bool
 	pauseMenu *pauseMenu
@@ -34,8 +34,8 @@ type gameScene struct {
 	debugInfoVisible bool
 }
 
-func NewGameScene(gameWorld *world.World, player player.Player) *gameScene {
-	game := &gameScene{
+func NewGameScene(gameWorld *world.World, player player.Player) *Game {
+	game := &Game{
 		widgets:      widget.NewWidgetContainer(),
 		debugWidgets: widget.NewWidgetContainer(),
 
@@ -59,12 +59,12 @@ func NewGameScene(gameWorld *world.World, player player.Player) *gameScene {
 	return game
 }
 
-func (game *gameScene) Save() {
+func (game *Game) Save() {
 	game.world.Save()
 	game.player.Save(game.world.Metadata.UUID)
 }
 
-func (game *gameScene) processInput() {
+func (game *Game) processInput() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		game.paused = !game.paused
 		log.Printf("Escape pressed. Toggled pause menu. (%v)", game.paused)
@@ -85,6 +85,13 @@ func (game *gameScene) processInput() {
 		}
 		return
 	}
+
+	game.player.Update(player.MovementVector{
+		Left:  ebiten.IsKeyPressed(ebiten.KeyA),
+		Right: ebiten.IsKeyPressed(ebiten.KeyD),
+		Up:    ebiten.IsKeyPressed(ebiten.KeyW),
+		Down:  ebiten.IsKeyPressed(ebiten.KeyS),
+	}, game.world)
 
 	// Check for key presses
 	switch {
@@ -136,18 +143,13 @@ func (game *gameScene) processInput() {
 	}
 }
 
-func (game *gameScene) updateLogic() {
-	game.player.Update(player.MovementVector{
-		Left:  ebiten.IsKeyPressed(ebiten.KeyA),
-		Right: ebiten.IsKeyPressed(ebiten.KeyD),
-		Up:    ebiten.IsKeyPressed(ebiten.KeyW),
-		Down:  ebiten.IsKeyPressed(ebiten.KeyS),
-	}, game.world)
+func (game *Game) updateLogic() {
+	if game.paused {
+		return
+	}
 
 	game.world.Update()
-
 	game.widgets.Update()
-
 	if game.debugInfoVisible {
 		game.debugWidgets.Update()
 	}
@@ -158,14 +160,14 @@ func (game *gameScene) updateLogic() {
 	}
 }
 
-func (game *gameScene) Update() {
+func (game *Game) Update() {
 	game.processInput()
 	game.updateLogic()
 }
 
-func (game *gameScene) Draw(screen *ebiten.Image) {
+func (game *Game) Draw(screen *ebiten.Image) {
 	game.world.Render(screen, game.player.X, game.player.Y, float64(config.UIScaling))
-	game.player.Render(screen, float64(config.UIScaling))
+	game.player.Render(screen, float64(config.UIScaling), game.paused)
 	game.inventory.Render(screen)
 
 	game.widgets.Render(screen)
@@ -196,7 +198,7 @@ func (game *gameScene) Draw(screen *ebiten.Image) {
 	}
 }
 
-func (game *gameScene) Destroy() {
+func (game *Game) Destroy() {
 	game.Save()
 	log.Println("GameScene.Destroy() called")
 }

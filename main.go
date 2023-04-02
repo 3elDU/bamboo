@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"time"
@@ -27,9 +26,6 @@ func init() {
 	}
 	w := io.MultiWriter(file, os.Stdout)
 	log.SetOutput(w)
-
-	// init RNG
-	rand.Seed(int64(time.Now().Nanosecond()))
 
 	// load assets
 	asset_loader.LoadAssets(config.AssetDirectory)

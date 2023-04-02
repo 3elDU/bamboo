@@ -15,13 +15,13 @@ type FlowersState struct {
 	TexturedBlockState
 }
 
-type flowers struct {
+type FlowersBlock struct {
 	baseBlock
 	texturedBlock
 }
 
-func NewFlowersBlock() *flowers {
-	return &flowers{
+func NewFlowersBlock() *FlowersBlock {
+	return &FlowersBlock{
 		baseBlock: baseBlock{
 			blockType: Flowers,
 		},
@@ -32,14 +32,14 @@ func NewFlowersBlock() *flowers {
 	}
 }
 
-func (b flowers) State() interface{} {
+func (b *FlowersBlock) State() interface{} {
 	return FlowersState{
 		BaseBlockState:     b.baseBlock.State().(BaseBlockState),
 		TexturedBlockState: b.texturedBlock.State().(TexturedBlockState),
 	}
 }
 
-func (b *flowers) LoadState(s interface{}) {
+func (b *FlowersBlock) LoadState(s interface{}) {
 	state := s.(FlowersState)
 	b.baseBlock.LoadState(state.BaseBlockState)
 	b.texturedBlock.LoadState(state.TexturedBlockState)

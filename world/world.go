@@ -11,10 +11,10 @@ import (
 )
 
 type World struct {
-	generator   *WorldGenerator
-	saverLoader *WorldSaverLoader
+	generator   *Generator
+	saverLoader *SaverLoader
 
-	Metadata WorldSave
+	Metadata Save
 
 	// keys there are Chunk coordinates.
 	// so, actual Chunk coordinates are x*16 and y*16
@@ -28,7 +28,7 @@ func NewWorld(name string, uuid uuid.UUID, seed int64) *World {
 	generator := NewWorldGenerator(seed)
 	go generator.Run()
 
-	metadata := WorldSave{Name: name, UUID: uuid, Seed: seed}
+	metadata := Save{Name: name, UUID: uuid, Seed: seed}
 
 	saverLoader := NewWorldSaverLoader(metadata)
 	go saverLoader.Run()
@@ -179,6 +179,6 @@ func (world *World) CheckNeighbors(cx, cy uint64) bool {
 	return len(world.GetNeighbors(cx, cy)) == 4
 }
 
-func (world World) Seed() int64 {
+func (world *World) Seed() int64 {
 	return world.Metadata.Seed
 }

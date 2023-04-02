@@ -1,7 +1,3 @@
-/*
-	Implementations for various block types
-*/
-
 package blocks
 
 import (
@@ -15,15 +11,15 @@ const (
 	Sand
 	Grass
 	Snow
-	Short_Grass
-	Tall_Grass
+	ShortGrass
+	TallGrass
 	Flowers
 	PineTree
 	RedMushroom
 	WhiteMushroom
 )
 
-// Returns an empty interface
+// GetBlockByID returns an empty block
 func GetBlockByID(id types.BlockType) types.Block {
 	switch id {
 	case Empty:
@@ -38,9 +34,9 @@ func GetBlockByID(id types.BlockType) types.Block {
 		return NewGrassBlock()
 	case Snow:
 		return NewSnowBlock()
-	case Short_Grass:
+	case ShortGrass:
 		return NewShortGrassBlock()
-	case Tall_Grass:
+	case TallGrass:
 		return NewTallGrassBlock()
 	case Flowers:
 		return NewFlowersBlock()

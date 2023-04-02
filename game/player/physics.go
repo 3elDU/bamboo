@@ -9,18 +9,18 @@ import (
 	"github.com/3elDU/bamboo/world"
 )
 
-func (p *Player) speed() float64 {
-	return math.Max(math.Abs(p.xVelocity), math.Abs(p.yVelocity))
+func (player *Player) speed() float64 {
+	return math.Max(math.Abs(player.xVelocity), math.Abs(player.yVelocity))
 }
 
-func (p *Player) updateMovementDirection() {
-	if p.speed() < 0.01 {
+func (player *Player) updateMovementDirection() {
+	if player.speed() < 0.01 {
 		return
 	}
 
 	var movementSide MovementDirection
 
-	if math.Abs(p.xVelocity) > math.Abs(p.yVelocity) {
+	if math.Abs(player.xVelocity) > math.Abs(player.yVelocity) {
 		movementSide = Left // horizontal movement
 	} else {
 		movementSide = Up // vertical movement
@@ -28,16 +28,16 @@ func (p *Player) updateMovementDirection() {
 
 	switch movementSide {
 	case Left:
-		if p.xVelocity > 0 {
-			p.movementDirection = Right
+		if player.xVelocity > 0 {
+			player.movementDirection = Right
 		} else {
-			p.movementDirection = Left
+			player.movementDirection = Left
 		}
 	case Up:
-		if p.yVelocity > 0 {
-			p.movementDirection = Down
+		if player.yVelocity > 0 {
+			player.movementDirection = Down
 		} else {
-			p.movementDirection = Up
+			player.movementDirection = Up
 		}
 	}
 }
@@ -106,45 +106,46 @@ func countCollisions(collisions [4]bool) (count uint) {
 	return
 }
 
+// Update updates the player physics and animation
 // FIXME: consider frame delta time in equations
-func (p *Player) Update(movement MovementVector, world *world.World) {
+func (player *Player) Update(movement MovementVector, world *world.World) {
 	dx, dy := movement.ToFloat()
 
-	p.xVelocity += dx * config.PlayerSpeed
-	p.yVelocity += dy * config.PlayerSpeed
+	player.xVelocity += dx * config.PlayerSpeed
+	player.yVelocity += dy * config.PlayerSpeed
 
 	// if player somehow got stuck in the block, skip collision check
-	if !anyOf(collidePlayer(types.Coords2f{X: p.X, Y: p.Y}, world)) {
+	if !anyOf(collidePlayer(types.Coords2f{X: player.X, Y: player.Y}, world)) {
 		// check for collisions on X axis
-		if anyOf(collidePlayer(types.Coords2f{X: p.X + p.xVelocity, Y: p.Y}, world)) {
-			p.xVelocity = 0
+		if anyOf(collidePlayer(types.Coords2f{X: player.X + player.xVelocity, Y: player.Y}, world)) {
+			player.xVelocity = 0
 		}
 		// check for collisions on Y axis
-		if anyOf(collidePlayer(types.Coords2f{X: p.X, Y: p.Y + p.yVelocity}, world)) {
-			p.yVelocity = 0
+		if anyOf(collidePlayer(types.Coords2f{X: player.X, Y: player.Y + player.yVelocity}, world)) {
+			player.yVelocity = 0
 		}
 		// check for corner collisions
-		if countCollisions(collidePlayer(types.Coords2f{X: p.X + p.xVelocity, Y: p.Y + p.yVelocity}, world)) == 1 {
+		if countCollisions(collidePlayer(types.Coords2f{X: player.X + player.xVelocity, Y: player.Y + player.yVelocity}, world)) == 1 {
 			// "bounce" off the corner
-			p.xVelocity = -p.xVelocity * 0.1
-			p.yVelocity = -p.yVelocity * 0.1
+			player.xVelocity = -player.xVelocity * 0.1
+			player.yVelocity = -player.yVelocity * 0.1
 		}
 	}
 
 	// multiply velocity by block speed modifier
 	speedModifier := 1.0
-	if block, ok := world.BlockAt(uint64(p.X), uint64(p.Y)).(types.CollidableBlock); ok {
+	if block, ok := world.BlockAt(uint64(player.X), uint64(player.Y)).(types.CollidableBlock); ok {
 		speedModifier = block.PlayerSpeed()
 	}
 
-	p.X += p.xVelocity * speedModifier
-	p.Y += p.yVelocity * speedModifier
+	player.X += player.xVelocity * speedModifier
+	player.Y += player.yVelocity * speedModifier
 
-	p.X = util.Clamp(p.X, 0, float64(config.WorldWidth))
-	p.Y = util.Clamp(p.Y, 0, float64(config.WorldHeight))
+	player.X = util.Clamp(player.X, 0, float64(config.WorldWidth))
+	player.Y = util.Clamp(player.Y, 0, float64(config.WorldHeight))
 
-	p.updateMovementDirection()
+	player.updateMovementDirection()
 
-	p.xVelocity *= 0.75
-	p.yVelocity *= 0.75
+	player.xVelocity *= 0.75
+	player.yVelocity *= 0.75
 }

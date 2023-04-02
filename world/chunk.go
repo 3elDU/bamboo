@@ -18,7 +18,7 @@ type Chunk struct {
 
 	// Whether a chunk has been modified since last update
 	modified bool
-	// similar to modified, but indicates that a redraw is required
+	// similar to modified, but indicates that redraw is required
 	// resets on Chunk.Render()
 	needsRedraw  bool
 	lastAccessed uint64
@@ -61,11 +61,11 @@ func (c *Chunk) Update(world types.World) {
 	}
 }
 
-func (c Chunk) BlockCoords() types.Coords2u {
+func (c *Chunk) BlockCoords() types.Coords2u {
 	return types.Coords2u{X: c.x * 16, Y: c.y * 16}
 }
 
-func (c Chunk) Coords() types.Coords2u {
+func (c *Chunk) Coords() types.Coords2u {
 	return types.Coords2u{X: c.x, Y: c.y}
 }
 

@@ -1,7 +1,3 @@
-/*
-Scene is a distinct state of the program, that displays specific state of the game.
-For example: main menu scene, "new game" scene, playing scene, death scene, etc.
-*/
 package scene_manager
 
 import (
@@ -16,11 +12,15 @@ import (
 // Keeping one and global instance of scene manager
 var manager *sceneManager
 
+/*
+Scene is a distinct state of the program, that displays specific state of the game.
+For example: main menu scene, "new game" scene, playing scene, death scene, etc.
+*/
 type Scene interface {
 	Update()
 	Draw(screen *ebiten.Image)
 
-	// called when the scene is about to be deleted
+	// Destroy is called when the scene is about to be deleted
 	Destroy()
 }
 
@@ -29,8 +29,7 @@ type sceneManager struct {
 	queue        []Scene
 
 	// tick counter
-	// can be retrieved throuch Ticks() function,
-	// and used for timing purposes, etc.
+	// can be retrieved through Ticks() function
 	counter uint64
 
 	// special flag, that is set in SceneManager.Exit()
@@ -45,13 +44,13 @@ func init() {
 	}
 }
 
-// Returns internal tick counter, that is incremented on each Update() call
-// Can be used for different timing purposes, etc.
+// Ticks Returns internal tick counter that is incremented on each Update() call
+// Can be used for different timing purposes
 func Ticks() uint64 {
 	return manager.counter
 }
 
-// Must be called from Scene.Update()
+// End must be called from Scene.Update()
 // Exits current scene, and switches to next in the queue
 // If the queue is empty, exits
 func End() {
@@ -73,7 +72,7 @@ func End() {
 	manager.printQueue("End")
 }
 
-// Terminates the program, destroying all the remaining scenes
+// Exit terminates the program, destroying all the remaining scenes
 func Exit() {
 	log.Println("SceneManager.Exit() called. Terminating all the scenes and quiting")
 	for _, scene := range manager.queue {
@@ -85,7 +84,7 @@ func Exit() {
 	manager.terminated = true
 }
 
-// Switches to the given scene, inserting current scene to the queue
+// Switch switches to the given scene, inserting current scene to the queue
 // Switch is intented for temporary scenes, like pause menu
 func Switch(next Scene) {
 	if manager.currentScene != nil {
@@ -96,23 +95,17 @@ func Switch(next Scene) {
 	manager.printQueue("Switch")
 }
 
-// Behaves similarly to Switch, but the main difference is,
+// QSwitch Behaves similarly to Switch, but the main difference is,
 // QSwitch completely replaces current scene with new one
 func QSwitch(next Scene) {
 	manager.currentScene = next
 	manager.printQueue("QSwitch")
 }
 
-// Pushes scene to the end of the queue
+// Push pushes scene to the end of the queue
 func Push(sc Scene) {
 	manager.queue = append(manager.queue, sc)
 	manager.printQueue("Push")
-}
-
-// Inserts scene at the beginning of the queue
-func Insert(sc Scene) {
-	manager.queue = slices.Insert(manager.queue, 0, sc)
-	manager.printQueue("Insert")
 }
 
 func (manager *sceneManager) Update() error {

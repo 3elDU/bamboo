@@ -16,7 +16,7 @@ type Block interface {
 	Update(world World)
 
 	State() interface{}
-	// panicks on error
+	// LoadState panicks on error
 	LoadState(interface{})
 }
 

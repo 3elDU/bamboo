@@ -20,11 +20,11 @@ func init() {
 	os.Mkdir(config.WorldSaveDirectory, os.ModePerm)
 }
 
-// WorldSaverLoader maintains chunk loading/saving queue,
+// SaverLoader maintains chunk loading/saving queue,
 // while doing actual work on separate goroutine,
 // so we don't have any freezes on the main thread
-type WorldSaverLoader struct {
-	Metadata WorldSave
+type SaverLoader struct {
+	Metadata Save
 
 	saveRequests     chan Chunk
 	loadRequestsPool map[types.Coords2u]bool
@@ -34,8 +34,8 @@ type WorldSaverLoader struct {
 	loaded       chan *Chunk
 }
 
-func NewWorldSaverLoader(metadata WorldSave) *WorldSaverLoader {
-	return &WorldSaverLoader{
+func NewWorldSaverLoader(metadata Save) *SaverLoader {
+	return &SaverLoader{
 		Metadata: metadata,
 
 		saveRequests:     make(chan Chunk, 1024),
@@ -45,7 +45,7 @@ func NewWorldSaverLoader(metadata WorldSave) *WorldSaverLoader {
 	}
 }
 
-func (sl *WorldSaverLoader) runSaver() {
+func (sl *SaverLoader) runSaver() {
 	for {
 		chunk := <-sl.saveRequests
 
@@ -54,7 +54,7 @@ func (sl *WorldSaverLoader) runSaver() {
 	}
 }
 
-func (sl *WorldSaverLoader) runLoader() {
+func (sl *SaverLoader) runLoader() {
 	for {
 		request := <-sl.loadRequests
 
@@ -63,20 +63,20 @@ func (sl *WorldSaverLoader) runLoader() {
 			// if the requested chunk doesn't exist, simply ignore the error and skip it
 			continue
 		}
-		log.Printf("WorldSaverLoader.runLoader() - loaded chunk %v; %v from disk", request.X, request.Y)
+		log.Printf("SaverLoader.runLoader() - loaded chunk %v; %v from disk", request.X, request.Y)
 
 		sl.loaded <- c
 	}
 }
 
-func (sl *WorldSaverLoader) Run() {
+func (sl *SaverLoader) Run() {
 	go sl.runSaver()
 	go sl.runLoader()
 }
 
 // Returns newly loaded chunk
 // If there is no pending chunks, returns nil
-func (sl *WorldSaverLoader) Receive() *Chunk {
+func (sl *SaverLoader) Receive() *Chunk {
 	select {
 	case c := <-sl.loaded:
 		delete(sl.loadRequestsPool, c.Coords())
@@ -87,12 +87,12 @@ func (sl *WorldSaverLoader) Receive() *Chunk {
 }
 
 // Pushes chunk save request to the queue
-func (sl *WorldSaverLoader) Save(chunk *Chunk) {
+func (sl *SaverLoader) Save(chunk *Chunk) {
 	sl.saveRequests <- *chunk
 }
 
 // Pushes chunk load reuqest to the queue
-func (sl *WorldSaverLoader) Load(cx, cy uint64) {
+func (sl *SaverLoader) Load(cx, cy uint64) {
 	coords := types.Coords2u{X: cx, Y: cy}
 	if sl.loadRequestsPool[coords] {
 		return
@@ -102,7 +102,7 @@ func (sl *WorldSaverLoader) Load(cx, cy uint64) {
 }
 
 // structure with metadata, representing a world save
-type WorldSave struct {
+type Save struct {
 	Name string    // world name as from the user
 	UUID uuid.UUID // internal unique world id, for identification purposes
 	Seed int64
@@ -131,13 +131,13 @@ type SavedChunk struct {
 func LoadWorld(id uuid.UUID) *World {
 	saveDir := filepath.Join(config.WorldSaveDirectory, id.String())
 
-	f, err := os.Open(filepath.Join(saveDir, "world.gob"))
+	f, err := os.Open(filepath.Join(saveDir, config.WorldInfoFile))
 	if err != nil {
 		log.Panicf("LoadWorld() - invalid file descriptor - %v", err)
 	}
 
 	decoder := gob.NewDecoder(f)
-	metadata := new(WorldSave)
+	metadata := new(Save)
 	if err := decoder.Decode(metadata); err != nil {
 		log.Panicf("LoadWorld() - failed to decode metadata - %v", err)
 	}
@@ -149,14 +149,14 @@ func LoadWorld(id uuid.UUID) *World {
 
 // NOTE: world folder is named after the UUID, not after the world name
 // that is, to avoid folder collision
-func (w *World) Save() {
-	saveDir := filepath.Join(config.WorldSaveDirectory, w.Metadata.UUID.String())
+func (world *World) Save() {
+	saveDir := filepath.Join(config.WorldSaveDirectory, world.Metadata.UUID.String())
 
 	// make a save directory, if it doesn't exist yet
 	os.Mkdir(saveDir, os.ModePerm)
 
 	// open world metadata file
-	f, err := os.Create(filepath.Join(saveDir, "world.gob"))
+	f, err := os.Create(filepath.Join(saveDir, config.WorldInfoFile))
 	if err != nil {
 		log.Panicf("failed to create world metadata file")
 	}
@@ -164,13 +164,13 @@ func (w *World) Save() {
 
 	// encode the metadata to it
 	encoder := gob.NewEncoder(f)
-	if err := encoder.Encode(w.Metadata); err != nil {
+	if err := encoder.Encode(world.Metadata); err != nil {
 		log.Panicf("failed to encode world metadata")
 	}
 
 	// loop over all loaded chunks, saving modified ones to the disk
-	for _, chunk := range w.chunks {
-		chunk.Save(w.Metadata.UUID)
+	for _, chunk := range world.chunks {
+		chunk.Save(world.Metadata.UUID)
 	}
 
 	log.Println("World.Save() - saved")
@@ -235,20 +235,18 @@ func (c *Chunk) Save(id uuid.UUID) {
 	}
 	defer f.Close()
 
-	// serialize the blockjs
-	var blocks [16][16]SavedBlock
+	// serialize the chunk
+	chunk := SavedChunk{
+		X: c.x, Y: c.y,
+	}
 	for x := 0; x < 16; x++ {
 		for y := 0; y < 16; y++ {
 			block := c.blocks[x][y]
-			blocks[x][y] = SavedBlock{
+			chunk.Data[x][y] = SavedBlock{
 				Type:  block.Type(),
 				State: block.State(),
 			}
 		}
-	}
-	chunk := SavedChunk{
-		X: c.x, Y: c.y,
-		Data: blocks,
 	}
 
 	encoder := gob.NewEncoder(f)

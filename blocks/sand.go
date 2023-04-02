@@ -17,19 +17,19 @@ type SandState struct {
 	CollidableBlockState
 }
 
-type sand struct {
+type SandBlock struct {
 	baseBlock
 	texturedBlock
 	collidableBlock
 }
 
-func NewSandBlock(stones bool) *sand {
+func NewSandBlock(stones bool) *SandBlock {
 	texVariant := "sand"
 	if stones {
 		texVariant = "sand-stones"
 	}
 
-	return &sand{
+	return &SandBlock{
 		baseBlock: baseBlock{
 			blockType: Sand,
 		},
@@ -44,7 +44,7 @@ func NewSandBlock(stones bool) *sand {
 	}
 }
 
-func (b sand) State() interface{} {
+func (b *SandBlock) State() interface{} {
 	return SandState{
 		BaseBlockState:       b.baseBlock.State().(BaseBlockState),
 		TexturedBlockState:   b.texturedBlock.State().(TexturedBlockState),
@@ -52,7 +52,7 @@ func (b sand) State() interface{} {
 	}
 }
 
-func (b *sand) LoadState(s interface{}) {
+func (b *SandBlock) LoadState(s interface{}) {
 	state := s.(SandState)
 	b.baseBlock.LoadState(state.BaseBlockState)
 	b.texturedBlock.LoadState(state.TexturedBlockState)

@@ -12,18 +12,18 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-var texture_map = map[MovementDirection]string{
+var textureMap = map[MovementDirection]string{
 	Left:  "player_left",
 	Right: "player_right",
 	Up:    "player_up",
 	Down:  "player_down",
 }
 
-func (player *Player) Render(screen *ebiten.Image, scaling float64) {
+func (player *Player) Render(screen *ebiten.Image, scaling float64, paused bool) {
 	opts := &ebiten.DrawImageOptions{}
 	sw, sh := screen.Size()
 	tex := ebiten.NewImageFromImage(
-		asset_loader.Texture(texture_map[player.movementDirection]).Texture().SubImage(
+		asset_loader.Texture(textureMap[player.movementDirection]).Texture().SubImage(
 			image.Rect(int(player.animationFrame)*16, 0, int(player.animationFrame)*16+16, 32),
 		),
 	)
@@ -36,7 +36,9 @@ func (player *Player) Render(screen *ebiten.Image, scaling float64) {
 	)
 	screen.DrawImage(tex, opts)
 
-	player.nextAnimationFrame()
+	if !paused {
+		player.nextAnimationFrame()
+	}
 }
 
 func (player *Player) nextAnimationFrame() {

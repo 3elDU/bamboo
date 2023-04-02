@@ -16,13 +16,13 @@ type PineTreeState struct {
 	CollidableBlockState
 }
 
-type pineTree struct {
+type PineTreeBlock struct {
 	connectedBlock
 	collidableBlock
 }
 
-func NewPineTreeBlock() *pineTree {
-	return &pineTree{
+func NewPineTreeBlock() *PineTreeBlock {
+	return &PineTreeBlock{
 		connectedBlock: connectedBlock{
 			baseBlock: baseBlock{
 				blockType: PineTree,
@@ -37,14 +37,14 @@ func NewPineTreeBlock() *pineTree {
 	}
 }
 
-func (b pineTree) State() interface{} {
+func (b *PineTreeBlock) State() interface{} {
 	return PineTreeState{
 		ConnectedBlockState:  b.connectedBlock.State().(ConnectedBlockState),
 		CollidableBlockState: b.collidableBlock.State().(CollidableBlockState),
 	}
 }
 
-func (b *pineTree) LoadState(s interface{}) {
+func (b *PineTreeBlock) LoadState(s interface{}) {
 	state := s.(PineTreeState)
 	b.connectedBlock.LoadState(state.ConnectedBlockState)
 	b.collidableBlock.LoadState(state.CollidableBlockState)

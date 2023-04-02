@@ -111,23 +111,23 @@ func RenderTextWidget(screen *ebiten.Image, widget TextWidget) {
 }
 
 // Universal container for both types of widgets, with useful methods
-type WidgetContainer struct {
+type Container struct {
 	Widgets     map[string]Widget
 	TextWidgets map[string]TextWidget
 }
 
-func NewWidgetContainer() *WidgetContainer {
-	return &WidgetContainer{
+func NewWidgetContainer() *Container {
+	return &Container{
 		Widgets:     make(map[string]Widget),
 		TextWidgets: make(map[string]TextWidget),
 	}
 }
 
-func (container *WidgetContainer) AddWidget(name string, widget Widget) {
+func (container *Container) AddWidget(name string, widget Widget) {
 	container.Widgets[name] = widget
 }
 
-func (container *WidgetContainer) GetWidget(name string) Widget {
+func (container *Container) GetWidget(name string) Widget {
 	w, exists := container.Widgets[name]
 	if !exists {
 		log.Panicf("widget with name %v doesn't exist", name)
@@ -135,11 +135,11 @@ func (container *WidgetContainer) GetWidget(name string) Widget {
 	return w
 }
 
-func (container *WidgetContainer) AddTextWidget(name string, widget TextWidget) {
+func (container *Container) AddTextWidget(name string, widget TextWidget) {
 	container.TextWidgets[name] = widget
 }
 
-func (container *WidgetContainer) GetTextWidget(name string) TextWidget {
+func (container *Container) GetTextWidget(name string) TextWidget {
 	w, exists := container.TextWidgets[name]
 	if !exists {
 		log.Panicf("text widget with name %v doesn't exist", name)
@@ -147,7 +147,7 @@ func (container *WidgetContainer) GetTextWidget(name string) TextWidget {
 	return w
 }
 
-func (container *WidgetContainer) Update() {
+func (container *Container) Update() {
 	for _, w := range container.Widgets {
 		w.Update()
 	}
@@ -156,7 +156,7 @@ func (container *WidgetContainer) Update() {
 	}
 }
 
-func (container *WidgetContainer) Render(screen *ebiten.Image) {
+func (container *Container) Render(screen *ebiten.Image) {
 	for _, w := range container.Widgets {
 		RenderWidget(screen, w)
 	}

@@ -18,7 +18,7 @@ type FormPrompt struct {
 }
 
 // a simple wrapper around basic components, to simplify creation of prompts
-type formComponent struct {
+type FormComponent struct {
 	baseView
 
 	formData chan []string
@@ -31,8 +31,8 @@ type formComponent struct {
 
 // When compose button is pressed, form data will be sent through `formData` channel,
 // in the proper order
-func Form(submitButtonTitle string, formData chan []string, prompts ...FormPrompt) *formComponent {
-	form := &formComponent{
+func Form(submitButtonTitle string, formData chan []string, prompts ...FormPrompt) *FormComponent {
+	form := &FormComponent{
 		baseView: newBaseView(),
 		formData: formData,
 		prompts:  make([]FormPrompt, len(prompts)),
@@ -78,29 +78,29 @@ func Form(submitButtonTitle string, formData chan []string, prompts ...FormPromp
 	return form
 }
 
-func (f *formComponent) MaxSize() (float64, float64) {
+func (f *FormComponent) MaxSize() (float64, float64) {
 	return f.view.MaxSize()
 }
-func (f *formComponent) ComputedSize() (float64, float64) {
+func (f *FormComponent) ComputedSize() (float64, float64) {
 	return f.view.ComputedSize()
 }
-func (f *formComponent) CapacityForChild(_ View) (float64, float64) {
+func (f *FormComponent) CapacityForChild(_ View) (float64, float64) {
 	return 0, 0
 }
-func (f *formComponent) Children() []View {
+func (f *FormComponent) Children() []View {
 	return []View{f.view}
 }
-func (f *formComponent) Update() error {
+func (f *FormComponent) Update() error {
 	if f.composeButton.IsPressed() {
-		log.Println("formComponent.Update() - got button press")
+		log.Println("FormComponent.Update() - got button press")
 		inputs := make([]string, len(f.prompts))
 		for i, prompt := range f.prompts {
 			inputs[i] = prompt.input.Input()
 		}
-		log.Printf("formComponent.Update() - [%v] [%v]", len(inputs), inputs)
+		log.Printf("FormComponent.Update() - [%v] [%v]", len(inputs), inputs)
 
 		if len(inputs) != len(f.prompts) {
-			log.Panicf("formComponent.Update() - len(inputs) != len(prompts)")
+			log.Panicf("FormComponent.Update() - len(inputs) != len(prompts)")
 		}
 
 		// make sure to send data in the separate goroutine, so we won't get a deadlock
@@ -111,6 +111,6 @@ func (f *formComponent) Update() error {
 
 	return f.view.Update()
 }
-func (f *formComponent) Draw(screen *ebiten.Image, x, y float64) error {
+func (f *FormComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	return f.view.Draw(screen, x, y)
 }

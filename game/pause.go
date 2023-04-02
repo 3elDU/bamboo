@@ -35,7 +35,7 @@ type pauseMenu struct {
 
 func newPauseMenu() *pauseMenu {
 	tex := ebiten.NewImage(1, 1)
-	tex.Fill(color.RGBA{0, 0, 0, 128})
+	tex.Fill(color.RGBA{A: 128})
 
 	var (
 		continueBtn = make(chan bool, 1)
@@ -66,7 +66,7 @@ func newPauseMenu() *pauseMenu {
 }
 
 func (p *pauseMenu) Draw(screen *ebiten.Image) error {
-	// "Dim" the screen with black texture
+	// Dim the background with translucent black texture
 	p.opts.GeoM.Reset()
 	w, h := screen.Size()
 	// Fixes issue #3

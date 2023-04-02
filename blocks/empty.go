@@ -8,16 +8,16 @@ import (
 	"github.com/3elDU/bamboo/types"
 )
 
-type emptyBlock struct {
+type EmptyBlock struct {
 	baseBlock
 }
 
-func (e *emptyBlock) Update(_ types.World) {
+func (e *EmptyBlock) Update(_ types.World) {
 
 }
 
-func NewEmptyBlock() *emptyBlock {
-	return &emptyBlock{
+func NewEmptyBlock() *EmptyBlock {
+	return &EmptyBlock{
 		baseBlock: baseBlock{
 			blockType: Empty,
 		},

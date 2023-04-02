@@ -29,7 +29,7 @@ type collidableBlock struct {
 	playerSpeed float64
 }
 
-func (b collidableBlock) Collidable() bool {
+func (b *collidableBlock) Collidable() bool {
 	return b.collidable
 }
 
@@ -42,7 +42,7 @@ func defaultCollisionPoints() [4]types.Coords2f {
 	}
 }
 
-func (b collidableBlock) CollisionPoints() [4]types.Coords2f {
+func (b *collidableBlock) CollisionPoints() [4]types.Coords2f {
 	/*
 		return [4]types.Coords2f{
 			{X: float64(b.x) + b.collisionPoints[0].X, Y: float64(b.y) + b.collisionPoints[0].Y},
@@ -54,11 +54,11 @@ func (b collidableBlock) CollisionPoints() [4]types.Coords2f {
 	return b.collisionPoints
 }
 
-func (b collidableBlock) PlayerSpeed() float64 {
+func (b *collidableBlock) PlayerSpeed() float64 {
 	return b.playerSpeed
 }
 
-func (b collidableBlock) State() interface{} {
+func (b *collidableBlock) State() interface{} {
 	return CollidableBlockState{
 		Collidable:      b.collidable,
 		CollisionPoints: b.collisionPoints,

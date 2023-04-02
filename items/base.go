@@ -18,11 +18,11 @@ type baseItem struct {
 	id types.ItemType
 }
 
-func (i baseItem) Type() types.ItemType {
+func (i *baseItem) Type() types.ItemType {
 	return i.id
 }
 
-func (i baseItem) State() interface{} {
+func (i *baseItem) State() interface{} {
 	return BaseItemState{
 		Type: i.id,
 	}

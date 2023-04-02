@@ -17,7 +17,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type newWorldScene struct {
+type NewWorldScene struct {
 	view ui.View
 
 	// form results will be received through this channel
@@ -25,10 +25,10 @@ type newWorldScene struct {
 	formData chan []string
 }
 
-func NewNewWorldScene() *newWorldScene {
+func NewNewWorldScene() *NewWorldScene {
 	formData := make(chan []string, 1)
 
-	return &newWorldScene{
+	return &NewWorldScene{
 		formData: formData,
 
 		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(), ui.Center(
@@ -42,32 +42,32 @@ func NewNewWorldScene() *newWorldScene {
 	}
 }
 
-func (s *newWorldScene) Update() {
+func (s *NewWorldScene) Update() {
 	if err := s.view.Update(); err != nil {
 		log.Panicf("failed to update a viev: %v", err)
 	}
 
 	select {
 	case formData := <-s.formData:
-		world_name, seed_string := formData[0], formData[1]
+		worldName, seedString := formData[0], formData[1]
 
 		// convert string to bytes -> compute hash -> convert hash to int64
-		seed_bytes := []byte(seed_string)
-		seed_hash_bytes := fnv.New64a().Sum(seed_bytes)
+		seedBytes := []byte(seedString)
+		seedHashBytes := fnv.New64a().Sum(seedBytes)
 		var seed int64
-		binary.Read(bytes.NewReader(seed_hash_bytes), binary.BigEndian, &seed)
+		binary.Read(bytes.NewReader(seedHashBytes), binary.BigEndian, &seed)
 
-		w := world.NewWorld(world_name, uuid.New(), seed)
+		w := world.NewWorld(worldName, uuid.New(), seed)
 		scene_manager.QSwitch(game.NewGameScene(w, player.Player{X: float64(config.PlayerStartX), Y: float64(config.PlayerStartY)}))
 	default:
 	}
 }
 
-func (*newWorldScene) Destroy() {
-	log.Println("newWorldScene.Destroy() called")
+func (*NewWorldScene) Destroy() {
+	log.Println("NewWorldScene.Destroy() called")
 }
 
-func (s *newWorldScene) Draw(screen *ebiten.Image) {
+func (s *NewWorldScene) Draw(screen *ebiten.Image) {
 	err := s.view.Draw(screen, 0, 0)
 	if err != nil {
 		log.Panicln(err)

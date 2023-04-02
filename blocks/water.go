@@ -16,13 +16,13 @@ type WaterState struct {
 	CollidableBlockState
 }
 
-type water struct {
+type WaterBlock struct {
 	connectedBlock
 	collidableBlock
 }
 
-func NewWaterBlock() *water {
-	return &water{
+func NewWaterBlock() *WaterBlock {
+	return &WaterBlock{
 		connectedBlock: connectedBlock{
 			baseBlock: baseBlock{
 				blockType: Water,
@@ -37,14 +37,14 @@ func NewWaterBlock() *water {
 	}
 }
 
-func (b water) State() interface{} {
+func (b *WaterBlock) State() interface{} {
 	return WaterState{
 		ConnectedBlockState:  b.connectedBlock.State().(ConnectedBlockState),
 		CollidableBlockState: b.collidableBlock.State().(CollidableBlockState),
 	}
 }
 
-func (b *water) LoadState(s interface{}) {
+func (b *WaterBlock) LoadState(s interface{}) {
 	state := s.(WaterState)
 	b.connectedBlock.LoadState(state.ConnectedBlockState)
 	b.collidableBlock.LoadState(state.CollidableBlockState)

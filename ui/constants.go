@@ -6,4 +6,4 @@ import (
 )
 
 // Em equals letter height divided by 2
-var Em float64 = font.FontHeight / 2 * float64(config.UIScaling)
+var Em = font.CharHeight / 2 * float64(config.UIScaling)

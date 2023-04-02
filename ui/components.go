@@ -20,26 +20,26 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-// screen is the root component
-type screenComponent struct {
+// ScreenComponent is the root component
+type ScreenComponent struct {
 	screen *ebiten.Image
 	child  View
 	id     uint64
 }
 
-func Screen(child View) *screenComponent {
+func Screen(child View) *ScreenComponent {
 	id := rand.Uint64()
-	s := &screenComponent{child: child, id: id}
+	s := &ScreenComponent{child: child, id: id}
 	child.SetParent(s)
 	return s
 }
-func (s screenComponent) ID() uint64 {
+func (s *ScreenComponent) ID() uint64 {
 	return s.id
 }
-func (s screenComponent) SetParent(parent View) {
-	log.Fatal("UI - Attempted to set parent for screen component")
+func (s *ScreenComponent) SetParent(_ View) {
+	log.Panicln("Attempted to set parent for screen component")
 }
-func (s *screenComponent) MaxSize() (float64, float64) {
+func (s *ScreenComponent) MaxSize() (float64, float64) {
 	if s.screen == nil {
 		return 0, 0
 	} else {
@@ -47,53 +47,53 @@ func (s *screenComponent) MaxSize() (float64, float64) {
 		return float64(w), float64(h)
 	}
 }
-func (s *screenComponent) CapacityForChild(child View) (float64, float64) {
+func (s *ScreenComponent) CapacityForChild(_ View) (float64, float64) {
 	return s.MaxSize()
 }
-func (s *screenComponent) ComputedSize() (float64, float64) {
+func (s *ScreenComponent) ComputedSize() (float64, float64) {
 	return s.MaxSize()
 }
-func (s *screenComponent) Children() []View {
+func (s *ScreenComponent) Children() []View {
 	return []View{s.child}
 }
-func (s *screenComponent) Update() error {
+func (s *ScreenComponent) Update() error {
 	return s.child.Update()
 }
-func (s *screenComponent) Draw(screen *ebiten.Image, x, y float64) error {
+func (s *ScreenComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	// yes, a little hacky
 	s.screen = screen
 	return s.child.Draw(screen, x, y)
 }
 
-type paddingComponent struct {
+type PaddingComponent struct {
 	baseView
 	child   View
 	padding float64
 }
 
-func Padding(amount float64, child View) *paddingComponent {
-	p := &paddingComponent{child: child, padding: amount, baseView: newBaseView()}
+func Padding(amount float64, child View) *PaddingComponent {
+	p := &PaddingComponent{child: child, padding: amount, baseView: newBaseView()}
 	child.SetParent(p)
 	return p
 }
-func (p *paddingComponent) MaxSize() (float64, float64) {
+func (p *PaddingComponent) MaxSize() (float64, float64) {
 	return p.parent.CapacityForChild(p)
 }
-func (p *paddingComponent) ComputedSize() (float64, float64) {
+func (p *PaddingComponent) ComputedSize() (float64, float64) {
 	w, h := p.MaxSize()
 	return w - p.padding*Em*2, h - p.padding*Em*2
 }
-func (p *paddingComponent) CapacityForChild(_ View) (float64, float64) {
+func (p *PaddingComponent) CapacityForChild(_ View) (float64, float64) {
 	w, h := p.MaxSize()
 	return w - p.padding*Em*2, h - p.padding*Em*2
 }
-func (p *paddingComponent) Children() []View {
+func (p *PaddingComponent) Children() []View {
 	return []View{p.child}
 }
-func (p *paddingComponent) Update() error {
+func (p *PaddingComponent) Update() error {
 	return p.child.Update()
 }
-func (p *paddingComponent) Draw(screen *ebiten.Image, x, y float64) error {
+func (p *PaddingComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	return p.child.Draw(screen, x+p.padding*Em, y+p.padding*Em)
 }
 
@@ -110,15 +110,15 @@ type StackOptions struct {
 	Proportions []float64 // how much % of the parent space will each child occupy
 }
 
-type stackComponent struct {
+type StackComponent struct {
 	baseView
 
 	opts     StackOptions
 	children []View
 }
 
-func Stack(opts StackOptions, children ...View) *stackComponent {
-	s := &stackComponent{
+func Stack(opts StackOptions, children ...View) *StackComponent {
+	s := &StackComponent{
 		baseView: newBaseView(),
 		opts:     opts,
 		children: children,
@@ -128,10 +128,10 @@ func Stack(opts StackOptions, children ...View) *stackComponent {
 	}
 	return s
 }
-func (s *stackComponent) MaxSize() (float64, float64) {
+func (s *StackComponent) MaxSize() (float64, float64) {
 	return s.parent.CapacityForChild(s)
 }
-func (s *stackComponent) ComputedSize() (w, h float64) {
+func (s *StackComponent) ComputedSize() (w, h float64) {
 	for i, child := range s.children {
 		cw, ch := child.ComputedSize()
 
@@ -161,7 +161,7 @@ func (s *stackComponent) ComputedSize() (w, h float64) {
 
 	return
 }
-func (s *stackComponent) CapacityForChild(child View) (float64, float64) {
+func (s *StackComponent) CapacityForChild(child View) (float64, float64) {
 	w, h := s.parent.CapacityForChild(child)
 
 	// index of the child
@@ -200,14 +200,14 @@ func (s *stackComponent) CapacityForChild(child View) (float64, float64) {
 	}
 }
 
-func (s *stackComponent) Children() []View {
+func (s *StackComponent) Children() []View {
 	return s.children
 }
-func (s *stackComponent) AddChild(child View) {
+func (s *StackComponent) AddChild(child View) {
 	child.SetParent(s)
 	s.children = append(s.children, child)
 }
-func (s *stackComponent) Update() error {
+func (s *StackComponent) Update() error {
 	for _, child := range s.children {
 		err := child.Update()
 		if err != nil {
@@ -216,7 +216,7 @@ func (s *stackComponent) Update() error {
 	}
 	return nil
 }
-func (s *stackComponent) Draw(screen *ebiten.Image, x, y float64) error {
+func (s *StackComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	for _, child := range s.children {
 		// there is multiple children in a stack,
 		// but we can't return multiple errors.
@@ -236,32 +236,32 @@ func (s *stackComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	return nil
 }
 
-type centerComponent struct {
+type CenterComponent struct {
 	baseView
 	child View
 }
 
-func Center(child View) *centerComponent {
-	c := &centerComponent{child: child, baseView: newBaseView()}
+func Center(child View) *CenterComponent {
+	c := &CenterComponent{child: child, baseView: newBaseView()}
 	child.SetParent(c)
 	return c
 }
-func (c *centerComponent) MaxSize() (float64, float64) {
+func (c *CenterComponent) MaxSize() (float64, float64) {
 	return c.parent.CapacityForChild(c)
 }
-func (c *centerComponent) ComputedSize() (float64, float64) {
+func (c *CenterComponent) ComputedSize() (float64, float64) {
 	return c.MaxSize()
 }
-func (c *centerComponent) CapacityForChild(child View) (float64, float64) {
+func (c *CenterComponent) CapacityForChild(_ View) (float64, float64) {
 	return c.MaxSize()
 }
-func (c *centerComponent) Children() []View {
+func (c *CenterComponent) Children() []View {
 	return []View{c.child}
 }
-func (c *centerComponent) Update() error {
+func (c *CenterComponent) Update() error {
 	return c.child.Update()
 }
-func (c *centerComponent) Draw(screen *ebiten.Image, x, y float64) error {
+func (c *CenterComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	w, h := c.parent.CapacityForChild(c)
 	cw, ch := c.child.ComputedSize()
 	return c.child.Draw(screen, x+w/2-cw/2, y+h/2-ch/2)
@@ -280,45 +280,45 @@ func DefaultLabelOptions() LabelOptions {
 	}
 }
 
-type labelComponent struct {
+type LabelComponent struct {
 	baseView
 	opts LabelOptions
 	text string
 }
 
-func Label(options LabelOptions, s string) *labelComponent {
-	return &labelComponent{
+func Label(options LabelOptions, s string) *LabelComponent {
+	return &LabelComponent{
 		text:     s,
 		opts:     options,
 		baseView: newBaseView(),
 	}
 }
-func (l *labelComponent) MaxSize() (float64, float64) {
+func (l *LabelComponent) MaxSize() (float64, float64) {
 	return l.parent.CapacityForChild(l)
 }
-func (l *labelComponent) ComputedSize() (float64, float64) {
+func (l *LabelComponent) ComputedSize() (float64, float64) {
 	w, h := font.GetStringSize(l.text, l.opts.Scaling)
 	return float64(w), float64(h)
 }
-func (l labelComponent) CapacityForChild(_ View) (float64, float64) {
+func (l *LabelComponent) CapacityForChild(_ View) (float64, float64) {
 	return 0, 0
 }
-func (l labelComponent) Children() []View {
+func (l *LabelComponent) Children() []View {
 	return []View{}
 }
-func (l *labelComponent) Update() error {
+func (l *LabelComponent) Update() error {
 	return nil
 }
-func (l *labelComponent) Draw(screen *ebiten.Image, x, y float64) error {
-	font.RenderFontWithOptions(screen, asset_loader.DefaultFont(), l.text, x, y, l.opts.Color, l.opts.Scaling)
+func (l *LabelComponent) Draw(screen *ebiten.Image, x, y float64) error {
+	font.RenderFontWithOptions(screen, l.text, x, y, l.opts.Color, l.opts.Scaling)
 	return nil
 }
 
-type buttonComponent struct {
+type ButtonComponent struct {
 	baseView
 
-	tex       types.Texture
-	tex_hover types.Texture
+	tex      types.Texture
+	texHover types.Texture
 
 	child View
 
@@ -328,10 +328,10 @@ type buttonComponent struct {
 	handler func()
 }
 
-func Button(handler func(), child View) *buttonComponent {
-	b := &buttonComponent{
-		tex:       asset_loader.Texture("button"),
-		tex_hover: asset_loader.Texture("button-hover"),
+func Button(handler func(), child View) *ButtonComponent {
+	b := &ButtonComponent{
+		tex:      asset_loader.Texture("button"),
+		texHover: asset_loader.Texture("button-hover"),
 
 		child:   child,
 		handler: handler,
@@ -339,27 +339,27 @@ func Button(handler func(), child View) *buttonComponent {
 	child.SetParent(b)
 	return b
 }
-func (b *buttonComponent) MaxSize() (float64, float64) {
+func (b *ButtonComponent) MaxSize() (float64, float64) {
 	return b.ComputedSize()
 }
-func (b *buttonComponent) ComputedSize() (float64, float64) {
+func (b *ButtonComponent) ComputedSize() (float64, float64) {
 	w, h := b.tex.ScaledSize()
 	return float64(w), float64(h)
 }
-func (b *buttonComponent) CapacityForChild(_ View) (float64, float64) {
+func (b *ButtonComponent) CapacityForChild(_ View) (float64, float64) {
 	return b.ComputedSize()
 }
-func (b *buttonComponent) Children() []View {
+func (b *ButtonComponent) Children() []View {
 	return []View{b.child}
 }
-func (b *buttonComponent) Update() error {
+func (b *ButtonComponent) Update() error {
 	if b.pressed {
 		go b.handler()
 	}
 	b.pressed = false
 	return nil
 }
-func (b *buttonComponent) Draw(screen *ebiten.Image, x, y float64) error {
+func (b *ButtonComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	opts := &ebiten.DrawImageOptions{}
 	opts.GeoM.Scale(float64(config.UIScaling), float64(config.UIScaling))
 	opts.GeoM.Translate(x, y)
@@ -370,7 +370,7 @@ func (b *buttonComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	// check if the cursor is hovering over the button
 	mouseOver := float64(cx) > x && float64(cy) > y && float64(cx) < x+w && float64(cy) < y+h
 	if mouseOver {
-		screen.DrawImage(b.tex_hover.Texture(), opts)
+		screen.DrawImage(b.texHover.Texture(), opts)
 	} else {
 		screen.DrawImage(b.tex.Texture(), opts)
 	}
@@ -384,10 +384,10 @@ func (b *buttonComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	cw, ch := b.child.ComputedSize()
 	return b.child.Draw(screen, x+w/2-cw/2, y+h/2-ch/2)
 }
-func (b *buttonComponent) IsPressed() bool {
+func (b *ButtonComponent) IsPressed() bool {
 	return b.pressed
 }
-func (b *buttonComponent) Press() {
+func (b *ButtonComponent) Press() {
 	b.pressed = true
 }
 
@@ -398,8 +398,7 @@ const (
 	BackgroundTile
 )
 
-// TODO: implement scaling
-type backgroundImageComponent struct {
+type BackgroundImageComponent struct {
 	baseView
 	child View
 
@@ -408,8 +407,8 @@ type backgroundImageComponent struct {
 	opts *ebiten.DrawImageOptions
 }
 
-func BackgroundImage(mode BackgroundImageRenderingMode, texture *ebiten.Image, child View) *backgroundImageComponent {
-	bg := &backgroundImageComponent{
+func BackgroundImage(mode BackgroundImageRenderingMode, texture *ebiten.Image, child View) *BackgroundImageComponent {
+	bg := &BackgroundImageComponent{
 		baseView: newBaseView(),
 		child:    child,
 		tex:      texture,
@@ -420,19 +419,19 @@ func BackgroundImage(mode BackgroundImageRenderingMode, texture *ebiten.Image, c
 	return bg
 }
 
-func (b *backgroundImageComponent) MaxSize() (float64, float64) {
+func (b *BackgroundImageComponent) MaxSize() (float64, float64) {
 	return b.parent.CapacityForChild(b)
 }
-func (b *backgroundImageComponent) ComputedSize() (float64, float64) {
+func (b *BackgroundImageComponent) ComputedSize() (float64, float64) {
 	return b.MaxSize()
 }
-func (b *backgroundImageComponent) CapacityForChild(child View) (float64, float64) {
+func (b *BackgroundImageComponent) CapacityForChild(_ View) (float64, float64) {
 	return b.MaxSize()
 }
-func (b *backgroundImageComponent) Update() error {
+func (b *BackgroundImageComponent) Update() error {
 	return b.child.Update()
 }
-func (b *backgroundImageComponent) Draw(screen *ebiten.Image, x, y float64) error {
+func (b *BackgroundImageComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	// draw background
 	b.opts.GeoM.Reset()
 
@@ -442,8 +441,8 @@ func (b *backgroundImageComponent) Draw(screen *ebiten.Image, x, y float64) erro
 		sw, sh := b.parent.CapacityForChild(b)
 		// scale the background, so that it matches the screen size
 		b.opts.GeoM.Scale(
-			float64(sw)/float64(w),
-			float64(sh)/float64(h),
+			sw/float64(w),
+			sh/float64(h),
 		)
 		b.opts.GeoM.Translate(x, y)
 		screen.DrawImage(b.tex, b.opts)
@@ -484,11 +483,11 @@ func (b *backgroundImageComponent) Draw(screen *ebiten.Image, x, y float64) erro
 	// draw child
 	return b.child.Draw(screen, x, y)
 }
-func (b *backgroundImageComponent) Children() []View {
+func (b *BackgroundImageComponent) Children() []View {
 	return []View{b.child}
 }
 
-type backgroundColorComponent struct {
+type BackgroundColorComponent struct {
 	baseView
 	child View
 
@@ -497,16 +496,16 @@ type backgroundColorComponent struct {
 	opts *ebiten.DrawImageOptions
 }
 
-func BackgroundColor(clr color.Color, child View) *backgroundColorComponent {
-	// It may seem strange, that we create an entire texture, then resize it
-	// Just to fill the rectangle with color
-	// But documentation says, ebitenutil.DrawRect() should be used ONLY for debugging and prototyping
+func BackgroundColor(clr color.Color, child View) *BackgroundColorComponent {
+	// It may seem strange, that we create an entire texture, then resize it,
+	// just to fill the rectangle with color.
+	// But documentation says, ebitenutil.DrawRect() should be used ONLY for debugging and prototyping.
 	// And, as of version 2.5, it is deprecated!
 	// So, I guess, this is a little workaround
 	tex := ebiten.NewImage(1, 1)
 	tex.Fill(clr)
 
-	bg := &backgroundColorComponent{
+	bg := &BackgroundColorComponent{
 		baseView: newBaseView(),
 		child:    child,
 
@@ -519,19 +518,19 @@ func BackgroundColor(clr color.Color, child View) *backgroundColorComponent {
 	return bg
 }
 
-func (b *backgroundColorComponent) MaxSize() (float64, float64) {
+func (b *BackgroundColorComponent) MaxSize() (float64, float64) {
 	return b.parent.CapacityForChild(b)
 }
-func (b *backgroundColorComponent) ComputedSize() (float64, float64) {
+func (b *BackgroundColorComponent) ComputedSize() (float64, float64) {
 	return b.MaxSize()
 }
-func (b *backgroundColorComponent) CapacityForChild(child View) (float64, float64) {
+func (b *BackgroundColorComponent) CapacityForChild(_ View) (float64, float64) {
 	return b.MaxSize()
 }
-func (b *backgroundColorComponent) Update() error {
+func (b *BackgroundColorComponent) Update() error {
 	return b.child.Update()
 }
-func (b *backgroundColorComponent) Draw(screen *ebiten.Image, x, y float64) error {
+func (b *BackgroundColorComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	b.opts.GeoM.Reset()
 	w, h := b.ComputedSize()
 	b.opts.GeoM.Scale(w, h)
@@ -541,13 +540,11 @@ func (b *backgroundColorComponent) Draw(screen *ebiten.Image, x, y float64) erro
 	b.child.Draw(screen, x, y)
 	return nil
 }
-func (b *backgroundColorComponent) Children() []View {
+func (b *BackgroundColorComponent) Children() []View {
 	return []View{b.child}
 }
 
-// TODO: implement focus handling
-// So that multiple input widgets at once would be possible
-type inputComponent struct {
+type InputComponent struct {
 	baseView
 	baseFocusView
 
@@ -555,7 +552,7 @@ type inputComponent struct {
 	texFocused types.Texture
 	opts       *ebiten.DrawImageOptions
 
-	label *labelComponent
+	label *LabelComponent
 
 	enterKey ebiten.Key
 	input    string
@@ -564,8 +561,8 @@ type inputComponent struct {
 	pressedKeys []rune
 }
 
-func Input(handler func(string), enterKey ebiten.Key, initialFocus bool) *inputComponent {
-	return &inputComponent{
+func Input(handler func(string), enterKey ebiten.Key, initialFocus bool) *InputComponent {
+	return &InputComponent{
 		baseView:      newBaseView(),
 		baseFocusView: baseFocusView{focused: initialFocus},
 
@@ -583,17 +580,17 @@ func Input(handler func(string), enterKey ebiten.Key, initialFocus bool) *inputC
 	}
 }
 
-func (i *inputComponent) MaxSize() (float64, float64) {
+func (i *InputComponent) MaxSize() (float64, float64) {
 	return i.ComputedSize()
 }
-func (i *inputComponent) ComputedSize() (float64, float64) {
+func (i *InputComponent) ComputedSize() (float64, float64) {
 	w, h := i.tex.ScaledSize()
 	return float64(w), float64(h)
 }
-func (i *inputComponent) CapacityForChild(child View) (float64, float64) {
+func (i *InputComponent) CapacityForChild(_ View) (float64, float64) {
 	return i.ComputedSize()
 }
-func (i *inputComponent) Update() error {
+func (i *InputComponent) Update() error {
 	// if the element isn't focused, skip
 	if !i.baseFocusView.focused {
 		return nil
@@ -629,11 +626,11 @@ func (i *inputComponent) Update() error {
 
 	return nil
 }
-func (i *inputComponent) Draw(screen *ebiten.Image, x, y float64) error {
+func (i *InputComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	// check for mouse presses, and update focus accordingly
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		cx_int, cy_int := ebiten.CursorPosition()
-		cx, cy := float64(cx_int), float64(cy_int)
+		_cx, _cy := ebiten.CursorPosition()
+		cx, cy := float64(_cx), float64(_cy)
 		w, h := i.ComputedSize()
 
 		if cx > x && cx < x+w && cy > y && cy < y+h {
@@ -662,12 +659,12 @@ func (i *inputComponent) Draw(screen *ebiten.Image, x, y float64) error {
 
 	return nil
 }
-func (i *inputComponent) Children() []View {
+func (i *InputComponent) Children() []View {
 	return []View{}
 }
-func (i *inputComponent) Input() string {
+func (i *InputComponent) Input() string {
 	return i.input
 }
-func (i *inputComponent) SetInput(input string) {
+func (i *InputComponent) SetInput(input string) {
 	i.input = input
 }

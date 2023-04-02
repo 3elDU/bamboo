@@ -15,15 +15,15 @@ type TallGrassState struct {
 	TexturedBlockState
 }
 
-type tallGrass struct {
+type TallGrassBlock struct {
 	baseBlock
 	texturedBlock
 }
 
-func NewTallGrassBlock() *tallGrass {
-	return &tallGrass{
+func NewTallGrassBlock() *TallGrassBlock {
+	return &TallGrassBlock{
 		baseBlock: baseBlock{
-			blockType: Tall_Grass,
+			blockType: TallGrass,
 		},
 		texturedBlock: texturedBlock{
 			tex:      asset_loader.Texture("tall_grass"),
@@ -32,14 +32,14 @@ func NewTallGrassBlock() *tallGrass {
 	}
 }
 
-func (b tallGrass) State() interface{} {
+func (b *TallGrassBlock) State() interface{} {
 	return TallGrassState{
 		BaseBlockState:     b.baseBlock.State().(BaseBlockState),
 		TexturedBlockState: b.texturedBlock.State().(TexturedBlockState),
 	}
 }
 
-func (b *tallGrass) LoadState(s interface{}) {
+func (b *TallGrassBlock) LoadState(s interface{}) {
 	state := s.(TallGrassState)
 	b.baseBlock.LoadState(state.BaseBlockState)
 	b.texturedBlock.LoadState(state.TexturedBlockState)

@@ -55,7 +55,7 @@ func (mvec MovementVector) ToFloat() (vx, vy float64) {
 func LoadPlayer(id uuid.UUID) *Player {
 	saveDir := filepath.Join(config.WorldSaveDirectory, id.String())
 
-	f, err := os.Open(filepath.Join(saveDir, "player.gob"))
+	f, err := os.Open(filepath.Join(saveDir, config.PlayerInfoFile))
 	if err != nil {
 		// if file does not exist, just return an empty object
 		return &Player{X: float64(config.PlayerStartX), Y: float64(config.PlayerStartY)}
@@ -69,20 +69,20 @@ func LoadPlayer(id uuid.UUID) *Player {
 	return player
 }
 
-func (p *Player) Save(id uuid.UUID) {
+func (player *Player) Save(id uuid.UUID) {
 	saveDir := filepath.Join(config.WorldSaveDirectory, id.String())
 
 	// make a save directory, if it doesn't exist yet
 	os.Mkdir(saveDir, os.ModePerm)
 
 	// open world metadata file
-	f, err := os.Create(filepath.Join(saveDir, "player.gob"))
+	f, err := os.Create(filepath.Join(saveDir, config.PlayerInfoFile))
 	if err != nil {
 		log.Panicf("failed to create player metadata file")
 	}
 	defer f.Close()
 
-	if err := gob.NewEncoder(f).Encode(p); err != nil {
+	if err := gob.NewEncoder(f).Encode(player); err != nil {
 		log.Panicf("failed to write player metadata")
 	}
 

@@ -7,7 +7,6 @@
           "buildTargets": [
             "$PROJECT_DIR$/main.go"
           ]
-        },
-
+        }
     ]
 }

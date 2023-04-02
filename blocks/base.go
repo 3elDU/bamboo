@@ -29,7 +29,7 @@ type baseBlock struct {
 	x, y uint
 
 	// Block types are defined in (blocks.go):13
-	// Each block must specify it's type, so that we can actually know what the block it is
+	// Each block must specify its type, so that we can actually know what the block it is
 	// ( Remember, all blocks are the same interface )
 	blockType types.BlockType
 }

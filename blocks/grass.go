@@ -16,20 +16,20 @@ type GrassBlockState struct {
 	CollidableBlockState
 }
 
-type grassBlock struct {
+type GrassBlock struct {
 	connectedBlock
 	collidableBlock
 }
 
-func NewGrassBlock() *grassBlock {
-	return &grassBlock{
+func NewGrassBlock() *GrassBlock {
+	return &GrassBlock{
 		connectedBlock: connectedBlock{
 			baseBlock: baseBlock{
 				blockType: Grass,
 			},
 			tex: asset_loader.ConnectedTexture("grass", true, true, true, true),
 			connectsTo: []types.BlockType{
-				Grass, Short_Grass, Tall_Grass, Flowers,
+				Grass, ShortGrass, TallGrass, Flowers,
 				PineTree,
 				RedMushroom, WhiteMushroom,
 				Stone,
@@ -42,14 +42,14 @@ func NewGrassBlock() *grassBlock {
 	}
 }
 
-func (b grassBlock) State() interface{} {
+func (b *GrassBlock) State() interface{} {
 	return GrassBlockState{
 		ConnectedBlockState:  b.connectedBlock.State().(ConnectedBlockState),
 		CollidableBlockState: b.collidableBlock.State().(CollidableBlockState),
 	}
 }
 
-func (b *grassBlock) LoadState(s interface{}) {
+func (b *GrassBlock) LoadState(s interface{}) {
 	state := s.(GrassBlockState)
 	b.connectedBlock.LoadState(state.ConnectedBlockState)
 	b.collidableBlock.LoadState(state.CollidableBlockState)

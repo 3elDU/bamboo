@@ -7,10 +7,10 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-const InventorySize = 5
+const Size = 5
 
 type Inventory struct {
-	Slots        [InventorySize]*types.ItemSlot
+	Slots        [Size]*types.ItemSlot
 	SelectedSlot int
 }
 
@@ -24,7 +24,7 @@ func NewInventory() *Inventory {
 	return &inv
 }
 
-// Returns false if there is no space
+// AddItem returns false if there is no space
 func (inv *Inventory) AddItem(item types.Item) bool {
 	for _, slot := range inv.Slots {
 		if slot.AddItem(item) {
@@ -35,10 +35,10 @@ func (inv *Inventory) AddItem(item types.Item) bool {
 }
 
 func (inv *Inventory) SelectSlot(slot int) {
-	if slot >= InventorySize {
+	if slot >= Size {
 		slot = 0
 	} else if slot < 0 {
-		slot = InventorySize - 1
+		slot = Size - 1
 	}
 
 	inv.SelectedSlot = slot
