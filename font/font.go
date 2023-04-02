@@ -116,7 +116,7 @@ func init() {
 }
 
 func RenderFontWithOptions(dest *ebiten.Image, s string, x, y float64, clr color.Color, scaling float64) {
-	scaling *= float64(config.UIScaling)
+	scaling *= config.UIScaling
 
 	lines := strings.Split(s, "\n")
 
@@ -176,10 +176,10 @@ func RenderFont(dest *ebiten.Image, s string, x, y float64, clr color.Color) {
 
 // GetStringWidth Returns width of the given string in pixels
 // Also handles multi-line strings properly
-func GetStringWidth(s string, scaling float64) int {
+func GetStringWidth(s string, scaling float64) float64 {
 	lines := strings.Split(s, "\n")
 	if len(lines) == 1 {
-		return int(float64(utf8.RuneCountInString(s)*(CharWidth+1)*config.UIScaling) * scaling)
+		return float64(utf8.RuneCountInString(s)*(CharWidth+1)) * config.UIScaling * scaling
 	} else if len(lines) > 1 {
 		max := 0
 		for _, line := range lines {
@@ -188,7 +188,7 @@ func GetStringWidth(s string, scaling float64) int {
 				max = runeCount
 			}
 		}
-		return max * (CharWidth + 1) * config.UIScaling
+		return float64(max*(CharWidth+1)) * config.UIScaling
 	}
 
 	return 0
@@ -196,14 +196,14 @@ func GetStringWidth(s string, scaling float64) int {
 
 // GetStringHeight returns height of the given string in pixels
 // Also handles multi-line stirngs properly
-func GetStringHeight(s string, scaling float64) int {
+func GetStringHeight(s string, scaling float64) float64 {
 	nLines := len(strings.Split(s, "\n"))
-	return int(float64(nLines*(CharHeight+1)*config.UIScaling) * scaling)
+	return float64(nLines*(CharHeight+1)) * config.UIScaling * scaling
 }
 
 // GetStringSize returns width and height of given string in pixels
 // Also handles multi-line strings properly
-func GetStringSize(s string, scaling float64) (width int, height int) {
+func GetStringSize(s string, scaling float64) (width float64, height float64) {
 	width = GetStringWidth(s, scaling)
 	height = GetStringHeight(s, scaling)
 	return

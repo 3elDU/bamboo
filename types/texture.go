@@ -9,7 +9,7 @@ type Texture interface {
 	Name() string
 	// Returns size of the texture, multiplied by ui scaling
 	// Useful for UI elements
-	ScaledSize() (int, int)
+	ScaledSize() (float64, float64)
 }
 
 type ConnectedTexture interface {

@@ -297,8 +297,7 @@ func (l *LabelComponent) MaxSize() (float64, float64) {
 	return l.parent.CapacityForChild(l)
 }
 func (l *LabelComponent) ComputedSize() (float64, float64) {
-	w, h := font.GetStringSize(l.text, l.opts.Scaling)
-	return float64(w), float64(h)
+	return font.GetStringSize(l.text, l.opts.Scaling)
 }
 func (l *LabelComponent) CapacityForChild(_ View) (float64, float64) {
 	return 0, 0
@@ -343,8 +342,7 @@ func (b *ButtonComponent) MaxSize() (float64, float64) {
 	return b.ComputedSize()
 }
 func (b *ButtonComponent) ComputedSize() (float64, float64) {
-	w, h := b.tex.ScaledSize()
-	return float64(w), float64(h)
+	return b.tex.ScaledSize()
 }
 func (b *ButtonComponent) CapacityForChild(_ View) (float64, float64) {
 	return b.ComputedSize()
@@ -361,7 +359,7 @@ func (b *ButtonComponent) Update() error {
 }
 func (b *ButtonComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	opts := &ebiten.DrawImageOptions{}
-	opts.GeoM.Scale(float64(config.UIScaling), float64(config.UIScaling))
+	opts.GeoM.Scale(config.UIScaling, config.UIScaling)
 	opts.GeoM.Translate(x, y)
 
 	w, h := b.ComputedSize()
@@ -584,8 +582,7 @@ func (i *InputComponent) MaxSize() (float64, float64) {
 	return i.ComputedSize()
 }
 func (i *InputComponent) ComputedSize() (float64, float64) {
-	w, h := i.tex.ScaledSize()
-	return float64(w), float64(h)
+	return i.tex.ScaledSize()
 }
 func (i *InputComponent) CapacityForChild(_ View) (float64, float64) {
 	return i.ComputedSize()
@@ -613,7 +610,7 @@ func (i *InputComponent) Update() error {
 		// if the input string doesn't fit in the texture, don't accept any more keys
 		texCapacity, _ := i.CapacityForChild(nil)
 		textSize := font.GetStringWidth(i.input, i.label.opts.Scaling)
-		if textSize > int(texCapacity) {
+		if textSize > texCapacity {
 			break
 		}
 
@@ -642,7 +639,7 @@ func (i *InputComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	}
 
 	i.opts.GeoM.Reset()
-	i.opts.GeoM.Scale(float64(config.UIScaling), float64(config.UIScaling))
+	i.opts.GeoM.Scale(config.UIScaling, config.UIScaling)
 	i.opts.GeoM.Translate(x, y)
 
 	if i.baseFocusView.focused {

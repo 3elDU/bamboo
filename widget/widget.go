@@ -4,7 +4,6 @@ import (
 	"image/color"
 	"log"
 
-	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/font"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -102,8 +101,8 @@ func RenderTextWidget(screen *ebiten.Image, widget TextWidget) {
 	t := widget.Render()
 
 	x, y := widgetPosition(
-		font.GetStringWidth(t.Text, float64(config.UIScaling)),
-		font.GetStringHeight(t.Text, float64(config.UIScaling)),
+		int(font.GetStringWidth(t.Text, 1)),
+		int(font.GetStringHeight(t.Text, 1)),
 		ww, wh, t.Anchor,
 	)
 
