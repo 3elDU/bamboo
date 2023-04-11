@@ -166,8 +166,8 @@ func (game *Game) Update() {
 }
 
 func (game *Game) Draw(screen *ebiten.Image) {
-	game.world.Render(screen, game.player.X, game.player.Y, float64(config.UIScaling))
-	game.player.Render(screen, float64(config.UIScaling), game.paused)
+	game.world.Render(screen, game.player.X, game.player.Y, config.UIScaling)
+	game.player.Render(screen, config.UIScaling, game.paused)
 	game.inventory.Render(screen)
 
 	game.widgets.Render(screen)

@@ -33,3 +33,8 @@ type DrawableBlock interface {
 	Render(world World, screen *ebiten.Image, pos Coords2f)
 	TextureName() string
 }
+
+type InteractiveBlock interface {
+	Block
+	Interact(world World, playerPosition Coords2f)
+}

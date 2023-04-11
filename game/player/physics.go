@@ -64,11 +64,15 @@ func collidePlayer(origin types.Coords2f, world types.World) (collisions [4]bool
 	}
 
 	for i, point := range playerCollisionPoints {
-		block, ok := world.BlockAt(uint64(point.X), uint64(point.Y)).(types.CollidableBlock)
-		if !ok {
-			continue
+		interactive, isInteractive := world.BlockAt(uint64(point.X), uint64(point.Y)).(types.InteractiveBlock)
+		if isInteractive {
+			interactive.Interact(world, origin)
 		}
 
+		block, isCollidable := world.BlockAt(uint64(point.X), uint64(point.Y)).(types.CollidableBlock)
+		if !isCollidable {
+			continue
+		}
 		if !block.Collidable() {
 			continue
 		}

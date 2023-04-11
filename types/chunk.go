@@ -11,7 +11,7 @@ type Chunk interface {
 	At(x uint, y uint) Block
 	BlockCoords() Coords2u
 	Coords() Coords2u
-	Generate(baseGenerator *perlin.Perlin, secondaryGenerator *perlin.Perlin, mountainGenerator *perlin.Perlin)
+	Generate(baseGenerator, secondaryGenerator *perlin.Perlin)
 	GenerateDummy()
 	Render(world World)
 	Save(id uuid.UUID)

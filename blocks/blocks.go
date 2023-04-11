@@ -17,6 +17,7 @@ const (
 	PineTree
 	RedMushroom
 	WhiteMushroom
+	CaveEntrance
 )
 
 // GetBlockByID returns an empty block
@@ -46,6 +47,8 @@ func GetBlockByID(id types.BlockType) types.Block {
 		return NewRedMushroomBlock()
 	case WhiteMushroom:
 		return NewWhiteMushroomBlock()
+	case CaveEntrance:
+		return NewCaveEntranceBlock()
 	}
 
 	return NewEmptyBlock()

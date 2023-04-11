@@ -33,6 +33,7 @@ func NewGrassBlock() *GrassBlock {
 				PineTree,
 				RedMushroom, WhiteMushroom,
 				Stone,
+				CaveEntrance,
 			},
 		},
 		collidableBlock: collidableBlock{
