@@ -3,6 +3,7 @@ package scenes
 import (
 	"bytes"
 	"encoding/binary"
+	"github.com/3elDU/bamboo/types"
 	"hash/fnv"
 	"log"
 
@@ -58,8 +59,13 @@ func (s *NewWorldScene) Update() {
 		worldName, seedString := formData[0], formData[1]
 		seed := seedFromString(seedString)
 
-		w := world.NewWorld(worldName, uuid.New(), seed)
-		scene_manager.QSwitch(game.NewGameScene(w, player.Player{X: float64(config.PlayerStartX), Y: float64(config.PlayerStartY)}))
+		w := world.NewWorld(types.Save{
+			Name:     worldName,
+			BaseUUID: uuid.New(),
+			UUID:     uuid.New(),
+			Seed:     seed,
+		})
+		scene_manager.QSwitch(game.NewGameScene(w, &player.Player{X: float64(config.PlayerStartX), Y: float64(config.PlayerStartY)}))
 	default:
 	}
 }

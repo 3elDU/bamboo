@@ -2,6 +2,7 @@ package player
 
 import (
 	"encoding/gob"
+	"github.com/3elDU/bamboo/types"
 	"log"
 	"os"
 	"path/filepath"
@@ -19,6 +20,10 @@ type Player struct {
 	movementDirection MovementDirection
 	animationFrame    uint8
 	lastFrameChange   time.Time
+
+	// Storing the selected world, so that we know what sub-world the player is currently in
+	// Used to determine what sub-world to load
+	SelectedWorld types.Save
 }
 
 type MovementDirection uint8
@@ -52,8 +57,8 @@ func (mvec MovementVector) ToFloat() (vx, vy float64) {
 	return
 }
 
-func LoadPlayer(id uuid.UUID) *Player {
-	saveDir := filepath.Join(config.WorldSaveDirectory, id.String())
+func LoadPlayer(baseUUID uuid.UUID) *Player {
+	saveDir := filepath.Join(config.WorldSaveDirectory, baseUUID.String())
 
 	f, err := os.Open(filepath.Join(saveDir, config.PlayerInfoFile))
 	if err != nil {
@@ -69,8 +74,11 @@ func LoadPlayer(id uuid.UUID) *Player {
 	return player
 }
 
-func (player *Player) Save(id uuid.UUID) {
-	saveDir := filepath.Join(config.WorldSaveDirectory, id.String())
+func (player *Player) Save(metadata types.Save) {
+	saveDir := filepath.Join(config.WorldSaveDirectory, metadata.BaseUUID.String())
+
+	// storing the world player is currently in
+	player.SelectedWorld = metadata
 
 	// make a save directory, if it doesn't exist yet
 	os.Mkdir(saveDir, os.ModePerm)

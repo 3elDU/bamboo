@@ -24,7 +24,7 @@ func init() {
 // while doing actual work on separate goroutine,
 // so we don't have any freezes on the main thread
 type SaverLoader struct {
-	Metadata Save
+	Metadata types.Save
 
 	saveRequests     chan Chunk
 	loadRequestsPool map[types.Coords2u]bool
@@ -34,7 +34,7 @@ type SaverLoader struct {
 	loaded       chan *Chunk
 }
 
-func NewWorldSaverLoader(metadata Save) *SaverLoader {
+func NewWorldSaverLoader(metadata types.Save) *SaverLoader {
 	return &SaverLoader{
 		Metadata: metadata,
 
@@ -50,7 +50,7 @@ func (sl *SaverLoader) runSaver() {
 		chunk := <-sl.saveRequests
 
 		// FIXME: This is probably not very save
-		chunk.Save(sl.Metadata.UUID)
+		chunk.Save(sl.Metadata)
 	}
 }
 
@@ -58,7 +58,7 @@ func (sl *SaverLoader) runLoader() {
 	for {
 		request := <-sl.loadRequests
 
-		c := LoadChunk(sl.Metadata.UUID, request.X, request.Y)
+		c := LoadChunk(sl.Metadata, request.X, request.Y)
 		if c == nil {
 			// if the requested chunk doesn't exist, simply ignore the error and skip it
 			continue
@@ -101,14 +101,6 @@ func (sl *SaverLoader) Load(cx, cy uint64) {
 	sl.loadRequests <- coords
 }
 
-// structure with metadata, representing a world save
-type Save struct {
-	Name string    // world name as from the user
-	UUID uuid.UUID // internal unique world id, for identification purposes
-	Seed int64
-	Size int64 // in bytes
-}
-
 // block structures contain unexported fields.
 // that makes it impossible to serialize them through gob
 // so, we need to convert it first
@@ -127,33 +119,32 @@ type SavedChunk struct {
 	Data [16][16]SavedBlock
 }
 
-// Loads a world with given uuid
-func LoadWorld(id uuid.UUID) *World {
-	saveDir := filepath.Join(config.WorldSaveDirectory, id.String())
+func Load(baseID, id uuid.UUID) *World {
+	saveDir := filepath.Join(config.WorldSaveDirectory, baseID.String(), id.String())
 
 	f, err := os.Open(filepath.Join(saveDir, config.WorldInfoFile))
 	if err != nil {
-		log.Panicf("LoadWorld() - invalid file descriptor - %v", err)
+		log.Panicf("world.Load() - invalid file descriptor - %v", err)
 	}
 
 	decoder := gob.NewDecoder(f)
-	metadata := new(Save)
+	metadata := new(types.Save)
 	if err := decoder.Decode(metadata); err != nil {
-		log.Panicf("LoadWorld() - failed to decode metadata - %v", err)
+		log.Panicf("world.Load() - failed to decode metadata - %v", err)
 	}
 
-	log.Printf("LoadWorld() - loaded metadata; seed - %v", metadata.Seed)
+	log.Printf("world.Load() - loaded metadata; seed - %v", metadata.Seed)
 
-	return NewWorld(metadata.Name, metadata.UUID, metadata.Seed)
+	return NewWorld(*metadata)
 }
 
 // NOTE: world folder is named after the UUID, not after the world name
 // that is, to avoid folder collision
 func (world *World) Save() {
-	saveDir := filepath.Join(config.WorldSaveDirectory, world.Metadata.UUID.String())
+	saveDir := filepath.Join(config.WorldSaveDirectory, world.Metadata.BaseUUID.String(), world.Metadata.UUID.String())
 
 	// make a save directory, if it doesn't exist yet
-	os.Mkdir(saveDir, os.ModePerm)
+	os.MkdirAll(saveDir, os.ModePerm)
 
 	// open world metadata file
 	f, err := os.Create(filepath.Join(saveDir, config.WorldInfoFile))
@@ -170,7 +161,7 @@ func (world *World) Save() {
 
 	// loop over all loaded chunks, saving modified ones to the disk
 	for _, chunk := range world.chunks {
-		chunk.Save(world.Metadata.UUID)
+		chunk.Save(world.Metadata)
 	}
 
 	log.Println("World.Save() - saved")
@@ -185,8 +176,8 @@ func ChunkExistsOnDisk(id uuid.UUID, x, y uint64) bool {
 }
 
 // if saved chunk doesn't exist, returns nil
-func LoadChunk(id uuid.UUID, x, y uint64) *Chunk {
-	path := filepath.Join(config.WorldSaveDirectory, id.String(),
+func LoadChunk(metadata types.Save, x, y uint64) *Chunk {
+	path := filepath.Join(config.WorldSaveDirectory, metadata.BaseUUID.String(), metadata.UUID.String(),
 		fmt.Sprintf("chunk_%v_%v.gob", x, y))
 
 	if _, err := os.Stat(path); err == nil {
@@ -220,13 +211,13 @@ func LoadChunk(id uuid.UUID, x, y uint64) *Chunk {
 	return nil
 }
 
-func (c *Chunk) Save(id uuid.UUID) {
+func (c *Chunk) Save(metadata types.Save) {
 	// if chunk wasn't modified, saving is unnecessary
 	if !c.modified {
 		return
 	}
 
-	path := filepath.Join(config.WorldSaveDirectory, id.String(),
+	path := filepath.Join(config.WorldSaveDirectory, metadata.BaseUUID.String(), metadata.UUID.String(),
 		fmt.Sprintf("chunk_%v_%v.gob", c.x, c.y))
 
 	f, err := os.Create(path)
@@ -258,9 +249,9 @@ func (c *Chunk) Save(id uuid.UUID) {
 	log.Printf("Chunk.Save() - %v; %v", c.x, c.y)
 }
 
-func DeleteWorld(id uuid.UUID) {
-	path := filepath.Join(config.WorldSaveDirectory, id.String())
+func DeleteWorld(metadata types.Save) {
+	path := filepath.Join(config.WorldSaveDirectory, metadata.BaseUUID.String())
 	if err := os.RemoveAll(path); err != nil {
-		log.Panicf("Failed to delete world %v - %v", id, err)
+		log.Panicf("Failed to delete world %v - %v", metadata.BaseUUID, err)
 	}
 }

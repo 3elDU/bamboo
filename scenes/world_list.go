@@ -3,6 +3,7 @@ package scenes
 import (
 	"encoding/gob"
 	"fmt"
+	"github.com/3elDU/bamboo/types"
 	"io/fs"
 	"log"
 	"os"
@@ -11,22 +12,20 @@ import (
 	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/game"
-	"github.com/3elDU/bamboo/game/player"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/ui"
 	"github.com/3elDU/bamboo/world"
-	"github.com/google/uuid"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type WorldListScene struct {
-	worldList []world.Save
+	worldList []types.Save
 	view      ui.View
 
 	// when the world will be selected by the user,
 	// world name will be transmitted through this channel
-	selectedWorld chan uuid.UUID
-	deleteWorld   chan uuid.UUID
+	selectedWorld chan types.Save
+	deleteWorld   chan types.Save
 
 	// when the "New world" button will be pressed
 	// the event will be transmitted through this channel
@@ -39,7 +38,7 @@ type WorldListScene struct {
 func (s *WorldListScene) Scan() {
 	log.Printf("worldListScene.Scan()")
 
-	worldList := make([]world.Save, 0)
+	worldList := make([]types.Save, 0)
 	filepath.WalkDir(config.WorldSaveDirectory, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -61,7 +60,7 @@ func (s *WorldListScene) Scan() {
 		defer worldInfo.Close()
 
 		decoder := gob.NewDecoder(worldInfo)
-		worldMetadata := new(world.Save)
+		worldMetadata := new(types.Save)
 		if err = decoder.Decode(worldMetadata); err != nil {
 			return err
 		}
@@ -85,19 +84,15 @@ func (s *WorldListScene) UpdateUI() {
 		Spacing:   1,
 	})
 	for _, currentWorld := range s.worldList {
-		// extract world UUID here, to use it later in button handler
-		worldUUID := currentWorld.UUID
-
 		// assemble a view for each world
 		worldList.AddChild(ui.Stack(ui.StackOptions{Direction: ui.VerticalStack, Spacing: 0.5},
 			ui.Stack(ui.StackOptions{Direction: ui.HorizontalStack, Spacing: 1},
 				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Name: %v", currentWorld.Name)),
 				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Seed: %v", currentWorld.Seed)),
-				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Size: %v", currentWorld.Size)),
 			),
 			ui.Stack(ui.StackOptions{Direction: ui.HorizontalStack, Spacing: 1},
-				ui.Button(func() { s.selectedWorld <- worldUUID }, ui.Label(ui.DefaultLabelOptions(), "Play")),
-				ui.Button(func() { s.deleteWorld <- worldUUID }, ui.Label(ui.DefaultLabelOptions(), "Delete")),
+				ui.Button(func() { s.selectedWorld <- currentWorld }, ui.Label(ui.DefaultLabelOptions(), "Play")),
+				ui.Button(func() { s.deleteWorld <- currentWorld }, ui.Label(ui.DefaultLabelOptions(), "Delete")),
 			),
 		))
 	}
@@ -117,8 +112,8 @@ func (s *WorldListScene) UpdateUI() {
 
 func NewWorldListScene() *WorldListScene {
 	scene := &WorldListScene{
-		selectedWorld: make(chan uuid.UUID, 1),
-		deleteWorld:   make(chan uuid.UUID, 1),
+		selectedWorld: make(chan types.Save, 1),
+		deleteWorld:   make(chan types.Save, 1),
 		newWorld:      make(chan bool, 1),
 		goBack:        make(chan bool, 1),
 	}
@@ -142,11 +137,9 @@ func (s *WorldListScene) Update() {
 	}
 
 	select {
-	case id := <-s.selectedWorld:
-		log.Printf("worldListScene - Selected world '%v'", id)
-		loadedWorld := world.LoadWorld(id)
-		loadedPlayer := player.LoadPlayer(id)
-		scene_manager.QSwitch(game.NewGameScene(loadedWorld, *loadedPlayer))
+	case save := <-s.selectedWorld:
+		log.Printf("worldListScene - Selected world '%v'", save)
+		scene_manager.QSwitch(game.LoadGameScene(save))
 	case <-s.newWorld:
 		log.Println("worldListScene - New world")
 		scene_manager.QSwitch(NewNewWorldScene())

@@ -52,7 +52,6 @@ func (cave *CaveEntranceBlock) LoadState(s interface{}) {
 	cave.id = state.ID
 }
 
-func (cave *CaveEntranceBlock) Interact(world types.World, _ types.Coords2f) {
+func (cave *CaveEntranceBlock) Interact(_ types.World, _ types.Coords2f) {
 	log.Println("interacted!")
-	world.ChunkAtB(uint64(cave.x), uint64(cave.y)).SetBlock(cave.x%16, cave.y%16, NewGrassBlock())
 }

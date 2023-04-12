@@ -2,7 +2,6 @@ package types
 
 import (
 	"github.com/aquilax/go-perlin"
-	"github.com/google/uuid"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -14,7 +13,7 @@ type Chunk interface {
 	Generate(baseGenerator, secondaryGenerator *perlin.Perlin)
 	GenerateDummy()
 	Render(world World)
-	Save(id uuid.UUID)
+	Save(metadata Save)
 	SetBlock(x uint, y uint, block Block)
 	Update(world World)
 	TriggerRedraw()

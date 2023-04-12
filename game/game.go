@@ -34,7 +34,8 @@ type Game struct {
 	debugInfoVisible bool
 }
 
-func NewGameScene(gameWorld *world.World, player player.Player) *Game {
+// Creates a game scene with a new world
+func NewGameScene(gameWorld *world.World, player *player.Player) *Game {
 	game := &Game{
 		widgets:      widget.NewWidgetContainer(),
 		debugWidgets: widget.NewWidgetContainer(),
@@ -42,7 +43,7 @@ func NewGameScene(gameWorld *world.World, player player.Player) *Game {
 		pauseMenu: newPauseMenu(),
 
 		world:     gameWorld,
-		player:    &player,
+		player:    player,
 		inventory: inventory.NewInventory(),
 
 		debugInfoVisible: false,
@@ -59,9 +60,17 @@ func NewGameScene(gameWorld *world.World, player player.Player) *Game {
 	return game
 }
 
+// Creates a game scene from existing world
+func LoadGameScene(metadata types.Save) *Game {
+	// load the player first, to determine which world to load
+	loadedPlayer := player.LoadPlayer(metadata.BaseUUID)
+	loadedWorld := world.Load(metadata.BaseUUID, loadedPlayer.SelectedWorld.UUID)
+	return NewGameScene(loadedWorld, loadedPlayer)
+}
+
 func (game *Game) Save() {
 	game.world.Save()
-	game.player.Save(game.world.Metadata.UUID)
+	game.player.Save(game.world.Metadata)
 }
 
 func (game *Game) processInput() {

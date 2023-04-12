@@ -7,14 +7,13 @@ import (
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/types"
-	"github.com/google/uuid"
 )
 
 type World struct {
 	generator   *Generator
 	saverLoader *SaverLoader
 
-	Metadata Save
+	Metadata types.Save
 
 	// keys there are Chunk coordinates.
 	// so, actual Chunk coordinates are x*16 and y*16
@@ -22,13 +21,11 @@ type World struct {
 }
 
 // Creates a new world, using given name and seed
-func NewWorld(name string, uuid uuid.UUID, seed int64) *World {
-	log.Printf("NewWorld - name %v; seed %v", name, seed)
+func NewWorld(metadata types.Save) *World {
+	log.Printf("NewWorld - name %v; seed %v", metadata.Name, metadata.Seed)
 
-	generator := NewWorldGenerator(seed)
+	generator := NewWorldGenerator(metadata.Seed)
 	go generator.Run()
-
-	metadata := Save{Name: name, UUID: uuid, Seed: seed}
 
 	saverLoader := NewWorldSaverLoader(metadata)
 	go saverLoader.Run()
