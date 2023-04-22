@@ -27,10 +27,10 @@ type SaverLoader struct {
 	Metadata types.Save
 
 	saveRequests     chan Chunk
-	loadRequestsPool map[types.Coords2u]bool
+	loadRequestsPool map[types.Vec2u]bool
 	// loadRequestsPool keeps track of currently requested chunks,
 	// so that one same chunk can't be requested twice
-	loadRequests chan types.Coords2u
+	loadRequests chan types.Vec2u
 	loaded       chan *Chunk
 }
 
@@ -39,8 +39,8 @@ func NewWorldSaverLoader(metadata types.Save) *SaverLoader {
 		Metadata: metadata,
 
 		saveRequests:     make(chan Chunk, 1024),
-		loadRequestsPool: make(map[types.Coords2u]bool),
-		loadRequests:     make(chan types.Coords2u, 256),
+		loadRequestsPool: make(map[types.Vec2u]bool),
+		loadRequests:     make(chan types.Vec2u, 256),
 		loaded:           make(chan *Chunk),
 	}
 }
@@ -93,7 +93,7 @@ func (sl *SaverLoader) Save(chunk *Chunk) {
 
 // Pushes chunk load reuqest to the queue
 func (sl *SaverLoader) Load(cx, cy uint64) {
-	coords := types.Coords2u{X: cx, Y: cy}
+	coords := types.Vec2u{X: cx, Y: cy}
 	if sl.loadRequestsPool[coords] {
 		return
 	}

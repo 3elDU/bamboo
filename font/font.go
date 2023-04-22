@@ -23,7 +23,7 @@ const (
 	CharHeight = 7
 )
 
-var charMap = map[rune]types.Coords2u{
+var charMap = map[rune]types.Vec2u{
 	'A': {X: 0, Y: 0},
 	'B': {X: 5, Y: 0},
 	'C': {X: 10, Y: 0},

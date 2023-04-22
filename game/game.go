@@ -126,7 +126,7 @@ func (game *Game) processInput() {
 		if itemInHand == nil {
 			break
 		}
-		itemInHand.Use(game.world, types.Coords2u{
+		itemInHand.Use(game.world, types.Vec2u{
 			X: uint64(game.player.X),
 			Y: uint64(game.player.Y),
 		})

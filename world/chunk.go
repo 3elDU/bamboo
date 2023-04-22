@@ -61,12 +61,12 @@ func (c *Chunk) Update(world types.World) {
 	}
 }
 
-func (c *Chunk) BlockCoords() types.Coords2u {
-	return types.Coords2u{X: c.x * 16, Y: c.y * 16}
+func (c *Chunk) BlockCoords() types.Vec2u {
+	return types.Vec2u{X: c.x * 16, Y: c.y * 16}
 }
 
-func (c *Chunk) Coords() types.Coords2u {
-	return types.Coords2u{X: c.x, Y: c.y}
+func (c *Chunk) Coords() types.Vec2u {
+	return types.Vec2u{X: c.x, Y: c.y}
 }
 
 func (c *Chunk) At(x, y uint) types.Block {
@@ -83,7 +83,7 @@ func (c *Chunk) SetBlock(x, y uint, block types.Block) {
 	}
 
 	block.SetParentChunk(c)
-	block.SetCoords(types.Coords2u{X: c.x*16 + uint64(x), Y: c.y*16 + uint64(y)})
+	block.SetCoords(types.Vec2u{X: c.x*16 + uint64(x), Y: c.y*16 + uint64(y)})
 	c.blocks[x][y] = block
 	c.lastAccessed = scene_manager.Ticks()
 	c.modified = true

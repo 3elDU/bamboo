@@ -52,6 +52,6 @@ func (cave *CaveEntranceBlock) LoadState(s interface{}) {
 	cave.id = state.ID
 }
 
-func (cave *CaveEntranceBlock) Interact(_ types.World, _ types.Coords2f) {
+func (cave *CaveEntranceBlock) Interact(_ types.World, _ types.Vec2f) {
 	log.Println("interacted!")
 }

@@ -17,7 +17,7 @@ type World struct {
 
 	// keys there are Chunk coordinates.
 	// so, actual Chunk coordinates are x*16 and y*16
-	chunks map[types.Coords2u]*Chunk
+	chunks map[types.Vec2u]*Chunk
 }
 
 // Creates a new world, using given name and seed
@@ -36,7 +36,7 @@ func NewWorld(metadata types.Save) *World {
 
 		Metadata: metadata,
 
-		chunks: make(map[types.Coords2u]*Chunk),
+		chunks: make(map[types.Vec2u]*Chunk),
 	}
 }
 
@@ -104,7 +104,7 @@ func (world *World) ChunkAt(cx, cy uint64) types.Chunk {
 func (world *World) ChunkAtB(bx, by uint64) types.Chunk {
 	cx := bx / 16
 	cy := by / 16
-	chunkCoordinates := types.Coords2u{X: cx, Y: cy}
+	chunkCoordinates := types.Vec2u{X: cx, Y: cy}
 
 	_, exists := world.chunks[chunkCoordinates]
 
@@ -131,7 +131,7 @@ func (world *World) ChunkAtB(bx, by uint64) types.Chunk {
 func (world *World) BlockAt(bx, by uint64) types.Block {
 	cx, cy := bx/16, by/16
 
-	chunk, exists := world.chunks[types.Coords2u{X: cx, Y: cy}]
+	chunk, exists := world.chunks[types.Vec2u{X: cx, Y: cy}]
 	if !exists {
 		return blocks.NewEmptyBlock()
 	}
@@ -140,12 +140,12 @@ func (world *World) BlockAt(bx, by uint64) types.Block {
 }
 
 func (world *World) ChunkExists(cx, cy uint64) bool {
-	_, exists := world.chunks[types.Coords2u{X: cx, Y: cy}]
+	_, exists := world.chunks[types.Vec2u{X: cx, Y: cy}]
 	return exists
 }
 
 func (world *World) GetNeighbors(cx, cy uint64) []types.Chunk {
-	sides := [4]types.Coords2u{
+	sides := [4]types.Vec2u{
 		{X: cx - 1, Y: cy}, // left
 		{X: cx + 1, Y: cy}, // right
 		{X: cx, Y: cy - 1}, // top

@@ -23,7 +23,7 @@ func (c *Chunk) Render(world types.World) {
 				continue
 			}
 
-			drawableBlock.Render(world, c.Texture(), types.Coords2f{
+			drawableBlock.Render(world, c.Texture(), types.Vec2f{
 				X: float64(x) * 16,
 				Y: float64(y) * 16,
 			})

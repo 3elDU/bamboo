@@ -11,5 +11,5 @@ type Item interface {
 	State() interface{}
 	LoadState(interface{})
 
-	Use(world World, pos Coords2u)
+	Use(world World, pos Vec2u)
 }

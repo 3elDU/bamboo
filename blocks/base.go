@@ -34,11 +34,11 @@ type baseBlock struct {
 	blockType types.BlockType
 }
 
-func (b *baseBlock) Coords() types.Coords2u {
-	return types.Coords2u{X: uint64(b.x), Y: uint64(b.y)}
+func (b *baseBlock) Coords() types.Vec2u {
+	return types.Vec2u{X: uint64(b.x), Y: uint64(b.y)}
 }
 
-func (b *baseBlock) SetCoords(coords types.Coords2u) {
+func (b *baseBlock) SetCoords(coords types.Vec2u) {
 	b.x = uint(coords.X)
 	b.y = uint(coords.Y)
 }

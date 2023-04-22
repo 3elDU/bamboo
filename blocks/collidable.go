@@ -12,7 +12,7 @@ func init() {
 
 type CollidableBlockState struct {
 	Collidable      bool
-	CollisionPoints [4]types.Coords2f
+	CollisionPoints [4]types.Vec2f
 	PlayerSpeed     float64
 }
 
@@ -21,7 +21,7 @@ type collidableBlock struct {
 
 	// Optional
 	// Each collision point is a coordinate in world space
-	collisionPoints [4]types.Coords2f
+	collisionPoints [4]types.Vec2f
 
 	// How fast player could move through this block
 	// Calculated by basePlayerSpeed * playerSpeed
@@ -33,8 +33,8 @@ func (b *collidableBlock) Collidable() bool {
 	return b.collidable
 }
 
-func defaultCollisionPoints() [4]types.Coords2f {
-	return [4]types.Coords2f{
+func defaultCollisionPoints() [4]types.Vec2f {
+	return [4]types.Vec2f{
 		{X: 0, Y: 0},
 		{X: 1, Y: 0},
 		{X: 0, Y: 1},
@@ -42,9 +42,9 @@ func defaultCollisionPoints() [4]types.Coords2f {
 	}
 }
 
-func (b *collidableBlock) CollisionPoints() [4]types.Coords2f {
+func (b *collidableBlock) CollisionPoints() [4]types.Vec2f {
 	/*
-		return [4]types.Coords2f{
+		return [4]types.Vec2f{
 			{X: float64(b.x) + b.collisionPoints[0].X, Y: float64(b.y) + b.collisionPoints[0].Y},
 			{X: float64(b.x) + b.collisionPoints[1].X, Y: float64(b.y) + b.collisionPoints[1].Y},
 			{X: float64(b.x) + b.collisionPoints[2].X, Y: float64(b.y) + b.collisionPoints[2].Y},

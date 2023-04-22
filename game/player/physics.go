@@ -44,8 +44,8 @@ func (player *Player) updateMovementDirection() {
 
 // Collision points for each block are specified in local space ( e.g. relative to the block itself ),
 // so for collision to work we need to convert them to global space first
-func convertToGlobalSpace(block types.Block, points [4]types.Coords2f) [4]types.Coords2f {
-	return [4]types.Coords2f{
+func convertToGlobalSpace(block types.Block, points [4]types.Vec2f) [4]types.Vec2f {
+	return [4]types.Vec2f{
 		{X: points[0].X + float64(block.Coords().X), Y: points[0].Y + float64(block.Coords().Y)},
 		{X: points[1].X + float64(block.Coords().X), Y: points[1].Y + float64(block.Coords().Y)},
 		{X: points[2].X + float64(block.Coords().X), Y: points[2].Y + float64(block.Coords().Y)},
@@ -55,8 +55,8 @@ func convertToGlobalSpace(block types.Block, points [4]types.Coords2f) [4]types.
 
 // check collision between player and the blocks
 // returns collision value for each corner
-func collidePlayer(origin types.Coords2f, world types.World) (collisions [4]bool) {
-	playerCollisionPoints := [4]types.Coords2f{
+func collidePlayer(origin types.Vec2f, world types.World) (collisions [4]bool) {
+	playerCollisionPoints := [4]types.Vec2f{
 		{X: origin.X - .25, Y: origin.Y - .25},
 		{X: origin.X + .25, Y: origin.Y - .25},
 		{X: origin.X - .25, Y: origin.Y + .4},
@@ -119,17 +119,17 @@ func (player *Player) Update(movement MovementVector, world *world.World) {
 	player.yVelocity += dy * config.PlayerSpeed
 
 	// if player somehow got stuck in the block, skip collision check
-	if !anyOf(collidePlayer(types.Coords2f{X: player.X, Y: player.Y}, world)) {
+	if !anyOf(collidePlayer(types.Vec2f{X: player.X, Y: player.Y}, world)) {
 		// check for collisions on X axis
-		if anyOf(collidePlayer(types.Coords2f{X: player.X + player.xVelocity, Y: player.Y}, world)) {
+		if anyOf(collidePlayer(types.Vec2f{X: player.X + player.xVelocity, Y: player.Y}, world)) {
 			player.xVelocity = 0
 		}
 		// check for collisions on Y axis
-		if anyOf(collidePlayer(types.Coords2f{X: player.X, Y: player.Y + player.yVelocity}, world)) {
+		if anyOf(collidePlayer(types.Vec2f{X: player.X, Y: player.Y + player.yVelocity}, world)) {
 			player.yVelocity = 0
 		}
 		// check for corner collisions
-		if countCollisions(collidePlayer(types.Coords2f{X: player.X + player.xVelocity, Y: player.Y + player.yVelocity}, world)) == 1 {
+		if countCollisions(collidePlayer(types.Vec2f{X: player.X + player.xVelocity, Y: player.Y + player.yVelocity}, world)) == 1 {
 			// "bounce" off the corner
 			player.xVelocity = -player.xVelocity * 0.1
 			player.yVelocity = -player.yVelocity * 0.1

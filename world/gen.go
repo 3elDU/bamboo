@@ -47,8 +47,8 @@ type Generator struct {
 
 	// requestsPool keeps track of currently requested chunks,
 	// so that one same chunk can't be requested twice
-	requestsPool map[types.Coords2u]bool
-	requests     chan types.Coords2u
+	requestsPool map[types.Vec2u]bool
+	requests     chan types.Vec2u
 	generated    chan *Chunk
 }
 
@@ -66,9 +66,9 @@ func NewWorldGenerator(seed int64) *Generator {
 		baseGenerator:      perlin.NewPerlin(2, 2, 16, baseSeed),
 		secondaryGenerator: perlin.NewPerlin(2, 2, 16, secondarySeed),
 
-		requestsPool: make(map[types.Coords2u]bool),
+		requestsPool: make(map[types.Vec2u]bool),
 		// for some reason, without buffering, it hangs
-		requests:  make(chan types.Coords2u, 128),
+		requests:  make(chan types.Vec2u, 128),
 		generated: make(chan *Chunk, 128),
 	}
 }
@@ -94,7 +94,7 @@ func (g *Generator) Run() {
 // Requests a chunk generation
 // Chunk can be retrieved later through Generator.Receive()
 func (g *Generator) Generate(cx, cy uint64) {
-	coords := types.Coords2u{X: cx, Y: cy}
+	coords := types.Vec2u{X: cx, Y: cy}
 	if g.requestsPool[coords] {
 		return
 	}
@@ -266,14 +266,14 @@ func (c *Chunk) generateStructures(baseGenerator, secondaryGenerator *perlin.Per
 	if features.f1 < CaveEntranceChance {
 		// use a bunch of hardcoded possible coordinates for cave entrance
 		// it is just easier than trying to make reproducible RNG
-		possibleCoordinates := []types.Coords2u{
+		possibleCoordinates := []types.Vec2u{
 			{X: 8, Y: 4},
 			{X: 4, Y: 12},
 			{X: 12, Y: 12},
 		}
 
 		// iterate over all possible coordinates, and pick the first valid pair
-		var chosenCoordinates types.Coords2u
+		var chosenCoordinates types.Vec2u
 		valid := false
 		for _, coords := range possibleCoordinates {
 			// valid positions for cave entrance are those that are surrounded by grass blocks on all sides

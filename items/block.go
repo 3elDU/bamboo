@@ -36,7 +36,7 @@ func (i *ItemFromBlock) Texture() *ebiten.Image {
 	return i.texture.Texture()
 }
 
-func (i *ItemFromBlock) Use(world types.World, pos types.Coords2u) {
+func (i *ItemFromBlock) Use(world types.World, pos types.Vec2u) {
 	world.ChunkAtB(pos.X, pos.Y).
 		SetBlock(uint(pos.X%16), uint(pos.Y%16), blocks.GetBlockByID(i.blockType))
 }

@@ -8,8 +8,8 @@ import (
 type Chunk interface {
 	// Returns a dummy block, in case of an error
 	At(x uint, y uint) Block
-	BlockCoords() Coords2u
-	Coords() Coords2u
+	BlockCoords() Vec2u
+	Coords() Vec2u
 	Generate(baseGenerator, secondaryGenerator *perlin.Perlin)
 	GenerateDummy()
 	Render(world World)
