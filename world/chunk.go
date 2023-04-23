@@ -3,7 +3,6 @@ package world
 import (
 	"log"
 
-	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -33,22 +32,6 @@ func NewChunk(cx, cy uint64) *Chunk {
 		needsRedraw:  true,
 		lastAccessed: scene_manager.Ticks(),
 	}
-}
-
-// Returns a chunk filled with water
-func NewDummyChunk(cx, cy uint64) *Chunk {
-	c := NewChunk(cx, cy)
-
-	for x := uint(0); x < 16; x++ {
-		for y := uint(0); y < 16; y++ {
-			c.SetBlock(x, y, blocks.NewWaterBlock())
-		}
-	}
-
-	// avoid saving dummy chunk to disk
-	c.modified = false
-
-	return c
 }
 
 func (c *Chunk) Update(world types.World) {

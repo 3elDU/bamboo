@@ -2,22 +2,21 @@ package game
 
 import (
 	"fmt"
-	"github.com/3elDU/bamboo/items"
-	"github.com/3elDU/bamboo/types"
-	"log"
-
 	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/font"
 	"github.com/3elDU/bamboo/game/inventory"
 	"github.com/3elDU/bamboo/game/player"
 	"github.com/3elDU/bamboo/game/widgets"
+	"github.com/3elDU/bamboo/items"
 	"github.com/3elDU/bamboo/scene_manager"
+	"github.com/3elDU/bamboo/types"
 	"github.com/3elDU/bamboo/widget"
 	"github.com/3elDU/bamboo/world"
 	"github.com/MakeNowJust/heredoc"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"log"
 )
 
 type Game struct {
@@ -70,7 +69,7 @@ func LoadGameScene(metadata types.Save) *Game {
 
 func (game *Game) Save() {
 	game.world.Save()
-	game.player.Save(game.world.Metadata)
+	game.player.Save(game.world.Metadata())
 }
 
 func (game *Game) processInput() {

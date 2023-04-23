@@ -141,7 +141,7 @@ func Load(baseID, id uuid.UUID) *World {
 // NOTE: world folder is named after the UUID, not after the world name
 // that is, to avoid folder collision
 func (world *World) Save() {
-	saveDir := filepath.Join(config.WorldSaveDirectory, world.Metadata.BaseUUID.String(), world.Metadata.UUID.String())
+	saveDir := filepath.Join(config.WorldSaveDirectory, world.metadata.BaseUUID.String(), world.metadata.UUID.String())
 
 	// make a save directory, if it doesn't exist yet
 	os.MkdirAll(saveDir, os.ModePerm)
@@ -155,13 +155,13 @@ func (world *World) Save() {
 
 	// encode the metadata to it
 	encoder := gob.NewEncoder(f)
-	if err := encoder.Encode(world.Metadata); err != nil {
+	if err := encoder.Encode(world.metadata); err != nil {
 		log.Panicf("failed to encode world metadata")
 	}
 
 	// loop over all loaded chunks, saving modified ones to the disk
 	for _, chunk := range world.chunks {
-		chunk.Save(world.Metadata)
+		chunk.Save(world.metadata)
 	}
 
 	log.Println("World.Save() - saved")

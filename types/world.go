@@ -12,6 +12,9 @@ type World interface {
 	ChunkAtB(bx uint64, by uint64) Chunk
 	ChunkExists(cx uint64, cy uint64) bool
 	GetNeighbors(cx uint64, cy uint64) []Chunk
+	// Returns world generator associated with this world
+	Generator() WorldGenerator
+	Metadata() Save
 	Render(screen *ebiten.Image, playerX float64, playerY float64, scaling float64)
 	Save()
 	Seed() int64

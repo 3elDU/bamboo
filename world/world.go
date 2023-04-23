@@ -1,22 +1,21 @@
 package world
 
 import (
+	"github.com/3elDU/bamboo/blocks"
+	"github.com/3elDU/bamboo/worldgen"
 	"log"
 
-	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/types"
 )
 
 type World struct {
-	generator   *Generator
+	generator   types.WorldGenerator
 	saverLoader *SaverLoader
 
-	Metadata types.Save
+	metadata types.Save
 
-	// keys there are Chunk coordinates.
-	// so, actual Chunk coordinates are x*16 and y*16
 	chunks map[types.Vec2u]*Chunk
 }
 
@@ -24,7 +23,7 @@ type World struct {
 func NewWorld(metadata types.Save) *World {
 	log.Printf("NewWorld - name %v; seed %v", metadata.Name, metadata.Seed)
 
-	generator := NewWorldGenerator(metadata.Seed)
+	generator := worldgen.NewWorldGenerator(metadata.Seed)
 	go generator.Run()
 
 	saverLoader := NewWorldSaverLoader(metadata)
@@ -34,7 +33,7 @@ func NewWorld(metadata types.Save) *World {
 		generator:   generator,
 		saverLoader: saverLoader,
 
-		Metadata: metadata,
+		metadata: metadata,
 
 		chunks: make(map[types.Vec2u]*Chunk),
 	}
@@ -43,16 +42,13 @@ func NewWorld(metadata types.Save) *World {
 // Update - x and y are player coordinates
 func (world *World) Update() {
 	// receive newly generated chunks from world generator
-	for {
-		if chunk := world.generator.Receive(); chunk != nil {
-			log.Printf("world.Update() - received chunk %v, %v", chunk.Coords().X, chunk.Coords().Y)
-			world.chunks[chunk.Coords()] = chunk
-			// Request redraw of each neighbor
-			for _, neighbor := range world.GetNeighbors(chunk.Coords().X, chunk.Coords().Y) {
-				neighbor.TriggerRedraw()
-			}
-		} else {
-			break
+	chunks := world.generator.Receive()
+	for _, chunk := range chunks {
+		log.Printf("world.Update() - received chunk %v, %v", chunk.Coords().X, chunk.Coords().Y)
+		world.chunks[chunk.Coords()] = chunk.(*Chunk)
+		// Request redraw of each neighbor
+		for _, neighbor := range world.GetNeighbors(chunk.Coords().X, chunk.Coords().Y) {
+			neighbor.TriggerRedraw()
 		}
 	}
 
@@ -110,17 +106,18 @@ func (world *World) ChunkAtB(bx, by uint64) types.Chunk {
 
 	if !exists {
 		// try to load the chunk from disk first
-		if ChunkExistsOnDisk(world.Metadata.UUID, cx, cy) {
+		if ChunkExistsOnDisk(world.metadata.UUID, cx, cy) {
 			// request chunk loading
 			world.saverLoader.Load(cx, cy)
 		} else {
-			// request chunk generation
-			world.generator.Generate(cx, cy)
-		}
+			dummyChunk := NewChunk(cx, cy)
+			world.generator.GenerateDummy(dummyChunk)
+			world.chunks[chunkCoordinates] = dummyChunk
 
-		// world.chunks[chunkCoordinates] = NewDummyChunk(cx, cy)
-		// return world.chunks[chunkCoordinates]
-		return NewDummyChunk(cx, cy)
+			// request chunk generation
+			chunk := NewChunk(cx, cy)
+			world.generator.Generate(chunk)
+		}
 	}
 
 	world.chunks[chunkCoordinates].lastAccessed = scene_manager.Ticks()
@@ -177,5 +174,13 @@ func (world *World) CheckNeighbors(cx, cy uint64) bool {
 }
 
 func (world *World) Seed() int64 {
-	return world.Metadata.Seed
+	return world.metadata.Seed
+}
+
+func (world *World) Metadata() types.Save {
+	return world.metadata
+}
+
+func (world *World) Generator() types.WorldGenerator {
+	return world.generator
 }

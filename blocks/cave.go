@@ -3,6 +3,7 @@ package blocks
 import (
 	"encoding/gob"
 	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/types"
 	"github.com/google/uuid"
 	"log"
@@ -53,5 +54,5 @@ func (cave *CaveEntranceBlock) LoadState(s interface{}) {
 }
 
 func (cave *CaveEntranceBlock) Interact(_ types.World, _ types.Vec2f) {
-	log.Println("interacted!")
+	log.Println(scene_manager.Ticks(), "interacted with cave")
 }

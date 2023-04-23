@@ -1,7 +1,7 @@
 /*
 Functions related to world generation
 */
-package world
+package worldgen
 
 import (
 	"math"
@@ -47,72 +47,80 @@ type Generator struct {
 
 	// requestsPool keeps track of currently requested chunks,
 	// so that one same chunk can't be requested twice
-	requestsPool map[types.Vec2u]bool
+	requestsPool map[types.Vec2u]types.Chunk
 	requests     chan types.Vec2u
-	generated    chan *Chunk
+	generated    chan types.Chunk
 }
 
 func NewWorldGenerator(seed int64) *Generator {
 	// make a random generator using global world seed
-	world := rand.New(rand.NewSource(seed))
+	globalSeed := rand.New(rand.NewSource(seed))
 
 	// generate perlin noise seeds, using it
 	var (
-		baseSeed      = world.Int63()
-		secondarySeed = world.Int63()
+		baseSeed      = globalSeed.Int63()
+		secondarySeed = globalSeed.Int63()
 	)
 
 	return &Generator{
 		baseGenerator:      perlin.NewPerlin(2, 2, 16, baseSeed),
 		secondaryGenerator: perlin.NewPerlin(2, 2, 16, secondarySeed),
 
-		requestsPool: make(map[types.Vec2u]bool),
+		requestsPool: make(map[types.Vec2u]types.Chunk),
 		// for some reason, without buffering, it hangs
 		requests:  make(chan types.Vec2u, 128),
-		generated: make(chan *Chunk, 128),
+		generated: make(chan types.Chunk, 128),
 	}
 }
 
-func (g *Generator) run() {
+func (generator *Generator) run() {
 	for {
 		// listen for incoming requests
-		req := <-g.requests
+		req := <-generator.requests
 
-		c := NewChunk(req.X, req.Y)
-		c.Generate(g.baseGenerator, g.secondaryGenerator)
+		chunk := generator.requestsPool[req]
+		generator.generate(chunk)
 
 		// FIXME: This is probably not very safe to pass pointers between goroutines
-		g.generated <- c
+		generator.generated <- chunk
 	}
 }
 
 // starts chunk generator in separate goroutine
-func (g *Generator) Run() {
-	go g.run()
+func (generator *Generator) Run() {
+	go generator.run()
 }
 
 // Requests a chunk generation
 // Chunk can be retrieved later through Generator.Receive()
-func (g *Generator) Generate(cx, cy uint64) {
-	coords := types.Vec2u{X: cx, Y: cy}
-	if g.requestsPool[coords] {
+func (generator *Generator) Generate(chunk types.Chunk) {
+	coords := chunk.Coords()
+	if _, exists := generator.requestsPool[coords]; exists {
 		return
 	}
-	g.requests <- coords
-	g.requestsPool[coords] = true
+	generator.requests <- coords
+	generator.requestsPool[coords] = chunk
 }
 
 // Returns newly generated chunk
 // If none are pending, returns nil
-func (g *Generator) Receive() *Chunk {
-	select {
-	case c := <-g.generated:
-		// remove chunk from request pool
-		delete(g.requestsPool, c.Coords())
-		return c
-	default:
-		return nil
+func (generator *Generator) Receive() (chunks []types.Chunk) {
+	noMoreValues := false
+	for {
+		select {
+		case receivedChunk := <-generator.generated:
+			chunks = append(chunks, receivedChunk)
+			// remove chunk from request pool
+			delete(generator.requestsPool, receivedChunk.Coords())
+		default:
+			noMoreValues = true
+		}
+
+		if noMoreValues {
+			break
+		}
 	}
+	return
 }
 
 // Features are regular random numbers, that can be used while generating blocks.
@@ -171,9 +179,9 @@ func height(gen *perlin.Perlin, x, y uint64, scale float64) float64 {
 }
 
 // generates basic blocks ( sand, water, etc. )
-func genBase(baseGenerator *perlin.Perlin, x, y uint64) types.Block {
+func (generator *Generator) genBase(x, y uint64) types.Block {
 	baseHeight := applyCircularMask(float64(x), float64(y),
-		height(baseGenerator, x, y, config.PerlinNoiseScaleFactor),
+		height(generator.baseGenerator, x, y, config.PerlinNoiseScaleFactor),
 	)
 
 	switch {
@@ -187,7 +195,7 @@ func genBase(baseGenerator *perlin.Perlin, x, y uint64) types.Block {
 }
 
 // Checks if 8 neighbors of the block are of the same type
-func checkNeighbors(desiredType types.BlockType, baseGenerator *perlin.Perlin, x, y uint64) bool {
+func (generator *Generator) checkNeighbors(desiredType types.BlockType, x, y uint64) bool {
 	sides := [8][2]uint64{
 		{x - 1, y},     // left
 		{x + 1, y},     // right
@@ -200,7 +208,7 @@ func checkNeighbors(desiredType types.BlockType, baseGenerator *perlin.Perlin, x
 	}
 
 	for _, side := range sides {
-		if genBase(baseGenerator, side[0], side[1]).Type() != desiredType {
+		if generator.genBase(side[0], side[1]).Type() != desiredType {
 			return false
 		}
 	}
@@ -209,9 +217,11 @@ func checkNeighbors(desiredType types.BlockType, baseGenerator *perlin.Perlin, x
 }
 
 // generates block features, depending on previous block
-func genFeatures(previous types.Block, baseGenerator *perlin.Perlin, secondaryGenerator *perlin.Perlin, features BlockFeatures, x, y uint64) types.Block {
+func (generator *Generator) genFeatures(previous types.Block, x, y uint64) types.Block {
+	features := makeFeatures(generator.secondaryGenerator, x*16, y*16)
+
 	// do not apply circular mask, while generating block features
-	secondaryHeight := height(secondaryGenerator, x, y, config.PerlinNoiseScaleFactor)
+	secondaryHeight := height(generator.secondaryGenerator, x, y, config.PerlinNoiseScaleFactor)
 
 	switch previous.Type() {
 	case blocks.Sand:
@@ -221,7 +231,7 @@ func genFeatures(previous types.Block, baseGenerator *perlin.Perlin, secondaryGe
 		}
 	case blocks.Grass:
 		// generate features on grass, only if it is surrounded by grass on all sides
-		if !checkNeighbors(blocks.Grass, baseGenerator, x, y) {
+		if !generator.checkNeighbors(blocks.Grass, x, y) {
 			return previous
 		}
 
@@ -250,18 +260,9 @@ func genFeatures(previous types.Block, baseGenerator *perlin.Perlin, secondaryGe
 	return previous
 }
 
-// generates block at given coordinates
-func gen(baseGenerator, secondaryGenerator *perlin.Perlin, x, y uint64) types.Block {
-	var generated types.Block
-
-	generated = genBase(baseGenerator, x, y)
-	generated = genFeatures(generated, baseGenerator, secondaryGenerator, makeFeatures(secondaryGenerator, x, y), x, y)
-
-	return generated
-}
-
-func (c *Chunk) generateStructures(baseGenerator, secondaryGenerator *perlin.Perlin) {
-	features := makeFeatures(secondaryGenerator, c.x*16, c.y*16)
+func (generator *Generator) generateStructures(chunk types.Chunk) {
+	chunkCoords := chunk.BlockCoords()
+	features := makeFeatures(generator.secondaryGenerator, chunkCoords.X, chunkCoords.Y)
 
 	if features.f1 < CaveEntranceChance {
 		// use a bunch of hardcoded possible coordinates for cave entrance
@@ -277,7 +278,7 @@ func (c *Chunk) generateStructures(baseGenerator, secondaryGenerator *perlin.Per
 		valid := false
 		for _, coords := range possibleCoordinates {
 			// valid positions for cave entrance are those that are surrounded by grass blocks on all sides
-			if checkNeighbors(blocks.Grass, baseGenerator, c.x*16+coords.X, c.y*16+coords.Y) {
+			if generator.checkNeighbors(blocks.Grass, chunkCoords.X+coords.X, chunkCoords.Y+coords.Y) {
 				chosenCoordinates = coords
 				valid = true
 				break
@@ -287,28 +288,33 @@ func (c *Chunk) generateStructures(baseGenerator, secondaryGenerator *perlin.Per
 			return
 		}
 
-		c.SetBlock(uint(chosenCoordinates.X), uint(chosenCoordinates.Y), blocks.NewCaveEntranceBlock())
+		chunk.SetBlock(uint(chosenCoordinates.X), uint(chosenCoordinates.Y), blocks.NewCaveEntranceBlock())
 	}
 }
 
-func (c *Chunk) Generate(baseGenerator, secondaryGenerator *perlin.Perlin) {
+func (generator *Generator) generate(chunk types.Chunk) {
 	for x := uint(0); x < 16; x++ {
 		for y := uint(0); y < 16; y++ {
-			bx := c.x*16 + uint64(x)
-			by := c.y*16 + uint64(y)
+			chunkCoordinates := chunk.Coords()
+			bx := chunkCoordinates.X*16 + uint64(x)
+			by := chunkCoordinates.Y*16 + uint64(y)
 
-			c.SetBlock(x, y, gen(baseGenerator, secondaryGenerator, bx, by))
+			var generated types.Block
+			generated = generator.genBase(bx, by)
+			generated = generator.genFeatures(generated, bx, by)
+
+			chunk.SetBlock(x, y, generated)
 		}
 	}
 
-	c.generateStructures(baseGenerator, secondaryGenerator)
+	generator.generateStructures(chunk)
 }
 
 // simply fills a chunk with water
-func (c *Chunk) GenerateDummy() {
+func (generator *Generator) GenerateDummy(chunk types.Chunk) {
 	for x := uint(0); x < 16; x++ {
 		for y := uint(0); y < 16; y++ {
-			c.SetBlock(x, y, blocks.NewWaterBlock())
+			chunk.SetBlock(x, y, blocks.NewWaterBlock())
 		}
 	}
 }

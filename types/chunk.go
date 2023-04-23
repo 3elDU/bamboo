@@ -1,7 +1,6 @@
 package types
 
 import (
-	"github.com/aquilax/go-perlin"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -10,8 +9,6 @@ type Chunk interface {
 	At(x uint, y uint) Block
 	BlockCoords() Vec2u
 	Coords() Vec2u
-	Generate(baseGenerator, secondaryGenerator *perlin.Perlin)
-	GenerateDummy()
 	Render(world World)
 	Save(metadata Save)
 	SetBlock(x uint, y uint, block Block)
