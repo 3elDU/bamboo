@@ -93,6 +93,4 @@ func (player *Player) Save(metadata types.Save) {
 	if err := gob.NewEncoder(f).Encode(player); err != nil {
 		log.Panicf("failed to write player metadata")
 	}
-
-	log.Println("Player.Save() - saved")
 }

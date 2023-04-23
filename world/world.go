@@ -44,7 +44,6 @@ func (world *World) Update() {
 	// receive newly generated chunks from world generator
 	chunks := world.generator.Receive()
 	for _, chunk := range chunks {
-		log.Printf("world.Update() - received chunk %v, %v", chunk.Coords().X, chunk.Coords().Y)
 		world.chunks[chunk.Coords()] = chunk.(*Chunk)
 		// Request redraw of each neighbor
 		for _, neighbor := range world.GetNeighbors(chunk.Coords().X, chunk.Coords().Y) {
@@ -69,28 +68,18 @@ func (world *World) Update() {
 	// that weren't accessed ( neither read, nor write ) for specified amount of ticks
 	// ( check config.go )
 	if scene_manager.Ticks()%30 == 0 {
-		chunksUnloaded := 0
-
 		for coords, chunk := range world.chunks {
 			if scene_manager.Ticks()-chunk.lastAccessed > config.ChunkUnloadDelay {
 				world.saverLoader.Save(chunk)
 				delete(world.chunks, coords)
-				chunksUnloaded++
 			}
-		}
-
-		if chunksUnloaded > 0 {
-			log.Printf("World.Update() - Unloaded %v chunks from memory; currently loaded - %v", chunksUnloaded, len(world.chunks))
 		}
 	}
 
-	// updateStart := time.Now()
 	// Update all currently loaded chunks
 	for _, chunk := range world.chunks {
 		chunk.Update(world)
 	}
-	// updateEnd := time.Now()
-	// log.Printf("World.Update() - chunk update took %v; loaded chunks - %v", updateEnd.Sub(updateStart).String(), len(world.chunks))
 }
 
 func (world *World) ChunkAt(cx, cy uint64) types.Chunk {

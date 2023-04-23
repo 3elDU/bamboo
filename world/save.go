@@ -163,8 +163,6 @@ func (world *World) Save() {
 	for _, chunk := range world.chunks {
 		chunk.Save(world.metadata)
 	}
-
-	log.Println("World.Save() - saved")
 }
 
 func ChunkExistsOnDisk(id uuid.UUID, x, y uint64) bool {
@@ -204,7 +202,6 @@ func LoadChunk(metadata types.Save, x, y uint64) *Chunk {
 
 		// mark chunk as unmodified, to avoid recursive loading/saving
 		c.modified = false
-		log.Printf("LoadChunk() - loaded chunk %v; %v from disk", x, y)
 		return c
 	}
 
@@ -246,7 +243,6 @@ func (c *Chunk) Save(metadata types.Save) {
 	}
 
 	c.modified = false
-	log.Printf("Chunk.Save() - %v; %v", c.x, c.y)
 }
 
 func DeleteWorld(metadata types.Save) {
