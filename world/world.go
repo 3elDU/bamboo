@@ -95,18 +95,17 @@ func (world *World) ChunkAtB(bx, by uint64) types.Chunk {
 
 	if !exists {
 		// try to load the chunk from disk first
-		if ChunkExistsOnDisk(world.metadata.UUID, cx, cy) {
+		if ChunkExistsOnDisk(world.metadata, cx, cy) {
 			// request chunk loading
 			world.saverLoader.Load(cx, cy)
 		} else {
-			dummyChunk := NewChunk(cx, cy)
-			world.generator.GenerateDummy(dummyChunk)
-			world.chunks[chunkCoordinates] = dummyChunk
-
 			// request chunk generation
 			chunk := NewChunk(cx, cy)
 			world.generator.Generate(chunk)
 		}
+		dummyChunk := NewChunk(cx, cy)
+		world.generator.GenerateDummy(dummyChunk)
+		world.chunks[chunkCoordinates] = dummyChunk
 	}
 
 	world.chunks[chunkCoordinates].lastAccessed = scene_manager.Ticks()
