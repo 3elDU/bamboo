@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"github.com/3elDU/bamboo/types"
+	"github.com/3elDU/bamboo/world_type"
 	"io/fs"
 	"log"
 	"os"
@@ -65,7 +66,10 @@ func (s *WorldListScene) Scan() {
 			return err
 		}
 
-		log.Println(*worldMetadata)
+		if worldMetadata.WorldType != world_type.Overworld {
+			return nil
+		}
+
 		worldList = append(worldList, *worldMetadata)
 
 		return nil
@@ -142,7 +146,7 @@ func (s *WorldListScene) Update() {
 		scene_manager.QSwitch(game.LoadGameScene(save))
 	case <-s.newWorld:
 		log.Println("worldListScene - New world")
-		scene_manager.QSwitch(NewNewWorldScene())
+		scene_manager.Switch(NewNewWorldScene())
 	case <-s.goBack:
 		scene_manager.End()
 	case id := <-s.deleteWorld:

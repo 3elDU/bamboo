@@ -23,20 +23,27 @@ type NewWorldScene struct {
 	// form results will be received through this channel
 	// first string is world name, second is world seed
 	formData chan []string
+
+	goBack chan bool
 }
 
 func NewNewWorldScene() *NewWorldScene {
 	formData := make(chan []string, 1)
+	goBack := make(chan bool, 1)
 
 	return &NewWorldScene{
 		formData: formData,
+		goBack:   goBack,
 
 		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(), ui.Center(
-			ui.Form(
-				"Create a new world",
-				formData,
-				ui.FormPrompt{Title: "World name"},
-				ui.FormPrompt{Title: "World seed"},
+			ui.Stack(ui.StackOptions{Direction: ui.VerticalStack},
+				ui.Form(
+					"Create a new world",
+					formData,
+					ui.FormPrompt{Title: "World name"},
+					ui.FormPrompt{Title: "World seed (optional)"},
+				),
+				ui.Button(func() { goBack <- true }, ui.Label(ui.DefaultLabelOptions(), "Go back")),
 			),
 		))),
 	}
@@ -60,6 +67,8 @@ func (s *NewWorldScene) Update() {
 	}
 
 	select {
+	case <-s.goBack:
+		scene_manager.End()
 	case formData := <-s.formData:
 		worldName, seedString := formData[0], formData[1]
 		seed := seedFromString(seedString)
