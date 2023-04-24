@@ -2,6 +2,7 @@ package blocks
 
 import (
 	"github.com/3elDU/bamboo/types"
+	"github.com/google/uuid"
 )
 
 const (
@@ -18,6 +19,8 @@ const (
 	RedMushroom
 	WhiteMushroom
 	CaveEntrance
+	CaveWall
+	CaveFloor
 )
 
 // GetBlockByID returns an empty block
@@ -48,7 +51,11 @@ func GetBlockByID(id types.BlockType) types.Block {
 	case WhiteMushroom:
 		return NewWhiteMushroomBlock()
 	case CaveEntrance:
-		return NewCaveEntranceBlock()
+		return NewCaveEntranceBlock(uuid.New())
+	case CaveWall:
+		return NewCaveWallBlock()
+	case CaveFloor:
+		return NewCaveFloorBlock()
 	}
 
 	return NewEmptyBlock()

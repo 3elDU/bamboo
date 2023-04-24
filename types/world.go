@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/3elDU/bamboo/world_type"
 	"github.com/google/uuid"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -28,6 +29,7 @@ type Save struct {
 	// All subsequent worlds will be created in their own directories, under the base directory.
 	BaseUUID uuid.UUID
 	// ID of the current world. There can be many worlds in a save.
-	UUID uuid.UUID
-	Seed int64
+	UUID      uuid.UUID
+	Seed      int64
+	WorldType world_type.WorldType
 }

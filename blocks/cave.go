@@ -25,7 +25,7 @@ type CaveEntranceBlock struct {
 	id uuid.UUID
 }
 
-func NewCaveEntranceBlock() *CaveEntranceBlock {
+func NewCaveEntranceBlock(id uuid.UUID) *CaveEntranceBlock {
 	return &CaveEntranceBlock{
 		baseBlock: baseBlock{
 			blockType: CaveEntrance,
@@ -33,7 +33,7 @@ func NewCaveEntranceBlock() *CaveEntranceBlock {
 		texturedBlock: texturedBlock{
 			tex: asset_loader.Texture("cave"),
 		},
-		id: uuid.New(),
+		id: id,
 	}
 }
 

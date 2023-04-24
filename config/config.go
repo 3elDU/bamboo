@@ -19,5 +19,5 @@ const (
 	WorldAutosaveDelay uint64 = 3600
 	ChunkUnloadDelay   uint64 = 600
 
-	UIScaling float64 = 3
+	UIScaling float64 = 2
 )

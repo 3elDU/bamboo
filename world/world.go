@@ -23,7 +23,7 @@ type World struct {
 func NewWorld(metadata types.Save) *World {
 	log.Printf("NewWorld - name %v; seed %v", metadata.Name, metadata.Seed)
 
-	generator := worldgen.NewWorldGenerator(metadata.Seed)
+	generator := worldgen.NewWorldgenForType(metadata.Seed, metadata.WorldType)
 	go generator.Run()
 
 	saverLoader := NewWorldSaverLoader(metadata)

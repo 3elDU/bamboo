@@ -4,7 +4,8 @@ Functions related to world generation
 package worldgen
 
 import (
-	"math"
+	"github.com/google/uuid"
+	"log"
 	"math/rand"
 
 	"github.com/3elDU/bamboo/blocks"
@@ -37,22 +38,13 @@ const (
 	CaveEntranceChance = 0.05
 )
 
-// Generator maintains chunk generation queue.
-// Actual generation happens in separate goroutine,
-// so we don't have any freezes on the main thread
-type Generator struct {
+type OverworldGenerator struct {
 	// Separate perlin noise generators for base blocks and vegetation/features
-	baseGenerator      *perlin.Perlin
-	secondaryGenerator *perlin.Perlin
-
-	// requestsPool keeps track of currently requested chunks,
-	// so that one same chunk can't be requested twice
-	requestsPool map[types.Vec2u]types.Chunk
-	requests     chan types.Vec2u
-	generated    chan types.Chunk
+	basePerlin      *perlin.Perlin
+	secondaryPerlin *perlin.Perlin
 }
 
-func NewWorldGenerator(seed int64) *Generator {
+func NewOverworldGenerator(seed int64) types.WorldGenerator {
 	// make a random generator using global world seed
 	globalSeed := rand.New(rand.NewSource(seed))
 
@@ -62,126 +54,18 @@ func NewWorldGenerator(seed int64) *Generator {
 		secondarySeed = globalSeed.Int63()
 	)
 
-	return &Generator{
-		baseGenerator:      perlin.NewPerlin(2, 2, 16, baseSeed),
-		secondaryGenerator: perlin.NewPerlin(2, 2, 16, secondarySeed),
-
-		requestsPool: make(map[types.Vec2u]types.Chunk),
-		// for some reason, without buffering, it hangs
-		requests:  make(chan types.Vec2u, 128),
-		generated: make(chan types.Chunk, 128),
-	}
-}
-
-func (generator *Generator) run() {
-	for {
-		// listen for incoming requests
-		req := <-generator.requests
-
-		chunk := generator.requestsPool[req]
-		generator.generate(chunk)
-
-		// FIXME: This is probably not very safe to pass pointers between goroutines
-		generator.generated <- chunk
-	}
-}
-
-// starts chunk generator in separate goroutine
-func (generator *Generator) Run() {
-	go generator.run()
-}
-
-// Requests a chunk generation
-// Chunk can be retrieved later through Generator.Receive()
-func (generator *Generator) Generate(chunk types.Chunk) {
-	coords := chunk.Coords()
-	if _, exists := generator.requestsPool[coords]; exists {
-		return
-	}
-	generator.requests <- coords
-	generator.requestsPool[coords] = chunk
-}
-
-// Returns newly generated chunk
-// If none are pending, returns nil
-func (generator *Generator) Receive() (chunks []types.Chunk) {
-	noMoreValues := false
-	for {
-		select {
-		case receivedChunk := <-generator.generated:
-			chunks = append(chunks, receivedChunk)
-			// remove chunk from request pool
-			delete(generator.requestsPool, receivedChunk.Coords())
-		default:
-			noMoreValues = true
-		}
-
-		if noMoreValues {
-			break
-		}
-	}
-	return
-}
-
-// Features are regular random numbers, that can be used while generating blocks.
-// Useful, when we need simple RNG, not perlin noise.
-//
-// They are reproducible, and unique for each block
-type BlockFeatures struct {
-	i1 int64
-	u1 uint64
-	f1 float64
-	f2 float64
-}
-
-// TODO: Optimize this
-func makeFeatures(p *perlin.Perlin, bx, by uint64) BlockFeatures {
-	// We make new random generator, using block coordinates and perlin noise generator
-	// This ensures that we get the same result every time, using same arguments
-	seed := int64((height(p, bx, by, config.PerlinNoiseScaleFactor) / 2) * float64(1<<63))
-	r := rand.New(rand.NewSource(seed))
-
-	return BlockFeatures{
-		i1: r.Int63(),
-		u1: r.Uint64(),
-		f1: r.Float64(),
-		f2: r.Float64(),
-	}
-}
-
-// Applies circular mask to generated perlin noise
-// The further block is from the center, the stronger the mask will be
-// This makes the world look like an archipelago, surrounded by ocean on all sides,
-// not like an infinite number of islands
-func applyCircularMask(x, y float64, val float64) float64 {
-	const (
-		radius  = float64(config.WorldWidth) / 2.5
-		centerX = float64(config.WorldWidth) / 2
-		centerY = float64(config.WorldHeight) / 2
-	)
-
-	pointInsideCircle := math.Pow(x-centerX, 2)+math.Pow(y-centerY, 2) < math.Pow(radius, 2)
-	if !pointInsideCircle {
-		return 0
+	implementation := &OverworldGenerator{
+		basePerlin:      perlin.NewPerlin(2, 2, 16, baseSeed),
+		secondaryPerlin: perlin.NewPerlin(2, 2, 16, secondarySeed),
 	}
 
-	distanceToCenter := math.Sqrt(math.Pow(x-centerX, 2) + math.Pow(y-centerY, 2))
-	// Divide the mask by 1.5, so it won't be too big
-	mask := distanceToCenter / radius / 1.5
-	return val - mask
-}
-
-// returns values from 0 to 2
-//
-// x and y are world(block) coordinates
-func height(gen *perlin.Perlin, x, y uint64, scale float64) float64 {
-	return gen.Noise2D(float64(x)/scale, float64(y)/scale) + 1
+	return newGenerator(implementation)
 }
 
 // generates basic blocks ( sand, water, etc. )
-func (generator *Generator) genBase(x, y uint64) types.Block {
+func (generator *OverworldGenerator) genBase(x, y uint64) types.Block {
 	baseHeight := applyCircularMask(float64(x), float64(y),
-		height(generator.baseGenerator, x, y, config.PerlinNoiseScaleFactor),
+		height(generator.basePerlin, x, y, config.PerlinNoiseScaleFactor),
 	)
 
 	switch {
@@ -195,7 +79,7 @@ func (generator *Generator) genBase(x, y uint64) types.Block {
 }
 
 // Checks if 8 neighbors of the block are of the same type
-func (generator *Generator) checkNeighbors(desiredType types.BlockType, x, y uint64) bool {
+func (generator *OverworldGenerator) checkNeighbors(desiredType types.BlockType, x, y uint64) bool {
 	sides := [8][2]uint64{
 		{x - 1, y},     // left
 		{x + 1, y},     // right
@@ -217,11 +101,11 @@ func (generator *Generator) checkNeighbors(desiredType types.BlockType, x, y uin
 }
 
 // generates block features, depending on previous block
-func (generator *Generator) genFeatures(previous types.Block, x, y uint64) types.Block {
-	features := makeFeatures(generator.secondaryGenerator, x*16, y*16)
+func (generator *OverworldGenerator) genFeatures(previous types.Block, x, y uint64) types.Block {
+	features := makeFeatures(generator.secondaryPerlin, x*16, y*16)
 
 	// do not apply circular mask, while generating block features
-	secondaryHeight := height(generator.secondaryGenerator, x, y, config.PerlinNoiseScaleFactor)
+	secondaryHeight := height(generator.secondaryPerlin, x, y, config.PerlinNoiseScaleFactor)
 
 	switch previous.Type() {
 	case blocks.Sand:
@@ -260,9 +144,9 @@ func (generator *Generator) genFeatures(previous types.Block, x, y uint64) types
 	return previous
 }
 
-func (generator *Generator) generateStructures(chunk types.Chunk) {
+func (generator *OverworldGenerator) generateStructures(chunk types.Chunk) {
 	chunkCoords := chunk.BlockCoords()
-	features := makeFeatures(generator.secondaryGenerator, chunkCoords.X, chunkCoords.Y)
+	features := makeFeatures(generator.secondaryPerlin, chunkCoords.X, chunkCoords.Y)
 
 	if features.f1 < CaveEntranceChance {
 		// use a bunch of hardcoded possible coordinates for cave entrance
@@ -288,14 +172,23 @@ func (generator *Generator) generateStructures(chunk types.Chunk) {
 			return
 		}
 
-		chunk.SetBlock(uint(chosenCoordinates.X), uint(chosenCoordinates.Y), blocks.NewCaveEntranceBlock())
+		// kinda slow but reproducible with the same seed, which is the most important
+		rng := rand.New(rand.NewSource(features.i1))
+		id, err := uuid.NewRandomFromReader(rng)
+		if err != nil {
+			// this should really never happen
+			log.Panicf("failed to generate UUID for cave: %v", err)
+		}
+		log.Printf("cave at %v, %v: %v", chunkCoords.X+chosenCoordinates.X, chunkCoords.Y+chosenCoordinates.Y, id)
+		chunk.SetBlock(uint(chosenCoordinates.X), uint(chosenCoordinates.Y), blocks.NewCaveEntranceBlock(id))
 	}
 }
 
-func (generator *Generator) generate(chunk types.Chunk) {
+func (generator *OverworldGenerator) generate(chunk types.Chunk) {
+	chunkCoordinates := chunk.Coords()
+
 	for x := uint(0); x < 16; x++ {
 		for y := uint(0); y < 16; y++ {
-			chunkCoordinates := chunk.Coords()
 			bx := chunkCoordinates.X*16 + uint64(x)
 			by := chunkCoordinates.Y*16 + uint64(y)
 
@@ -311,7 +204,7 @@ func (generator *Generator) generate(chunk types.Chunk) {
 }
 
 // simply fills a chunk with water
-func (generator *Generator) GenerateDummy(chunk types.Chunk) {
+func (generator *OverworldGenerator) generateDummy(chunk types.Chunk) {
 	for x := uint(0); x < 16; x++ {
 		for y := uint(0); y < 16; y++ {
 			chunk.SetBlock(x, y, blocks.NewWaterBlock())

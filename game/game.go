@@ -14,6 +14,7 @@ import (
 	"github.com/3elDU/bamboo/types"
 	"github.com/3elDU/bamboo/widget"
 	"github.com/3elDU/bamboo/world"
+	"github.com/3elDU/bamboo/world_type"
 	"github.com/MakeNowJust/heredoc"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -186,13 +187,15 @@ func (game *Game) handleEvents() {
 			caveID := ev.Args().(event.CaveEnteredArgs).ID
 
 			game.world = world.NewWorld(types.Save{
-				Name:     game.world.Metadata().Name,
-				BaseUUID: game.world.Metadata().BaseUUID,
-				UUID:     caveID,
-				Seed:     int64(caveID.ID()),
+				Name:      game.world.Metadata().Name,
+				BaseUUID:  game.world.Metadata().BaseUUID,
+				UUID:      caveID,
+				Seed:      int64(caveID.ID()),
+				WorldType: world_type.Cave,
 			})
 			game.player = &player.Player{X: float64(config.PlayerStartX), Y: float64(config.PlayerStartY)}
 			game.player.SelectedWorld = game.world.Metadata()
+			game.Save()
 		}
 	}
 }

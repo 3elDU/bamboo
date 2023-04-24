@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"github.com/3elDU/bamboo/types"
+	"github.com/3elDU/bamboo/world_type"
 	"hash/fnv"
 	"log"
 	"math/rand"
@@ -64,10 +65,11 @@ func (s *NewWorldScene) Update() {
 		seed := seedFromString(seedString)
 
 		scene_manager.QSwitch(game.NewGameScene(types.Save{
-			Name:     worldName,
-			BaseUUID: uuid.New(),
-			UUID:     uuid.New(),
-			Seed:     seed,
+			Name:      worldName,
+			BaseUUID:  uuid.New(),
+			UUID:      uuid.New(),
+			Seed:      seed,
+			WorldType: world_type.Overworld,
 		}))
 	default:
 	}
