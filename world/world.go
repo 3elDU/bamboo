@@ -124,6 +124,19 @@ func (world *World) BlockAt(bx, by uint64) types.Block {
 	return chunk.At(uint(bx%16), uint(by%16))
 }
 
+func (world *World) SetBlock(bx, by uint64, block types.Block) {
+	cx, cy := bx/16, by/16
+
+	if !world.ChunkExists(cx, cy) {
+		// generate a chunk immediately, if it doesn't exist
+		c := NewChunk(cx, cy)
+		world.generator.GenerateImmediately(c)
+		world.chunks[types.Vec2u{X: cx, Y: cy}] = c
+	}
+
+	world.chunks[types.Vec2u{X: cx, Y: cy}].SetBlock(uint(bx%16), uint(by%16), block)
+}
+
 func (world *World) ChunkExists(cx, cy uint64) bool {
 	_, exists := world.chunks[types.Vec2u{X: cx, Y: cy}]
 	return exists

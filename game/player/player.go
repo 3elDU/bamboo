@@ -2,8 +2,11 @@ package player
 
 import (
 	"encoding/gob"
+	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/types"
+	"github.com/3elDU/bamboo/world"
 	"log"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"time"
@@ -93,4 +96,46 @@ func (player *Player) Save(metadata types.Save) {
 	if err := gob.NewEncoder(f).Encode(player); err != nil {
 		log.Panicf("failed to write player metadata")
 	}
+}
+
+func isValidSpawnpoint(blockType types.BlockType) bool {
+	validBlocks := []types.BlockType{
+		blocks.Sand, blocks.Grass, blocks.ShortGrass, blocks.TallGrass, blocks.Flowers, blocks.RedMushroom, blocks.WhiteMushroom,
+		blocks.CaveFloor,
+	}
+
+	for _, blockType2 := range validBlocks {
+		if blockType == blockType2 {
+			return true
+		}
+	}
+	return false
+}
+
+// Creates a new player, picking a valid spawn point
+func NewPlayer(w types.World) *Player {
+	// use the same seed for reproducible spawnpoint generation
+	rng := rand.New(rand.NewSource(1))
+
+	x, y := 0, 0
+	it := 1
+	for {
+		// Pick X and Y coordinates from 256 to 768
+		x = rng.Intn(768-256) + 256
+		y = rng.Intn(768-256) + 256
+
+		// create a new generator so that it doesn't overwrite chunks in the world
+		c := world.NewChunk(uint64(x)/16, uint64(y)/16)
+		w.Generator().GenerateImmediately(c)
+		blockType := c.At(uint(x%16), uint(y%16)).Type()
+
+		if isValidSpawnpoint(blockType) {
+			break
+		}
+
+		it++
+	}
+	log.Printf("picked spawn point (%v, %v), took %v iterations", x, y, it)
+
+	return &Player{X: float64(x), Y: float64(y), SelectedWorld: w.Metadata()}
 }

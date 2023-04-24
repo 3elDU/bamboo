@@ -6,7 +6,6 @@ import (
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/types"
 	"github.com/3elDU/bamboo/util"
-	"github.com/3elDU/bamboo/world"
 )
 
 func (player *Player) speed() float64 {
@@ -64,11 +63,6 @@ func collidePlayer(origin types.Vec2f, world types.World) (collisions [4]bool) {
 	}
 
 	for i, point := range playerCollisionPoints {
-		interactive, isInteractive := world.BlockAt(uint64(point.X), uint64(point.Y)).(types.InteractiveBlock)
-		if isInteractive {
-			interactive.Interact(world, origin)
-		}
-
 		block, isCollidable := world.BlockAt(uint64(point.X), uint64(point.Y)).(types.CollidableBlock)
 		if !isCollidable {
 			continue
@@ -89,6 +83,32 @@ func collidePlayer(origin types.Vec2f, world types.World) (collisions [4]bool) {
 	}
 
 	return
+}
+
+// retrieves all interactive blocks the player is colliding with,
+// and calls Interact() on them
+func interactWithBlocks(origin types.Vec2f, world types.World) {
+	playerCollisionPoints := [4]types.Vec2f{
+		{X: origin.X - .25, Y: origin.Y - .25},
+		{X: origin.X + .25, Y: origin.Y - .25},
+		{X: origin.X - .25, Y: origin.Y + .4},
+		{X: origin.X + .25, Y: origin.Y + .4},
+	}
+
+	collisions := make(map[types.Vec2u]types.InteractiveBlock)
+
+	for _, point := range playerCollisionPoints {
+		block, interactive := world.BlockAt(uint64(point.X), uint64(point.Y)).(types.InteractiveBlock)
+		if !interactive {
+			continue
+		}
+
+		collisions[block.Coords()] = block
+	}
+
+	for _, block := range collisions {
+		block.Interact(world, origin)
+	}
 }
 
 // returns true if any of collisions is true
@@ -112,7 +132,7 @@ func countCollisions(collisions [4]bool) (count uint) {
 
 // Update updates the player physics and animation
 // FIXME: consider frame delta time in equations
-func (player *Player) Update(movement MovementVector, world *world.World) {
+func (player *Player) Update(movement MovementVector, world types.World) {
 	dx, dy := movement.ToFloat()
 
 	player.xVelocity += dx * config.PlayerSpeed
@@ -141,6 +161,8 @@ func (player *Player) Update(movement MovementVector, world *world.World) {
 	if block, ok := world.BlockAt(uint64(player.X), uint64(player.Y)).(types.CollidableBlock); ok {
 		speedModifier = block.PlayerSpeed()
 	}
+
+	interactWithBlocks(types.Vec2f{X: player.X, Y: player.Y}, world)
 
 	player.X += player.xVelocity * speedModifier
 	player.Y += player.yVelocity * speedModifier

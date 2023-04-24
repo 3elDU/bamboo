@@ -65,6 +65,7 @@ func height(gen *perlin.Perlin, x, y uint64, scale float64) float64 {
 type generatorImplementation interface {
 	generate(chunk types.Chunk)
 	generateDummy(chunk types.Chunk)
+	seed() int64
 }
 
 // Generator handles chunk generation queue, while the generation itself is handled by embedded class.
@@ -112,6 +113,10 @@ func (generator *Generator) Generate(chunk types.Chunk) {
 	generator.requestsPool[coords] = chunk
 }
 
+func (generator *Generator) GenerateImmediately(chunk types.Chunk) {
+	generator.implementation.generate(chunk)
+}
+
 // Unlike Generator.Generate(), Generator.GenerateDummy() generates the chunk immediately, without the queue
 func (generator *Generator) GenerateDummy(chunk types.Chunk) {
 	generator.implementation.generateDummy(chunk)
@@ -135,4 +140,8 @@ func (generator *Generator) Receive() (chunks []types.Chunk) {
 		}
 	}
 	return
+}
+
+func (generator *Generator) Seed() int64 {
+	return generator.implementation.seed()
 }

@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/event"
@@ -59,9 +60,10 @@ func newGame(gameWorld *world.World, player *player.Player) *Game {
 
 // Creates a game scene with a new world
 func NewGameScene(metadata types.Save) *Game {
+	w := world.NewWorld(metadata)
 	game := newGame(
-		world.NewWorld(metadata),
-		&player.Player{X: float64(config.PlayerStartX), Y: float64(config.PlayerStartY)},
+		w,
+		player.NewPlayer(w),
 	)
 	game.player.SelectedWorld = metadata
 
@@ -184,17 +186,43 @@ func (game *Game) handleEvents() {
 	for _, ev := range event.GetEvents() {
 		switch ev.Type() {
 		case event.CaveEntered:
+			// save the previous world before switching to a new one
+			game.Save()
+
 			caveID := ev.Args().(event.CaveEnteredArgs).ID
 
-			game.world = world.NewWorld(types.Save{
+			caveExit := blocks.NewCaveEntranceBlock(game.world.Metadata().UUID)
+
+			metadata := types.Save{
 				Name:      game.world.Metadata().Name,
 				BaseUUID:  game.world.Metadata().BaseUUID,
 				UUID:      caveID,
 				Seed:      int64(caveID.ID()),
 				WorldType: world_type.Cave,
-			})
-			game.player = &player.Player{X: float64(config.PlayerStartX), Y: float64(config.PlayerStartY)}
-			game.player.SelectedWorld = game.world.Metadata()
+			}
+
+			var newWorld *world.World
+			// Check if the world already exists on disk
+			if world.ExistsOnDisk(metadata) {
+				newWorld = world.Load(metadata.BaseUUID, metadata.UUID)
+			} else {
+				newWorld = world.NewWorld(metadata)
+			}
+
+			game.player = player.NewPlayer(newWorld)
+
+			// if we're switching from cave to overworld, don't place the cave exit.
+			// also don't place cave exit if that chunk already exists on disk, so we don't overwrite it
+			if newWorld.Metadata().WorldType == world_type.Cave && !world.ChunkExistsOnDisk(
+				newWorld.Metadata(),
+				uint64(game.player.X+2)/16, uint64(game.player.Y)/16,
+			) {
+				// place a portal to overworld next to the player
+				newWorld.SetBlock(uint64(game.player.X)+2, uint64(game.player.Y), caveExit)
+			}
+
+			game.world = newWorld
+
 			game.Save()
 		}
 	}

@@ -8,12 +8,14 @@ import (
 )
 
 type CaveGenerator struct {
-	noise *perlin.Perlin
+	noiseSeed int64
+	noise     *perlin.Perlin
 }
 
 func NewCaveGenerator(seed int64) types.WorldGenerator {
 	implementation := &CaveGenerator{
-		noise: perlin.NewPerlin(2, 2, 1, seed),
+		noiseSeed: seed,
+		noise:     perlin.NewPerlin(2, 2, 1, seed),
 	}
 	return newGenerator(implementation)
 }
@@ -39,4 +41,8 @@ func (generator *CaveGenerator) generateDummy(chunk types.Chunk) {
 			chunk.SetBlock(x, y, blocks.NewCaveFloorBlock())
 		}
 	}
+}
+
+func (generator *CaveGenerator) seed() int64 {
+	return generator.noiseSeed
 }

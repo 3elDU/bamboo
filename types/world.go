@@ -8,6 +8,7 @@ import (
 
 type World interface {
 	BlockAt(bx uint64, by uint64) Block
+	SetBlock(bx, by uint64, block Block)
 	CheckNeighbors(cx uint64, cy uint64) bool
 	ChunkAt(cx uint64, cy uint64) Chunk
 	ChunkAtB(bx uint64, by uint64) Chunk
