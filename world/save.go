@@ -165,8 +165,8 @@ func (world *World) Save() {
 	}
 }
 
-func ChunkExistsOnDisk(id uuid.UUID, x, y uint64) bool {
-	path := filepath.Join(config.WorldSaveDirectory, id.String(),
+func ChunkExistsOnDisk(metadata types.Save, x, y uint64) bool {
+	path := filepath.Join(config.WorldSaveDirectory, metadata.BaseUUID.String(), metadata.UUID.String(),
 		fmt.Sprintf("chunk_%v_%v.gob", x, y))
 
 	_, err := os.Stat(path)
