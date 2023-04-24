@@ -63,7 +63,6 @@ func (sl *SaverLoader) runLoader() {
 			// if the requested chunk doesn't exist, simply ignore the error and skip it
 			continue
 		}
-		log.Printf("SaverLoader.runLoader() - loaded chunk %v; %v from disk", request.X, request.Y)
 
 		sl.loaded <- c
 	}
