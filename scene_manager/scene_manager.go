@@ -26,7 +26,7 @@ type Scene interface {
 
 type sceneManager struct {
 	currentScene Scene
-	queue        []Scene
+	stack        []Scene
 
 	// tick counter
 	// can be retrieved through Ticks() function
@@ -40,7 +40,7 @@ func init() {
 	ebiten.SetWindowClosingHandled(true)
 	manager = &sceneManager{
 		currentScene: nil,
-		queue:        make([]Scene, 0),
+		stack:        make([]Scene, 0),
 	}
 }
 
@@ -50,32 +50,32 @@ func Ticks() uint64 {
 	return manager.counter
 }
 
-// End must be called from Scene.Update()
-// Exits current scene, and switches to next in the queue
-// If the queue is empty, exits
-func End() {
+// Pop must be called from Scene.Update()
+// Exits current scene, and switches to next in the stack
+// If the stack is empty, exits
+func Pop() {
 	if manager.currentScene != nil {
 		manager.currentScene.Destroy()
 	}
 
-	if len(manager.queue) != 0 {
-		next := manager.queue[0]
+	if len(manager.stack) != 0 {
+		next := manager.stack[0]
 		manager.currentScene = next
 
-		// delete scene from the queue
-		manager.queue[0] = nil
-		manager.queue = slices.Delete(manager.queue, 0, 1)
+		// delete scene from the stack
+		manager.stack[0] = nil
+		manager.stack = slices.Delete(manager.stack, 0, 1)
 	} else {
 		manager.currentScene = nil
 	}
 
-	manager.printQueue("End")
+	manager.printQueue("Pop")
 }
 
 // Exit terminates the program, destroying all the remaining scenes
 func Exit() {
 	log.Println("SceneManager.Exit() called. Terminating all the scenes and quiting")
-	for _, scene := range manager.queue {
+	for _, scene := range manager.stack {
 		scene.Destroy()
 	}
 	if manager.currentScene != nil {
@@ -84,27 +84,27 @@ func Exit() {
 	manager.terminated = true
 }
 
-// Switch switches to the given scene, inserting current scene to the queue
-// Switch is intented for temporary scenes, like pause menu
-func Switch(next Scene) {
+// PushAndSwitch switches to the given scene, inserting current scene to the stack.
+// PushAndSwitch is intented for temporary scenes, like pause menu
+func PushAndSwitch(next Scene) {
 	if manager.currentScene != nil {
-		manager.queue = slices.Insert(manager.queue, 0, manager.currentScene)
+		manager.stack = slices.Insert(manager.stack, 0, manager.currentScene)
 	}
 
 	manager.currentScene = next
-	manager.printQueue("Switch")
+	manager.printQueue("PushAndSwitch")
 }
 
-// QSwitch Behaves similarly to Switch, but the main difference is,
-// QSwitch completely replaces current scene with new one
-func QSwitch(next Scene) {
+// QPushAndSwitch Behaves similarly to PushAndSwitch, but the main difference is,
+// QPushAndSwitch completely replaces current scene with new one
+func QPushAndSwitch(next Scene) {
 	manager.currentScene = next
-	manager.printQueue("QSwitch")
+	manager.printQueue("QPushAndSwitch")
 }
 
-// Push pushes scene to the end of the queue
+// Push pushes scene to the stack
 func Push(sc Scene) {
-	manager.queue = append(manager.queue, sc)
+	manager.stack = append(manager.stack, sc)
 	manager.printQueue("Push")
 }
 
@@ -119,7 +119,7 @@ func (manager *sceneManager) Update() error {
 		if manager.currentScene != nil {
 			manager.currentScene.Destroy()
 		}
-		for _, sc := range manager.queue {
+		for _, sc := range manager.stack {
 			sc.Destroy()
 		}
 
@@ -127,8 +127,8 @@ func (manager *sceneManager) Update() error {
 	}
 
 	if manager.currentScene == nil {
-		if len(manager.queue) != 0 {
-			End()
+		if len(manager.stack) != 0 {
+			Pop()
 		} else {
 			log.Println("SceneManager.Update() - No scenes left to display. Exiting!")
 			return fmt.Errorf("exit")
@@ -153,12 +153,12 @@ func (manager *sceneManager) Layout(outsideWidth, outsideHeight int) (int, int) 
 }
 
 func (manager *sceneManager) printQueue(originFunc string) {
-	queueTypes := make([]reflect.Type, len(manager.queue))
-	for i, scene := range manager.queue {
+	queueTypes := make([]reflect.Type, len(manager.stack))
+	for i, scene := range manager.stack {
 		queueTypes[i] = reflect.TypeOf(scene)
 	}
 
-	log.Printf("SceneManager.%v - current %v; queue %v",
+	log.Printf("SceneManager.%v - current %v; stack %v",
 		originFunc, reflect.TypeOf(manager.currentScene), queueTypes)
 }
 

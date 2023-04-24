@@ -68,12 +68,12 @@ func (s *NewWorldScene) Update() {
 
 	select {
 	case <-s.goBack:
-		scene_manager.End()
+		scene_manager.Pop()
 	case formData := <-s.formData:
 		worldName, seedString := formData[0], formData[1]
 		seed := seedFromString(seedString)
 
-		scene_manager.QSwitch(game.NewGameScene(types.Save{
+		scene_manager.QPushAndSwitch(game.NewGameScene(types.Save{
 			Name:      worldName,
 			BaseUUID:  uuid.New(),
 			UUID:      uuid.New(),

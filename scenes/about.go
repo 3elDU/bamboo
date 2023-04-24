@@ -44,7 +44,7 @@ func (s *AboutScene) Update() {
 
 	select {
 	case <-s.goBackEvent:
-		scene_manager.End()
+		scene_manager.Pop()
 	default:
 	}
 }

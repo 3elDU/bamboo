@@ -37,8 +37,6 @@ type WorldListScene struct {
 
 // Scan scans the save folder for worlds
 func (s *WorldListScene) Scan() {
-	log.Printf("worldListScene.Scan()")
-
 	worldList := make([]types.Save, 0)
 	filepath.WalkDir(config.WorldSaveDirectory, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -143,12 +141,12 @@ func (s *WorldListScene) Update() {
 	select {
 	case save := <-s.selectedWorld:
 		log.Printf("worldListScene - Selected world '%v'", save)
-		scene_manager.QSwitch(game.LoadGameScene(save))
+		scene_manager.QPushAndSwitch(game.LoadGameScene(save))
 	case <-s.newWorld:
 		log.Println("worldListScene - New world")
-		scene_manager.Switch(NewNewWorldScene())
+		scene_manager.PushAndSwitch(NewNewWorldScene())
 	case <-s.goBack:
-		scene_manager.End()
+		scene_manager.Pop()
 	case id := <-s.deleteWorld:
 		world.DeleteWorld(id)
 		s.Scan()

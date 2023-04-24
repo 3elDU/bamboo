@@ -62,10 +62,10 @@ func (s *MainMenu) Update() {
 		switch id {
 		case 1: // Singleplayer button
 			log.Println("mainMenu - \"Singleplayer\" button pressed")
-			scene_manager.Switch(NewWorldListScene())
+			scene_manager.PushAndSwitch(NewWorldListScene())
 		case 2: // About
 			log.Println("mainMenu - \"About\" button pressed")
-			scene_manager.Switch(NewAboutScene())
+			scene_manager.PushAndSwitch(NewAboutScene())
 		case 3: // Exit
 			log.Println("mainMenu - \"Exit\" button pressed")
 			scene_manager.Exit()

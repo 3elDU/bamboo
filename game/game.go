@@ -101,7 +101,7 @@ func (game *Game) processInput() {
 			game.paused = false
 		case exitButtonPressed:
 			game.Save()
-			scene_manager.End()
+			scene_manager.Pop()
 		}
 		return
 	}
