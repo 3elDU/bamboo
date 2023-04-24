@@ -6,14 +6,12 @@ import (
 	"github.com/3elDU/bamboo/types"
 	"hash/fnv"
 	"log"
+	"math/rand"
 
 	"github.com/3elDU/bamboo/asset_loader"
-	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/game"
-	"github.com/3elDU/bamboo/game/player"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/ui"
-	"github.com/3elDU/bamboo/world"
 	"github.com/google/uuid"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -44,8 +42,14 @@ func NewNewWorldScene() *NewWorldScene {
 }
 
 func seedFromString(s string) (seed int64) {
-	hash := fnv.New64a().Sum([]byte(s))
-	binary.Read(bytes.NewReader(hash), binary.BigEndian, &seed)
+	if s == "" {
+		// if seed string is empty, generate a random one instead
+		seed = rand.Int63()
+		log.Println("seed: ", seed)
+	} else {
+		hash := fnv.New64a().Sum([]byte(s))
+		binary.Read(bytes.NewReader(hash), binary.BigEndian, &seed)
+	}
 	return
 }
 
@@ -59,13 +63,12 @@ func (s *NewWorldScene) Update() {
 		worldName, seedString := formData[0], formData[1]
 		seed := seedFromString(seedString)
 
-		w := world.NewWorld(types.Save{
+		scene_manager.QSwitch(game.NewGameScene(types.Save{
 			Name:     worldName,
 			BaseUUID: uuid.New(),
 			UUID:     uuid.New(),
 			Seed:     seed,
-		})
-		scene_manager.QSwitch(game.NewGameScene(w, &player.Player{X: float64(config.PlayerStartX), Y: float64(config.PlayerStartY)}))
+		}))
 	default:
 	}
 }

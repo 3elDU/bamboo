@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/config"
+	"github.com/3elDU/bamboo/event"
 	"github.com/3elDU/bamboo/font"
 	"github.com/3elDU/bamboo/game/inventory"
 	"github.com/3elDU/bamboo/game/player"
@@ -33,8 +34,7 @@ type Game struct {
 	debugInfoVisible bool
 }
 
-// Creates a game scene with a new world
-func NewGameScene(gameWorld *world.World, player *player.Player) *Game {
+func newGame(gameWorld *world.World, player *player.Player) *Game {
 	game := &Game{
 		widgets:      widget.NewWidgetContainer(),
 		debugWidgets: widget.NewWidgetContainer(),
@@ -53,6 +53,17 @@ func NewGameScene(gameWorld *world.World, player *player.Player) *Game {
 		&widgets.PerfWidget{Color: colors.Black},
 	)
 
+	return game
+}
+
+// Creates a game scene with a new world
+func NewGameScene(metadata types.Save) *Game {
+	game := newGame(
+		world.NewWorld(metadata),
+		&player.Player{X: float64(config.PlayerStartX), Y: float64(config.PlayerStartY)},
+	)
+	game.player.SelectedWorld = metadata
+
 	// perform a save immediately after the scene creation
 	game.Save()
 
@@ -64,7 +75,7 @@ func LoadGameScene(metadata types.Save) *Game {
 	// load the player first, to determine which world to load
 	loadedPlayer := player.LoadPlayer(metadata.BaseUUID)
 	loadedWorld := world.Load(metadata.BaseUUID, loadedPlayer.SelectedWorld.UUID)
-	return NewGameScene(loadedWorld, loadedPlayer)
+	return newGame(loadedWorld, loadedPlayer)
 }
 
 func (game *Game) Save() {
@@ -168,9 +179,28 @@ func (game *Game) updateLogic() {
 	}
 }
 
+func (game *Game) handleEvents() {
+	for _, ev := range event.GetEvents() {
+		switch ev.Type() {
+		case event.CaveEntered:
+			caveID := ev.Args().(event.CaveEnteredArgs).ID
+
+			game.world = world.NewWorld(types.Save{
+				Name:     game.world.Metadata().Name,
+				BaseUUID: game.world.Metadata().BaseUUID,
+				UUID:     caveID,
+				Seed:     int64(caveID.ID()),
+			})
+			game.player = &player.Player{X: float64(config.PlayerStartX), Y: float64(config.PlayerStartY)}
+			game.player.SelectedWorld = game.world.Metadata()
+		}
+	}
+}
+
 func (game *Game) Update() {
 	game.processInput()
 	game.updateLogic()
+	game.handleEvents()
 }
 
 func (game *Game) Draw(screen *ebiten.Image) {
