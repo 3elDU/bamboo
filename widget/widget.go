@@ -83,10 +83,10 @@ func widgetPosition(iw, ih, ww, wh int, anchor Anchor) (int, int) {
 }
 
 func RenderWidget(screen *ebiten.Image, widget Widget) {
-	ww, wh := screen.Size()
+	ww, wh := screen.Bounds().Dx(), screen.Bounds().Dy()
 	img := widget.Render()
 
-	iw, ih := img.Size()
+	iw, ih := img.Bounds().Dx(), img.Bounds().Dy()
 
 	x, y := widgetPosition(iw, ih, ww, wh, widget.Anchor())
 
@@ -97,7 +97,7 @@ func RenderWidget(screen *ebiten.Image, widget Widget) {
 }
 
 func RenderTextWidget(screen *ebiten.Image, widget TextWidget) {
-	ww, wh := screen.Size()
+	ww, wh := screen.Bounds().Dx(), screen.Bounds().Dy()
 	t := widget.Render()
 
 	x, y := widgetPosition(

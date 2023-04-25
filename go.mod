@@ -5,25 +5,25 @@ go 1.18
 require (
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/aquilax/go-perlin v1.1.0
-	github.com/hajimehoshi/ebiten/v2 v2.4.7
+	github.com/hajimehoshi/ebiten/v2 v2.5.3
 	github.com/pkg/profile v1.7.0
 	github.com/teacat/noire v1.1.0
-	golang.org/x/exp v0.0.0-20221006183845-316c7553db56
-	golang.org/x/image v0.0.0-20220722155232-062f8c9fd539
+	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
+	golang.org/x/image v0.7.0
 )
 
 require (
 	github.com/felixge/fgprof v0.9.3 // indirect
-	github.com/google/pprof v0.0.0-20211214055906-6f57359322fd // indirect
+	github.com/google/pprof v0.0.0-20230406165453-00490a63f317 // indirect
+	golang.org/x/sync v0.1.0 // indirect
 )
 
 require (
-	github.com/ebitengine/purego v0.0.0-20220905075623-aeed57cda744 // indirect
-	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20220806181222-55e207c401ad // indirect
+	github.com/ebitengine/purego v0.3.2 // indirect
+	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20221017161538-93cebf72946b // indirect
 	github.com/google/uuid v1.3.0
-	github.com/hajimehoshi/file2byteslice v0.0.0-20210813153925-5340248a8f41 // indirect
-	github.com/jezek/xgb v1.0.1 // indirect
-	golang.org/x/exp/shiny v0.0.0-20221011111909-0220f59fc3e4 // indirect
-	golang.org/x/mobile v0.0.0-20220722155234-aaac322e2105 // indirect
-	golang.org/x/sys v0.0.0-20220818161305-2296e01440c6 // indirect
+	github.com/jezek/xgb v1.1.0 // indirect
+	golang.org/x/exp/shiny v0.0.0-20230425010034-47ecfdc1ba53 // indirect
+	golang.org/x/mobile v0.0.0-20230301163155-e0f57694e12c // indirect
+	golang.org/x/sys v0.7.0 // indirect
 )

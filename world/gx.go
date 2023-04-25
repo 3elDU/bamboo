@@ -35,7 +35,7 @@ func (c *Chunk) Render(world types.World) {
 
 func (world *World) Render(screen *ebiten.Image, playerX, playerY, scaling float64) {
 	var (
-		screenWidth, screenHeight = screen.Size()
+		screenWidth, screenHeight = screen.Bounds().Dx(), screen.Bounds().Dy()
 		screenWidthInChunks       = float64(screenWidth) / 256 / scaling
 		screenHeightInChunks      = float64(screenHeight) / 256 / scaling
 		opts                      = &ebiten.DrawImageOptions{}

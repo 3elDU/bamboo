@@ -5,13 +5,13 @@
 package font
 
 import (
+	"github.com/3elDU/bamboo/colors"
 	"image"
 	"image/color"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/3elDU/bamboo/asset_loader"
-	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -145,8 +145,8 @@ func RenderFontWithOptions(dest *ebiten.Image, s string, x, y float64, clr color
 				x+float64(i)*(float64(6)*scaling),
 				y+float64(j)*(float64(8)*scaling),
 			)
-			opts.ColorM.Reset()
-			opts.ColorM.ScaleWithColor(clr)
+			opts.ColorScale.Reset()
+			opts.ColorScale.ScaleWithColor(clr)
 
 			opts2.GeoM.Reset()
 			opts2.GeoM.Scale(scaling, scaling)
@@ -154,8 +154,8 @@ func RenderFontWithOptions(dest *ebiten.Image, s string, x, y float64, clr color
 				x+float64(i)*(float64(6)*scaling)+scaling,
 				y+float64(j)*(float64(8)*scaling)+scaling,
 			)
-			opts2.ColorM.Reset()
-			opts2.ColorM.ScaleWithColor(colors.Complementary(clr))
+			opts2.ColorScale.Reset()
+			opts2.ColorScale.ScaleWithColor(colors.Complementary(clr))
 
 			dest.DrawImage(img, opts2)
 			dest.DrawImage(img, opts)

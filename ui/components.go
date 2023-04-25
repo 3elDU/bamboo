@@ -43,8 +43,8 @@ func (s *ScreenComponent) MaxSize() (float64, float64) {
 	if s.screen == nil {
 		return 0, 0
 	} else {
-		w, h := s.screen.Size()
-		return float64(w), float64(h)
+		bounds := s.screen.Bounds()
+		return float64(bounds.Dx()), float64(bounds.Dy())
 	}
 }
 func (s *ScreenComponent) CapacityForChild(_ View) (float64, float64) {
@@ -435,24 +435,23 @@ func (b *BackgroundImageComponent) Draw(screen *ebiten.Image, x, y float64) erro
 
 	switch b.mode {
 	case BackgroundStretch:
-		w, h := b.tex.Size()
+		bounds := b.tex.Bounds()
 		sw, sh := b.parent.CapacityForChild(b)
 		// scale the background, so that it matches the screen size
 		b.opts.GeoM.Scale(
-			sw/float64(w),
-			sh/float64(h),
+			sw/float64(bounds.Dx()),
+			sh/float64(bounds.Dy()),
 		)
 		b.opts.GeoM.Translate(x, y)
 		screen.DrawImage(b.tex, b.opts)
 
 	case BackgroundTile:
-		w, h := b.tex.Size()
+		bounds := b.tex.Bounds()
+		w, h := bounds.Dx(), bounds.Dy()
 		sw, sh := b.parent.CapacityForChild(b)
 		for tx := 0; tx < int(sw); tx += w {
 			for ty := 0; ty < int(sh); ty += h {
 				b.opts.GeoM.Reset()
-				b.opts.CompositeMode = 0
-				// TODO: make corner rendering better
 				switch {
 				// handle corners properly
 				case int(sw)-tx < w && int(sh)-ty < h:

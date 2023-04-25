@@ -52,13 +52,13 @@ func (inv *Inventory) Render(screen *ebiten.Image) {
 	inventoryTexture := asset_loader.Texture("inventory")
 	w, h := inventoryTexture.ScaledSize()
 	inventoryDrawOpts := &ebiten.DrawImageOptions{}
-	sw, sh := screen.Size()
+	sw, sh := screen.Bounds().Dx(), screen.Bounds().Dy()
 
 	// position of inventory texture on the screen
 	ix := float64(sw)/2 - float64(w)/2 // horizontally centered
-	iy := float64(sh) - float64(h)     // bottom of the screen
+	iy := float64(sh) - h              // bottom of the screen
 
-	inventoryDrawOpts.GeoM.Scale(float64(config.UIScaling), float64(config.UIScaling))
+	inventoryDrawOpts.GeoM.Scale(config.UIScaling, config.UIScaling)
 	inventoryDrawOpts.GeoM.Translate(ix, iy)
 
 	screen.DrawImage(inventoryTexture.Texture(), inventoryDrawOpts)
@@ -71,9 +71,9 @@ func (inv *Inventory) Render(screen *ebiten.Image) {
 		itemTex := slot.Item.Texture()
 		itemTexOpts := &ebiten.DrawImageOptions{}
 
-		itemTexOpts.GeoM.Scale(float64(config.UIScaling), float64(config.UIScaling))
+		itemTexOpts.GeoM.Scale(config.UIScaling, config.UIScaling)
 		itemTexOpts.GeoM.Translate(
-			ix+4*float64(config.UIScaling)+(20*float64(i)*float64(config.UIScaling)),
+			ix+4*float64(config.UIScaling)+(20*float64(i)*config.UIScaling),
 			iy+3*float64(config.UIScaling),
 		)
 
@@ -82,9 +82,9 @@ func (inv *Inventory) Render(screen *ebiten.Image) {
 
 	selectedSlotTex := asset_loader.Texture("selected_slot").Texture()
 	selectedSlotTexOpts := &ebiten.DrawImageOptions{}
-	selectedSlotTexOpts.GeoM.Scale(float64(config.UIScaling), float64(config.UIScaling))
+	selectedSlotTexOpts.GeoM.Scale(config.UIScaling, config.UIScaling)
 	selectedSlotTexOpts.GeoM.Translate(
-		ix+float64(config.UIScaling)+(20*float64(inv.SelectedSlot)*float64(config.UIScaling)),
+		ix+config.UIScaling+(20*float64(inv.SelectedSlot)*config.UIScaling),
 		iy,
 	)
 	screen.DrawImage(selectedSlotTex, selectedSlotTexOpts)

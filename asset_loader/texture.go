@@ -18,8 +18,8 @@ func (t *texture) Name() string {
 }
 
 func (t *texture) ScaledSize() (float64, float64) {
-	w, h := t.Texture().Size()
-	return float64(w) * config.UIScaling, float64(h) * config.UIScaling
+	bounds := t.Texture().Bounds()
+	return float64(bounds.Dx()) * config.UIScaling, float64(bounds.Dy()) * config.UIScaling
 }
 
 type connectedTexture struct {

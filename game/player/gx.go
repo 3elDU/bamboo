@@ -21,7 +21,7 @@ var textureMap = map[MovementDirection]string{
 
 func (player *Player) Render(screen *ebiten.Image, scaling float64, paused bool) {
 	opts := &ebiten.DrawImageOptions{}
-	sw, sh := screen.Size()
+	sw, sh := screen.Bounds().Dx(), screen.Bounds().Dy()
 	tex := ebiten.NewImageFromImage(
 		asset_loader.Texture(textureMap[player.movementDirection]).Texture().SubImage(
 			image.Rect(int(player.animationFrame)*16, 0, int(player.animationFrame)*16+16, 32),

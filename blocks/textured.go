@@ -24,12 +24,12 @@ func (b *texturedBlock) Render(_ types.World, screen *ebiten.Image, pos types.Ve
 	opts := &ebiten.DrawImageOptions{}
 
 	if b.rotation != 0 {
-		w, h := b.tex.Texture().Size()
+		bounds := b.tex.Texture().Bounds()
 		// Move image half a texture size, so that rotation origin will be in the center
-		opts.GeoM.Translate(float64(-w/2), float64(-h/2))
+		opts.GeoM.Translate(float64(-bounds.Dx()/2), float64(-bounds.Dy()/2))
 		opts.GeoM.Rotate(b.rotation * (math.Pi / 180))
-		pos.X += float64(w / 2)
-		pos.Y += float64(h / 2)
+		pos.X += float64(bounds.Dx() / 2)
+		pos.Y += float64(bounds.Dy() / 2)
 	}
 
 	opts.GeoM.Translate(pos.X, pos.Y)
