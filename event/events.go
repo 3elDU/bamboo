@@ -4,7 +4,8 @@ import "github.com/google/uuid"
 
 // Enumeration with all declared event types
 const (
-	CaveEntered Type = iota
+	CaveEnter Type = iota
+	CaveExit
 )
 
 type CaveEnteredArgs struct {

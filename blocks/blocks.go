@@ -21,6 +21,7 @@ const (
 	CaveEntrance
 	CaveWall
 	CaveFloor
+	CaveExit
 )
 
 // GetBlockByID returns an empty block
@@ -56,6 +57,8 @@ func GetBlockByID(id types.BlockType) types.Block {
 		return NewCaveWallBlock()
 	case CaveFloor:
 		return NewCaveFloorBlock()
+	case CaveExit:
+		return NewCaveExitBlock()
 	}
 
 	return NewEmptyBlock()

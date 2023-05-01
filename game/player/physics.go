@@ -130,6 +130,15 @@ func countCollisions(collisions [4]bool) (count uint) {
 	return
 }
 
+func (player *Player) Move(vec types.Vec2f) {
+	player.X += vec.X
+	player.Y += vec.Y
+}
+
+func (player *Player) Velocity() types.Vec2f {
+	return types.Vec2f{X: player.xVelocity, Y: player.yVelocity}
+}
+
 // Update updates the player physics and animation
 // FIXME: consider frame delta time in equations
 func (player *Player) Update(movement MovementVector, world types.World) {

@@ -29,26 +29,28 @@ type Game struct {
 	paused    bool
 	pauseMenu *pauseMenu
 
-	world     *world.World
-	player    *player.Player
-	inventory *inventory.Inventory
+	world       *world.World
+	player      *player.Player
+	playerStack *player.Stack
+	inventory   *inventory.Inventory
 
 	debugInfoVisible bool
 }
 
-func newGame(gameWorld *world.World, player *player.Player) *Game {
+func newGame(gameWorld *world.World, playerStack *player.Stack) *Game {
 	game := &Game{
 		widgets:      widget.NewWidgetContainer(),
 		debugWidgets: widget.NewWidgetContainer(),
 
 		pauseMenu: newPauseMenu(),
 
-		world:     gameWorld,
-		player:    player,
-		inventory: inventory.NewInventory(),
+		world:       gameWorld,
+		playerStack: playerStack,
+		inventory:   inventory.NewInventory(),
 
 		debugInfoVisible: false,
 	}
+	game.player = playerStack.Top()
 
 	game.debugWidgets.AddTextWidget(
 		"debug",
@@ -61,11 +63,12 @@ func newGame(gameWorld *world.World, player *player.Player) *Game {
 // Creates a game scene with a new world
 func NewGameScene(metadata types.Save) *Game {
 	w := world.NewWorld(metadata)
+	stack := player.NewPlayerStack()
+	stack.Push(player.NewPlayer(w))
 	game := newGame(
 		w,
-		player.NewPlayer(w),
+		stack,
 	)
-	game.player.SelectedWorld = metadata
 
 	// perform a save immediately after the scene creation
 	game.Save()
@@ -75,15 +78,15 @@ func NewGameScene(metadata types.Save) *Game {
 
 // Creates a game scene from existing world
 func LoadGameScene(metadata types.Save) *Game {
-	// load the player first, to determine which world to load
-	loadedPlayer := player.LoadPlayer(metadata.BaseUUID)
-	loadedWorld := world.Load(metadata.BaseUUID, loadedPlayer.SelectedWorld.UUID)
+	// load the player stack first, to determine which world to load
+	loadedPlayer := player.LoadPlayerStack(metadata.BaseUUID)
+	loadedWorld := world.Load(metadata.BaseUUID, loadedPlayer.Top().SelectedWorld.UUID)
 	return newGame(loadedWorld, loadedPlayer)
 }
 
 func (game *Game) Save() {
 	game.world.Save()
-	game.player.Save(game.world.Metadata())
+	game.playerStack.Save(game.world.Metadata())
 }
 
 func (game *Game) processInput() {
@@ -185,13 +188,19 @@ func (game *Game) updateLogic() {
 func (game *Game) handleEvents() {
 	for _, ev := range event.GetEvents() {
 		switch ev.Type() {
-		case event.CaveEntered:
+		case event.CaveEnter:
+			// Move player a bit from the cave entrance, so when the world is loaded back,
+			// the player won't be immediately teleported to cave
+			vel := game.player.Velocity()
+			game.player.Move(types.Vec2f{
+				X: -vel.X * 10,
+				Y: -vel.Y * 10,
+			})
+
 			// save the previous world before switching to a new one
 			game.Save()
 
 			caveID := ev.Args().(event.CaveEnteredArgs).ID
-
-			caveExit := blocks.NewCaveEntranceBlock(game.world.Metadata().UUID)
 
 			metadata := types.Save{
 				Name:      game.world.Metadata().Name,
@@ -202,28 +211,29 @@ func (game *Game) handleEvents() {
 			}
 
 			var newWorld *world.World
-			// Check if the world already exists on disk
+			// Check if cave already exists on disk
 			if world.ExistsOnDisk(metadata) {
 				newWorld = world.Load(metadata.BaseUUID, metadata.UUID)
 			} else {
 				newWorld = world.NewWorld(metadata)
 			}
 
-			game.player = player.NewPlayer(newWorld)
+			game.playerStack.Push(player.NewPlayer(newWorld))
+			game.player = game.playerStack.Top()
 
-			// if we're switching from cave to overworld, don't place the cave exit.
-			// also don't place cave exit if that chunk already exists on disk, so we don't overwrite it
-			if newWorld.Metadata().WorldType == world_type.Cave && !world.ChunkExistsOnDisk(
-				newWorld.Metadata(),
-				uint64(game.player.X+2)/16, uint64(game.player.Y)/16,
-			) {
-				// place a portal to overworld next to the player
-				newWorld.SetBlock(uint64(game.player.X)+2, uint64(game.player.Y), caveExit)
+			// don't place cave exit if that chunk already exists on disk, so we don't overwrite it
+			if !world.ChunkExistsOnDisk(newWorld.Metadata(), uint64(game.player.X+1)/16, uint64(game.player.Y)/16) {
+				// place a cave exit next to the player
+				newWorld.SetBlock(uint64(game.player.X)+1, uint64(game.player.Y), blocks.NewCaveExitBlock())
 			}
 
 			game.world = newWorld
-
+		case event.CaveExit:
 			game.Save()
+			game.playerStack.Pop()
+			game.player = game.playerStack.Top()
+			// reload the world
+			game.world = world.Load(game.player.SelectedWorld.BaseUUID, game.player.SelectedWorld.UUID)
 		}
 	}
 }
