@@ -11,7 +11,7 @@ Clone the repository, and run `go run .` in the terminal.
 [Go](https://go.dev/) must be installed for this to work, of course.
 
 ### Progress
-See [FEATURES.md](FEATURES.md)
+[here](https://github.com/users/3elDU/projects/1)
 
 ## Naming conventions
 You may notice, that some functions are suffixed with `B` (example: `world.ChunkAtB`), and some are not.  
