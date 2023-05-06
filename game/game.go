@@ -208,6 +208,7 @@ func (game *Game) handleEvents() {
 				UUID:      caveID,
 				Seed:      int64(caveID.ID()),
 				WorldType: world_type.Cave,
+				Size:      config.SizeForWorldType(world_type.Cave),
 			}
 
 			var newWorld *world.World
@@ -228,12 +229,14 @@ func (game *Game) handleEvents() {
 			}
 
 			game.world = newWorld
+			game.Save()
 		case event.CaveExit:
 			game.Save()
 			game.playerStack.Pop()
 			game.player = game.playerStack.Top()
 			// reload the world
 			game.world = world.Load(game.player.SelectedWorld.BaseUUID, game.player.SelectedWorld.UUID)
+			game.Save()
 		}
 	}
 }

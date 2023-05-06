@@ -176,8 +176,8 @@ func (player *Player) Update(movement MovementVector, world types.World) {
 	player.X += player.xVelocity * speedModifier
 	player.Y += player.yVelocity * speedModifier
 
-	player.X = util.Clamp(player.X, 0, float64(config.WorldWidth))
-	player.Y = util.Clamp(player.Y, 0, float64(config.WorldHeight))
+	player.X = util.Clamp(player.X, 0, float64(world.Size().X))
+	player.Y = util.Clamp(player.Y, 0, float64(world.Size().Y))
 
 	player.updateMovementDirection()
 

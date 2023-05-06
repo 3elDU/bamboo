@@ -39,15 +39,15 @@ const (
 )
 
 type OverworldGenerator struct {
-	noiseSeed int64
+	metadata types.Save
 	// Separate perlin noise generators for base blocks and vegetation/features
 	basePerlin      *perlin.Perlin
 	secondaryPerlin *perlin.Perlin
 }
 
-func NewOverworldGenerator(seed int64) types.WorldGenerator {
+func NewOverworldGenerator(metadata types.Save) types.WorldGenerator {
 	// make a random generator using global world seed
-	globalSeed := rand.New(rand.NewSource(seed))
+	globalSeed := rand.New(rand.NewSource(metadata.Seed))
 
 	// generate perlin noise seeds, using it
 	var (
@@ -56,7 +56,7 @@ func NewOverworldGenerator(seed int64) types.WorldGenerator {
 	)
 
 	implementation := &OverworldGenerator{
-		noiseSeed:       seed,
+		metadata:        metadata,
 		basePerlin:      perlin.NewPerlin(2, 2, 16, baseSeed),
 		secondaryPerlin: perlin.NewPerlin(2, 2, 16, secondarySeed),
 	}
@@ -66,7 +66,7 @@ func NewOverworldGenerator(seed int64) types.WorldGenerator {
 
 // generates basic blocks ( sand, water, etc. )
 func (generator *OverworldGenerator) genBase(x, y uint64) types.Block {
-	baseHeight := applyCircularMask(float64(x), float64(y),
+	baseHeight := applyCircularMask(generator.metadata.Size, float64(x), float64(y),
 		height(generator.basePerlin, x, y, config.PerlinNoiseScaleFactor),
 	)
 
@@ -215,5 +215,5 @@ func (generator *OverworldGenerator) generateDummy(chunk types.Chunk) {
 }
 
 func (generator *OverworldGenerator) seed() int64 {
-	return generator.noiseSeed
+	return generator.metadata.Seed
 }

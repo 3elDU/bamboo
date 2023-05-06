@@ -37,11 +37,11 @@ func makeFeatures(p *perlin.Perlin, bx, by uint64) BlockFeatures {
 // The further block is from the center, the stronger the mask will be
 // This makes the world look like an archipelago, surrounded by ocean on all sides,
 // not like an infinite number of islands
-func applyCircularMask(x, y float64, val float64) float64 {
-	const (
-		radius  = float64(config.WorldWidth) / 2.5
-		centerX = float64(config.WorldWidth) / 2
-		centerY = float64(config.WorldHeight) / 2
+func applyCircularMask(worldSize types.Vec2u, x, y, val float64) float64 {
+	var (
+		radius  = (float64(worldSize.X) + float64(worldSize.Y)) / 2 / 2.5
+		centerX = float64(worldSize.X) / 2
+		centerY = float64(worldSize.Y) / 2
 	)
 
 	pointInsideCircle := math.Pow(x-centerX, 2)+math.Pow(y-centerY, 2) < math.Pow(radius, 2)

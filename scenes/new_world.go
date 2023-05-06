@@ -3,6 +3,7 @@ package scenes
 import (
 	"bytes"
 	"encoding/binary"
+	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/types"
 	"github.com/3elDU/bamboo/world_type"
 	"hash/fnv"
@@ -79,6 +80,7 @@ func (s *NewWorldScene) Update() {
 			UUID:      uuid.New(),
 			Seed:      seed,
 			WorldType: world_type.Overworld,
+			Size:      config.SizeForWorldType(world_type.Overworld),
 		}))
 	default:
 	}

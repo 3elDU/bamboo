@@ -1,18 +1,20 @@
 package config
 
+import (
+	"github.com/3elDU/bamboo/types"
+	"github.com/3elDU/bamboo/world_type"
+	"log"
+)
+
 // All values with type uint64 are measured in ticks, unless noted otherwise
 // 1 second == 60 ticks
 const (
-	AssetDirectory                 = "./assets/"
 	PerlinNoiseScaleFactor float64 = 128
-	PlayerSpeed            float64 = 0.02
 
-	WorldWidth  uint64 = 1024
-	WorldHeight uint64 = 1024
+	AssetDirectory = "./assets/"
 
-	PlayerStartX   = WorldWidth / 2 // initial player position, when the world is created
-	PlayerStartY   = WorldHeight / 2
-	PlayerInfoFile = "player.gob"
+	PlayerSpeed    float64 = 0.02
+	PlayerInfoFile         = "player.gob"
 
 	WorldSaveDirectory        = "./saves/"
 	WorldInfoFile             = "world.gob"
@@ -20,4 +22,19 @@ const (
 	ChunkUnloadDelay   uint64 = 600
 
 	UIScaling float64 = 2
+
+	OverworldSize = 1024
+	Cave1Size     = 256
 )
+
+func SizeForWorldType(world world_type.WorldType) types.Vec2u {
+	switch world {
+	case world_type.Overworld:
+		return types.Vec2u{X: OverworldSize, Y: OverworldSize}
+	case world_type.Cave:
+		return types.Vec2u{X: Cave1Size, Y: Cave1Size}
+	}
+
+	log.Printf("Unable to retrieve world size for world type %v", world)
+	return types.Vec2u{X: 1024, Y: 1024}
+}

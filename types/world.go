@@ -20,6 +20,8 @@ type World interface {
 	Render(screen *ebiten.Image, playerX float64, playerY float64, scaling float64)
 	Save()
 	Seed() int64
+	// Returned size is in chunks
+	Size() Vec2u
 	Update()
 }
 
@@ -30,7 +32,9 @@ type Save struct {
 	// All subsequent worlds will be created in their own directories, under the base directory.
 	BaseUUID uuid.UUID
 	// ID of the current world. There can be many worlds in a save.
-	UUID      uuid.UUID
-	Seed      int64
+	UUID uuid.UUID
+	Seed int64
+	// Size of the world in blocks
+	Size      Vec2u
 	WorldType world_type.WorldType
 }

@@ -74,11 +74,14 @@ func NewPlayer(w types.World) *Player {
 	rng := rand.New(rand.NewSource(1))
 
 	x, y := 0, 0
+	worldWidth := int(w.Size().X)
+	worldHeight := int(w.Size().Y)
 	it := 1
 	for {
-		// Pick X and Y coordinates from 256 to 768
-		x = rng.Intn(768-256) + 256
-		y = rng.Intn(768-256) + 256
+		// Pick X and Y coordinates from 1/4 of the world to 3/4 of the world
+		// E.g. if the world is 1024 blocks in size, coordinates would be in range from 256 to 768
+		x = rng.Intn(worldWidth/4*3-worldWidth/4) + worldWidth/4
+		y = rng.Intn(worldHeight/4*3-worldHeight/4) + worldHeight/4
 
 		// create a new chunk so that we don't overwrite chunks in the world
 		c := world.NewChunk(uint64(x)/16, uint64(y)/16)

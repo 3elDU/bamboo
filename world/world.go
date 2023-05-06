@@ -21,9 +21,9 @@ type World struct {
 
 // Creates a new world, using given name and seed
 func NewWorld(metadata types.Save) *World {
-	log.Printf("NewWorld - name %v; seed %v", metadata.Name, metadata.Seed)
+	log.Printf("NewWorld - %v", metadata)
 
-	generator := worldgen.NewWorldgenForType(metadata.Seed, metadata.WorldType)
+	generator := worldgen.NewWorldgenForWorld(metadata)
 	go generator.Run()
 
 	saverLoader := NewWorldSaverLoader(metadata)
@@ -176,6 +176,10 @@ func (world *World) CheckNeighbors(cx, cy uint64) bool {
 
 func (world *World) Seed() int64 {
 	return world.metadata.Seed
+}
+
+func (world *World) Size() types.Vec2u {
+	return world.metadata.Size
 }
 
 func (world *World) Metadata() types.Save {

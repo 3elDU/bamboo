@@ -3,7 +3,6 @@ package world
 import (
 	"math"
 
-	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -48,7 +47,7 @@ func (world *World) Render(screen *ebiten.Image, playerX, playerY, scaling float
 	for x := playerX - screenWidthInChunks/2*16 - 16; x < playerX+screenWidthInChunks/2*16+16; x += 16 {
 		for y := playerY - screenHeightInChunks/2*16 - 16; y < playerY+screenHeightInChunks/2*16+16; y += 16 {
 			// If a chunk is out of world borders, skip it
-			if x < 0 || x > float64(config.WorldWidth) || y < 0 || y > float64(config.WorldHeight) {
+			if x < 0 || x > float64(world.metadata.Size.X) || y < 0 || y > float64(world.metadata.Size.Y) {
 				continue
 			}
 
