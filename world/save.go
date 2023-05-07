@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/types"
 	"github.com/google/uuid"
@@ -205,7 +204,7 @@ func LoadChunk(metadata types.Save, x, y uint64) *Chunk {
 		// decode blocks
 		for x := uint(0); x < 16; x++ {
 			for y := uint(0); y < 16; y++ {
-				b := blocks.GetBlockByID(savedChunk.Data[x][y].Type)
+				b := types.NewBlock(savedChunk.Data[x][y].Type)
 				b.LoadState(savedChunk.Data[x][y].State)
 				c.SetBlock(x, y, b)
 			}

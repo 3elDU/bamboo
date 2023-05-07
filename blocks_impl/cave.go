@@ -1,4 +1,4 @@
-package blocks
+package blocks_impl
 
 import (
 	"encoding/gob"
@@ -10,6 +10,7 @@ import (
 
 func init() {
 	gob.Register(CaveEntranceState{})
+	types.NewCaveEntranceBlock = NewCaveEntranceBlock
 }
 
 type CaveEntranceState struct {
@@ -25,10 +26,10 @@ type CaveEntranceBlock struct {
 	id uuid.UUID
 }
 
-func NewCaveEntranceBlock(id uuid.UUID) *CaveEntranceBlock {
+func NewCaveEntranceBlock(id uuid.UUID) types.Block {
 	return &CaveEntranceBlock{
 		baseBlock: baseBlock{
-			blockType: CaveEntrance,
+			blockType: types.CaveEntranceBlock,
 		},
 		texturedBlock: texturedBlock{
 			tex: asset_loader.Texture("cave"),

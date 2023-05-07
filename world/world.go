@@ -1,7 +1,6 @@
 package world
 
 import (
-	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/worldgen"
 	"log"
 
@@ -118,7 +117,7 @@ func (world *World) BlockAt(bx, by uint64) types.Block {
 
 	chunk, exists := world.chunks[types.Vec2u{X: cx, Y: cy}]
 	if !exists {
-		return blocks.NewEmptyBlock()
+		return types.NewEmptyBlock()
 	}
 
 	return chunk.At(uint(bx%16), uint(by%16))

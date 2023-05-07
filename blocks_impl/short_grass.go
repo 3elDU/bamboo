@@ -1,29 +1,31 @@
-package blocks
+package blocks_impl
 
 import (
 	"encoding/gob"
+	"github.com/3elDU/bamboo/types"
 
 	"github.com/3elDU/bamboo/asset_loader"
 )
 
 func init() {
-	gob.Register(SnowState{})
+	gob.Register(ShortGrassState{})
+	types.NewShortGrassBlock = NewShortGrassBlock
 }
 
-type SnowState struct {
+type ShortGrassState struct {
 	BaseBlockState
 	TexturedBlockState
 }
 
-type SnowBlock struct {
+type ShortGrassBlock struct {
 	baseBlock
 	texturedBlock
 }
 
-func NewSnowBlock() *SnowBlock {
-	return &SnowBlock{
+func NewShortGrassBlock() types.Block {
+	return &ShortGrassBlock{
 		baseBlock: baseBlock{
-			blockType: ShortGrass,
+			blockType: types.ShortGrassBlock,
 		},
 		texturedBlock: texturedBlock{
 			tex:      asset_loader.Texture("short_grass"),
@@ -32,15 +34,15 @@ func NewSnowBlock() *SnowBlock {
 	}
 }
 
-func (b *SnowBlock) State() interface{} {
-	return SnowState{
+func (b *ShortGrassBlock) State() interface{} {
+	return ShortGrassState{
 		BaseBlockState:     b.baseBlock.State().(BaseBlockState),
 		TexturedBlockState: b.texturedBlock.State().(TexturedBlockState),
 	}
 }
 
-func (b *SnowBlock) LoadState(s interface{}) {
-	state := s.(SnowState)
+func (b *ShortGrassBlock) LoadState(s interface{}) {
+	state := s.(ShortGrassState)
 	b.baseBlock.LoadState(state.BaseBlockState)
 	b.texturedBlock.LoadState(state.TexturedBlockState)
 }

@@ -2,7 +2,6 @@ package items
 
 import (
 	"github.com/3elDU/bamboo/asset_loader"
-	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -38,7 +37,7 @@ func (i *ItemFromBlock) Texture() *ebiten.Image {
 
 func (i *ItemFromBlock) Use(world types.World, pos types.Vec2u) {
 	world.ChunkAtB(pos.X, pos.Y).
-		SetBlock(uint(pos.X%16), uint(pos.Y%16), blocks.GetBlockByID(i.blockType))
+		SetBlock(uint(pos.X%16), uint(pos.Y%16), types.NewBlock(i.blockType))
 }
 
 func (i *ItemFromBlock) State() interface{} {

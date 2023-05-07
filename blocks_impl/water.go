@@ -1,4 +1,4 @@
-package blocks
+package blocks_impl
 
 import (
 	"encoding/gob"
@@ -8,44 +8,45 @@ import (
 )
 
 func init() {
-	gob.Register(StoneState{})
+	gob.Register(WaterState{})
+	types.NewWaterBlock = NewWaterBlock
 }
 
-type StoneState struct {
+type WaterState struct {
 	ConnectedBlockState
 	CollidableBlockState
 }
 
-type StoneBlock struct {
+type WaterBlock struct {
 	connectedBlock
 	collidableBlock
 }
 
-func NewStoneBlock() *StoneBlock {
-	return &StoneBlock{
+func NewWaterBlock() types.Block {
+	return &WaterBlock{
 		connectedBlock: connectedBlock{
 			baseBlock: baseBlock{
-				blockType: Stone,
+				blockType: types.WaterBlock,
 			},
-			tex:        asset_loader.ConnectedTexture("stone", false, false, false, false),
-			connectsTo: []types.BlockType{Stone},
+			tex:        asset_loader.ConnectedTexture("lake", false, false, false, false),
+			connectsTo: []types.BlockType{types.WaterBlock},
 		},
 		collidableBlock: collidableBlock{
-			collidable:      true,
-			collisionPoints: defaultCollisionPoints(),
+			collidable:  false,
+			playerSpeed: 0.2,
 		},
 	}
 }
 
-func (b *StoneBlock) State() interface{} {
-	return StoneState{
+func (b *WaterBlock) State() interface{} {
+	return WaterState{
 		ConnectedBlockState:  b.connectedBlock.State().(ConnectedBlockState),
 		CollidableBlockState: b.collidableBlock.State().(CollidableBlockState),
 	}
 }
 
-func (b *StoneBlock) LoadState(s interface{}) {
-	state := s.(StoneState)
+func (b *WaterBlock) LoadState(s interface{}) {
+	state := s.(WaterState)
 	b.connectedBlock.LoadState(state.ConnectedBlockState)
 	b.collidableBlock.LoadState(state.CollidableBlockState)
 }

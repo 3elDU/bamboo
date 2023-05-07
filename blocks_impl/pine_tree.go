@@ -1,4 +1,4 @@
-package blocks
+package blocks_impl
 
 import (
 	"encoding/gob"
@@ -8,27 +8,28 @@ import (
 )
 
 func init() {
-	gob.Register(CaveWallState{})
+	gob.Register(PineTreeState{})
+	types.NewPineTreeBlock = NewPineTreeBlock
 }
 
-type CaveWallState struct {
+type PineTreeState struct {
 	ConnectedBlockState
 	CollidableBlockState
 }
 
-type CaveWallBlock struct {
+type PineTreeBlock struct {
 	connectedBlock
 	collidableBlock
 }
 
-func NewCaveWallBlock() *CaveWallBlock {
-	return &CaveWallBlock{
+func NewPineTreeBlock() types.Block {
+	return &PineTreeBlock{
 		connectedBlock: connectedBlock{
 			baseBlock: baseBlock{
-				blockType: CaveWall,
+				blockType: types.PineTreeBlock,
 			},
-			tex:        asset_loader.ConnectedTexture("cave_wall", false, false, false, false),
-			connectsTo: []types.BlockType{CaveWall},
+			tex:        asset_loader.ConnectedTexture("pine", false, false, false, false),
+			connectsTo: []types.BlockType{types.PineTreeBlock},
 		},
 		collidableBlock: collidableBlock{
 			collidable:      true,
@@ -37,15 +38,15 @@ func NewCaveWallBlock() *CaveWallBlock {
 	}
 }
 
-func (b *CaveWallBlock) State() interface{} {
-	return CaveWallState{
+func (b *PineTreeBlock) State() interface{} {
+	return PineTreeState{
 		ConnectedBlockState:  b.connectedBlock.State().(ConnectedBlockState),
 		CollidableBlockState: b.collidableBlock.State().(CollidableBlockState),
 	}
 }
 
-func (b *CaveWallBlock) LoadState(s interface{}) {
-	state := s.(CaveWallState)
+func (b *PineTreeBlock) LoadState(s interface{}) {
+	state := s.(PineTreeState)
 	b.connectedBlock.LoadState(state.ConnectedBlockState)
 	b.collidableBlock.LoadState(state.CollidableBlockState)
 }

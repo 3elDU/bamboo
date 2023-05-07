@@ -1,7 +1,8 @@
-package blocks
+package blocks_impl
 
 import (
 	"encoding/gob"
+	"github.com/3elDU/bamboo/types"
 
 	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/util"
@@ -9,6 +10,7 @@ import (
 
 func init() {
 	gob.Register(SandState{})
+	types.NewSandBlock = NewSandBlock
 }
 
 type SandState struct {
@@ -23,7 +25,7 @@ type SandBlock struct {
 	collidableBlock
 }
 
-func NewSandBlock(stones bool) *SandBlock {
+func NewSandBlock(stones bool) types.Block {
 	texVariant := "sand"
 	if stones {
 		texVariant = "sand-stones"
@@ -31,7 +33,7 @@ func NewSandBlock(stones bool) *SandBlock {
 
 	return &SandBlock{
 		baseBlock: baseBlock{
-			blockType: Sand,
+			blockType: types.SandBlock,
 		},
 		texturedBlock: texturedBlock{
 			tex:      asset_loader.Texture(texVariant),

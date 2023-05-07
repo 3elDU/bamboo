@@ -1,4 +1,4 @@
-package blocks
+package blocks_impl
 
 import (
 	"encoding/gob"
@@ -9,6 +9,7 @@ import (
 
 func init() {
 	gob.Register(GrassBlockState{})
+	types.NewGrassBlock = NewGrassBlock
 }
 
 type GrassBlockState struct {
@@ -21,19 +22,19 @@ type GrassBlock struct {
 	collidableBlock
 }
 
-func NewGrassBlock() *GrassBlock {
+func NewGrassBlock() types.Block {
 	return &GrassBlock{
 		connectedBlock: connectedBlock{
 			baseBlock: baseBlock{
-				blockType: Grass,
+				blockType: types.GrassBlock,
 			},
 			tex: asset_loader.ConnectedTexture("grass", true, true, true, true),
 			connectsTo: []types.BlockType{
-				Grass, ShortGrass, TallGrass, Flowers,
-				PineTree,
-				RedMushroom, WhiteMushroom,
-				Stone,
-				CaveEntrance,
+				types.GrassBlock, types.ShortGrassBlock, types.TallGrassBlock, types.FlowersBlock,
+				types.PineTreeBlock,
+				types.RedMushroomBlock, types.WhiteMushroomBlock,
+				types.StoneBlock,
+				types.CaveEntranceBlock,
 			},
 		},
 		collidableBlock: collidableBlock{

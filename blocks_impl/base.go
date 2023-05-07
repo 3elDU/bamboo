@@ -3,7 +3,7 @@
 	Implements basic methods and fields, so we don't have to rewrite this in every block type
 */
 
-package blocks
+package blocks_impl
 
 import (
 	"encoding/gob"

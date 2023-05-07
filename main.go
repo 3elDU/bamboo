@@ -15,6 +15,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/pkg/profile"
 	"golang.org/x/exp/slices"
+
+	// import blocks_impl for side effects, so that all New*Block() functions will be initialized
+	_ "github.com/3elDU/bamboo/blocks_impl"
 )
 
 func init() {

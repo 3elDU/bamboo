@@ -1,13 +1,15 @@
-package blocks
+package blocks_impl
 
 import (
 	"encoding/gob"
+	"github.com/3elDU/bamboo/types"
 
 	"github.com/3elDU/bamboo/asset_loader"
 )
 
 func init() {
 	gob.Register(TallGrassState{})
+	types.NewTallGrassBlock = NewTallGrassBlock
 }
 
 type TallGrassState struct {
@@ -20,10 +22,10 @@ type TallGrassBlock struct {
 	texturedBlock
 }
 
-func NewTallGrassBlock() *TallGrassBlock {
+func NewTallGrassBlock() types.Block {
 	return &TallGrassBlock{
 		baseBlock: baseBlock{
-			blockType: TallGrass,
+			blockType: types.TallGrassBlock,
 		},
 		texturedBlock: texturedBlock{
 			tex:      asset_loader.Texture("tall_grass"),

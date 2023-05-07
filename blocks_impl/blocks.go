@@ -1,63 +1,47 @@
-package blocks
+package blocks_impl
 
 import (
 	"github.com/3elDU/bamboo/types"
 	"github.com/google/uuid"
 )
 
-const (
-	Empty types.BlockType = iota
-	Stone
-	Water
-	Sand
-	Grass
-	Snow
-	ShortGrass
-	TallGrass
-	Flowers
-	PineTree
-	RedMushroom
-	WhiteMushroom
-	CaveEntrance
-	CaveWall
-	CaveFloor
-	CaveExit
-)
+func init() {
+	types.NewBlock = newBlockByID
+}
 
-// GetBlockByID returns an empty block
-func GetBlockByID(id types.BlockType) types.Block {
+func newBlockByID(id types.BlockType) types.Block {
 	switch id {
-	case Empty:
+	case types.EmptyBlock:
 		return NewEmptyBlock()
-	case Stone:
+	case types.StoneBlock:
 		return NewStoneBlock()
-	case Water:
+	case types.WaterBlock:
 		return NewWaterBlock()
-	case Sand:
+	case types.SandBlock:
 		return NewSandBlock(false)
-	case Grass:
+	case types.GrassBlock:
 		return NewGrassBlock()
-	case Snow:
+	case types.SnowBlock:
 		return NewSnowBlock()
-	case ShortGrass:
+	case types.ShortGrassBlock:
 		return NewShortGrassBlock()
-	case TallGrass:
+	case types.TallGrassBlock:
 		return NewTallGrassBlock()
-	case Flowers:
+	case types.FlowersBlock:
 		return NewFlowersBlock()
-	case PineTree:
+	case types.PineTreeBlock:
 		return NewPineTreeBlock()
-	case RedMushroom:
+	case types.RedMushroomBlock:
 		return NewRedMushroomBlock()
-	case WhiteMushroom:
+	case types.WhiteMushroomBlock:
 		return NewWhiteMushroomBlock()
-	case CaveEntrance:
+	case types.CaveEntranceBlock:
 		return NewCaveEntranceBlock(uuid.New())
-	case CaveWall:
+	case types.CaveWallBlock:
 		return NewCaveWallBlock()
-	case CaveFloor:
+	case types.CaveFloorBlock:
 		return NewCaveFloorBlock()
-	case CaveExit:
+	case types.CaveExitBlock:
 		return NewCaveExitBlock()
 	}
 

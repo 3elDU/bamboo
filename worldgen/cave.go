@@ -1,7 +1,6 @@
 package worldgen
 
 import (
-	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/types"
 	"github.com/aquilax/go-perlin"
@@ -27,9 +26,9 @@ func (generator *CaveGenerator) generate(chunk types.Chunk) {
 			h := height(generator.noise, coords.X+uint64(x), coords.Y+uint64(y), config.PerlinNoiseScaleFactor/5)
 
 			if h < 1 {
-				chunk.SetBlock(x, y, blocks.NewCaveFloorBlock())
+				chunk.SetBlock(x, y, types.NewCaveFloorBlock())
 			} else {
-				chunk.SetBlock(x, y, blocks.NewCaveWallBlock())
+				chunk.SetBlock(x, y, types.NewCaveWallBlock())
 			}
 		}
 	}
@@ -38,7 +37,7 @@ func (generator *CaveGenerator) generate(chunk types.Chunk) {
 func (generator *CaveGenerator) generateDummy(chunk types.Chunk) {
 	for x := uint(0); x < 16; x++ {
 		for y := uint(0); y < 16; y++ {
-			chunk.SetBlock(x, y, blocks.NewCaveFloorBlock())
+			chunk.SetBlock(x, y, types.NewCaveFloorBlock())
 		}
 	}
 }

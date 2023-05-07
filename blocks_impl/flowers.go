@@ -1,46 +1,48 @@
-package blocks
+package blocks_impl
 
 import (
 	"encoding/gob"
+	"github.com/3elDU/bamboo/types"
 
 	"github.com/3elDU/bamboo/asset_loader"
 )
 
 func init() {
-	gob.Register(CaveFloorState{})
+	gob.Register(FlowersState{})
+	types.NewFlowersBlock = NewFlowersBlock
 }
 
-type CaveFloorState struct {
+type FlowersState struct {
 	BaseBlockState
 	TexturedBlockState
 }
 
-type CaveFloorBlock struct {
+type FlowersBlock struct {
 	baseBlock
 	texturedBlock
 }
 
-func NewCaveFloorBlock() *CaveFloorBlock {
-	return &CaveFloorBlock{
+func NewFlowersBlock() types.Block {
+	return &FlowersBlock{
 		baseBlock: baseBlock{
-			blockType: CaveFloor,
+			blockType: types.FlowersBlock,
 		},
 		texturedBlock: texturedBlock{
-			tex:      asset_loader.Texture("cave_floor"),
+			tex:      asset_loader.Texture("flowers"),
 			rotation: 0,
 		},
 	}
 }
 
-func (b *CaveFloorBlock) State() interface{} {
-	return CaveFloorState{
+func (b *FlowersBlock) State() interface{} {
+	return FlowersState{
 		BaseBlockState:     b.baseBlock.State().(BaseBlockState),
 		TexturedBlockState: b.texturedBlock.State().(TexturedBlockState),
 	}
 }
 
-func (b *CaveFloorBlock) LoadState(s interface{}) {
-	state := s.(CaveFloorState)
+func (b *FlowersBlock) LoadState(s interface{}) {
+	state := s.(FlowersState)
 	b.baseBlock.LoadState(state.BaseBlockState)
 	b.texturedBlock.LoadState(state.TexturedBlockState)
 }

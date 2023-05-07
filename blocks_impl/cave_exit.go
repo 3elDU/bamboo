@@ -1,4 +1,4 @@
-package blocks
+package blocks_impl
 
 import (
 	"encoding/gob"
@@ -9,6 +9,7 @@ import (
 
 func init() {
 	gob.Register(CaveExitState{})
+	types.NewCaveExitBlock = NewCaveExitBlock
 }
 
 type CaveExitState struct {
@@ -21,10 +22,10 @@ type CaveExitBlock struct {
 	texturedBlock
 }
 
-func NewCaveExitBlock() *CaveExitBlock {
+func NewCaveExitBlock() types.Block {
 	return &CaveExitBlock{
 		baseBlock: baseBlock{
-			blockType: CaveExit,
+			blockType: types.CaveExitBlock,
 		},
 		texturedBlock: texturedBlock{
 			tex: asset_loader.Texture("cave_exit"),

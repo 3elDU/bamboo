@@ -1,13 +1,16 @@
-package blocks
+package blocks_impl
 
 import (
 	"encoding/gob"
+	"github.com/3elDU/bamboo/types"
 
 	"github.com/3elDU/bamboo/asset_loader"
 )
 
 func init() {
 	gob.Register(MushroomState{})
+	types.NewRedMushroomBlock = NewRedMushroomBlock
+	types.NewWhiteMushroomBlock = NewWhiteMushroomBlock
 }
 
 type MushroomState struct {
@@ -20,10 +23,10 @@ type MushroomBlock struct {
 	texturedBlock
 }
 
-func NewRedMushroomBlock() *MushroomBlock {
+func NewRedMushroomBlock() types.Block {
 	return &MushroomBlock{
 		baseBlock: baseBlock{
-			blockType: RedMushroom,
+			blockType: types.RedMushroomBlock,
 		},
 		texturedBlock: texturedBlock{
 			tex: asset_loader.Texture("red-mushroom"),
@@ -31,10 +34,10 @@ func NewRedMushroomBlock() *MushroomBlock {
 	}
 }
 
-func NewWhiteMushroomBlock() *MushroomBlock {
+func NewWhiteMushroomBlock() types.Block {
 	return &MushroomBlock{
 		baseBlock: baseBlock{
-			blockType: WhiteMushroom,
+			blockType: types.WhiteMushroomBlock,
 		},
 		texturedBlock: texturedBlock{
 			tex: asset_loader.Texture("white-mushroom"),

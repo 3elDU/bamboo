@@ -1,7 +1,6 @@
 package player
 
 import (
-	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/types"
 	"github.com/3elDU/bamboo/world"
 	"log"
@@ -56,8 +55,8 @@ func (mvec MovementVector) ToFloat() (vx, vy float64) {
 
 func isValidSpawnpoint(blockType types.BlockType) bool {
 	validBlocks := []types.BlockType{
-		blocks.Sand, blocks.Grass, blocks.ShortGrass, blocks.TallGrass, blocks.Flowers, blocks.RedMushroom, blocks.WhiteMushroom,
-		blocks.CaveFloor,
+		types.SandBlock, types.GrassBlock, types.ShortGrassBlock, types.TallGrassBlock, types.FlowersBlock, types.RedMushroomBlock, types.WhiteMushroomBlock,
+		types.CaveFloorBlock,
 	}
 
 	for _, blockType2 := range validBlocks {

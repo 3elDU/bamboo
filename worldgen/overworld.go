@@ -8,7 +8,6 @@ import (
 	"log"
 	"math/rand"
 
-	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/types"
 	"github.com/aquilax/go-perlin"
@@ -72,11 +71,11 @@ func (generator *OverworldGenerator) genBase(x, y uint64) types.Block {
 
 	switch {
 	case baseHeight <= WaterHeight: // Water
-		return blocks.NewWaterBlock()
+		return types.NewWaterBlock()
 	case baseHeight <= SandHeight: // Sand
-		return blocks.NewSandBlock(false)
+		return types.NewSandBlock(false)
 	default: // Grass
-		return blocks.NewGrassBlock()
+		return types.NewGrassBlock()
 	}
 }
 
@@ -110,14 +109,14 @@ func (generator *OverworldGenerator) genFeatures(previous types.Block, x, y uint
 	secondaryHeight := height(generator.secondaryPerlin, x, y, config.PerlinNoiseScaleFactor)
 
 	switch previous.Type() {
-	case blocks.Sand:
+	case types.SandBlock:
 		// With 3% change, generate sand with stones
 		if features.f1 <= SandStoneChance {
-			return blocks.NewSandBlock(true)
+			return types.NewSandBlock(true)
 		}
-	case blocks.Grass:
+	case types.GrassBlock:
 		// generate features on grass, only if it is surrounded by grass on all sides
-		if !generator.checkNeighbors(blocks.Grass, x, y) {
+		if !generator.checkNeighbors(types.GrassBlock, x, y) {
 			return previous
 		}
 
@@ -128,17 +127,17 @@ func (generator *OverworldGenerator) genFeatures(previous types.Block, x, y uint
 			switch {
 			case features.f1 <= MushroomChance:
 				if features.f2 <= 0.5 {
-					return blocks.NewRedMushroomBlock()
+					return types.NewRedMushroomBlock()
 				} else {
-					return blocks.NewWhiteMushroomBlock()
+					return types.NewWhiteMushroomBlock()
 				}
 			case features.f1 <= FlowerChance:
-				return blocks.NewFlowersBlock()
+				return types.NewFlowersBlock()
 			}
 
-			return blocks.NewShortGrassBlock()
+			return types.NewShortGrassBlock()
 		default: // Tree
-			return blocks.NewPineTreeBlock()
+			return types.NewPineTreeBlock()
 		}
 	}
 
@@ -164,7 +163,7 @@ func (generator *OverworldGenerator) generateStructures(chunk types.Chunk) {
 		valid := false
 		for _, coords := range possibleCoordinates {
 			// valid positions for cave entrance are those that are surrounded by grass blocks on all sides
-			if generator.checkNeighbors(blocks.Grass, chunkCoords.X+coords.X, chunkCoords.Y+coords.Y) {
+			if generator.checkNeighbors(types.GrassBlock, chunkCoords.X+coords.X, chunkCoords.Y+coords.Y) {
 				chosenCoordinates = coords
 				valid = true
 				break
@@ -182,7 +181,7 @@ func (generator *OverworldGenerator) generateStructures(chunk types.Chunk) {
 			log.Panicf("failed to generate UUID for cave: %v", err)
 		}
 		log.Printf("cave at %v, %v: %v", chunkCoords.X+chosenCoordinates.X, chunkCoords.Y+chosenCoordinates.Y, id)
-		chunk.SetBlock(uint(chosenCoordinates.X), uint(chosenCoordinates.Y), blocks.NewCaveEntranceBlock(id))
+		chunk.SetBlock(uint(chosenCoordinates.X), uint(chosenCoordinates.Y), types.NewCaveEntranceBlock(id))
 	}
 }
 
@@ -209,7 +208,7 @@ func (generator *OverworldGenerator) generate(chunk types.Chunk) {
 func (generator *OverworldGenerator) generateDummy(chunk types.Chunk) {
 	for x := uint(0); x < 16; x++ {
 		for y := uint(0); y < 16; y++ {
-			chunk.SetBlock(x, y, blocks.NewWaterBlock())
+			chunk.SetBlock(x, y, types.NewWaterBlock())
 		}
 	}
 }

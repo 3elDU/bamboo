@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"github.com/3elDU/bamboo/blocks"
 	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/event"
@@ -208,7 +207,7 @@ func (game *Game) handleEvents() {
 			// don't place cave exit if that chunk already exists on disk, so we don't overwrite it
 			if !world.ChunkExistsOnDisk(newWorld.Metadata(), uint64(game.player.X+1)/16, uint64(game.player.Y)/16) {
 				// place a cave exit next to the player
-				newWorld.SetBlock(uint64(game.player.X)+1, uint64(game.player.Y), blocks.NewCaveExitBlock())
+				newWorld.SetBlock(uint64(game.player.X)+1, uint64(game.player.Y), types.NewCaveExitBlock())
 			}
 
 			game.world = newWorld

@@ -1,34 +1,35 @@
-package blocks
+package blocks_impl
 
 import (
 	"encoding/gob"
+	"github.com/3elDU/bamboo/types"
 
 	"github.com/3elDU/bamboo/asset_loader"
-	"github.com/3elDU/bamboo/types"
 )
 
 func init() {
-	gob.Register(PineTreeState{})
+	gob.Register(CaveWallState{})
+	types.NewCaveWallBlock = NewCaveWallBlock
 }
 
-type PineTreeState struct {
+type CaveWallState struct {
 	ConnectedBlockState
 	CollidableBlockState
 }
 
-type PineTreeBlock struct {
+type CaveWallBlock struct {
 	connectedBlock
 	collidableBlock
 }
 
-func NewPineTreeBlock() *PineTreeBlock {
-	return &PineTreeBlock{
+func NewCaveWallBlock() types.Block {
+	return &CaveWallBlock{
 		connectedBlock: connectedBlock{
 			baseBlock: baseBlock{
-				blockType: PineTree,
+				blockType: types.CaveWallBlock,
 			},
-			tex:        asset_loader.ConnectedTexture("pine", false, false, false, false),
-			connectsTo: []types.BlockType{PineTree},
+			tex:        asset_loader.ConnectedTexture("cave_wall", false, false, false, false),
+			connectsTo: []types.BlockType{types.CaveWallBlock},
 		},
 		collidableBlock: collidableBlock{
 			collidable:      true,
@@ -37,15 +38,15 @@ func NewPineTreeBlock() *PineTreeBlock {
 	}
 }
 
-func (b *PineTreeBlock) State() interface{} {
-	return PineTreeState{
+func (b *CaveWallBlock) State() interface{} {
+	return CaveWallState{
 		ConnectedBlockState:  b.connectedBlock.State().(ConnectedBlockState),
 		CollidableBlockState: b.collidableBlock.State().(CollidableBlockState),
 	}
 }
 
-func (b *PineTreeBlock) LoadState(s interface{}) {
-	state := s.(PineTreeState)
+func (b *CaveWallBlock) LoadState(s interface{}) {
+	state := s.(CaveWallState)
 	b.connectedBlock.LoadState(state.ConnectedBlockState)
 	b.collidableBlock.LoadState(state.CollidableBlockState)
 }

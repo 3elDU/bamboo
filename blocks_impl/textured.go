@@ -1,4 +1,4 @@
-package blocks
+package blocks_impl
 
 import (
 	"log"
