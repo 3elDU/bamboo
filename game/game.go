@@ -9,11 +9,9 @@ import (
 	"github.com/3elDU/bamboo/font"
 	"github.com/3elDU/bamboo/game/inventory"
 	"github.com/3elDU/bamboo/game/player"
-	"github.com/3elDU/bamboo/game/widgets"
 	"github.com/3elDU/bamboo/items"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/types"
-	"github.com/3elDU/bamboo/widget"
 	"github.com/3elDU/bamboo/world"
 	"github.com/3elDU/bamboo/world_type"
 	"github.com/MakeNowJust/heredoc"
@@ -23,9 +21,6 @@ import (
 )
 
 type Game struct {
-	widgets      *widget.Container
-	debugWidgets *widget.Container
-
 	paused    bool
 	pauseMenu *pauseMenu
 
@@ -39,9 +34,6 @@ type Game struct {
 
 func newGame(gameWorld *world.World, playerStack *player.Stack) *Game {
 	game := &Game{
-		widgets:      widget.NewWidgetContainer(),
-		debugWidgets: widget.NewWidgetContainer(),
-
 		pauseMenu: newPauseMenu(),
 
 		world:       gameWorld,
@@ -51,11 +43,6 @@ func newGame(gameWorld *world.World, playerStack *player.Stack) *Game {
 		debugInfoVisible: false,
 	}
 	game.player = playerStack.Top()
-
-	game.debugWidgets.AddTextWidget(
-		"debug",
-		&widgets.PerfWidget{Color: colors.Black},
-	)
 
 	return game
 }
@@ -174,10 +161,6 @@ func (game *Game) updateLogic() {
 	}
 
 	game.world.Update()
-	game.widgets.Update()
-	if game.debugInfoVisible {
-		game.debugWidgets.Update()
-	}
 
 	// perform autosave each N ticks
 	if scene_manager.Ticks()%config.WorldAutosaveDelay == 0 {
@@ -252,11 +235,6 @@ func (game *Game) Draw(screen *ebiten.Image) {
 	game.player.Render(screen, config.UIScaling, game.paused)
 	game.inventory.Render(screen)
 
-	game.widgets.Render(screen)
-	if game.debugInfoVisible {
-		game.debugWidgets.Render(screen)
-	}
-
 	if game.debugInfoVisible {
 		font.RenderFont(screen,
 			fmt.Sprintf(
@@ -264,11 +242,15 @@ func (game *Game) Draw(screen *ebiten.Image) {
 					player pos:		%.2f, %.2f
 					world seed:		%v
 					UI scaling:		%v
+
+					FPS:			%.0f
+					TPS:			%.0f
 				`),
-				game.player.X, game.player.Y, game.world.Seed(), config.UIScaling,
+				game.player.X, game.player.Y, game.world.Seed(), config.UIScaling, ebiten.ActualFPS(), ebiten.ActualTPS(),
 			),
 			0, 0, colors.Black,
 		)
+
 	}
 
 	// draw pause menu
