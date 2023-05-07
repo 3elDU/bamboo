@@ -16,8 +16,9 @@ import (
 	"github.com/pkg/profile"
 	"golang.org/x/exp/slices"
 
-	// import blocks_impl for side effects, so that all New*Block() functions will be initialized
+	// imports for side effects
 	_ "github.com/3elDU/bamboo/blocks_impl"
+	_ "github.com/3elDU/bamboo/items_impl"
 )
 
 func init() {

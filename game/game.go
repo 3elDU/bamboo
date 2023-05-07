@@ -8,7 +8,6 @@ import (
 	"github.com/3elDU/bamboo/font"
 	"github.com/3elDU/bamboo/game/inventory"
 	"github.com/3elDU/bamboo/game/player"
-	"github.com/3elDU/bamboo/items"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/types"
 	"github.com/3elDU/bamboo/world"
@@ -119,7 +118,7 @@ func (game *Game) processInput() {
 			break
 		}
 
-		item := items.NewItemFromBlock(drawable)
+		item := types.NewBlockItem(drawable)
 		game.inventory.AddItem(item)
 
 	// Use the item in hand

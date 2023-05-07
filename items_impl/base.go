@@ -1,4 +1,4 @@
-package items
+package items_impl
 
 import (
 	"encoding/gob"
