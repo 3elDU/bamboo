@@ -28,7 +28,7 @@ func NewAboutScene() *AboutScene {
 					// TODO: Actually write something here
 				`)),
 				ui.Button(
-					func() { goBackEvent <- 1 },
+					goBackEvent, 1,
 					ui.Label(ui.DefaultLabelOptions(), "Back"),
 				),
 			)),

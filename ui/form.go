@@ -68,7 +68,7 @@ func Form(submitButtonTitle string, formData chan []string, prompts ...FormPromp
 
 	composeButton := Button(
 		// Leave the handler empty, because we'll check for the button press manually
-		func() {},
+		make(chan interface{}), nil,
 		Label(DefaultLabelOptions(), submitButtonTitle),
 	)
 	promptsStack.AddChild(composeButton)

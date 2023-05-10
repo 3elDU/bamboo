@@ -34,15 +34,15 @@ func NewMainMenuScene() *MainMenu {
 					)),
 					ui.Center(ui.Stack(ui.StackOptions{Spacing: 0.5},
 						ui.Button(
-							func() { buttonPressed <- 1 },
+							buttonPressed, 1,
 							ui.Label(ui.DefaultLabelOptions(), "Singleplayer"),
 						),
 						ui.Button(
-							func() { buttonPressed <- 2 },
+							buttonPressed, 2,
 							ui.Label(ui.DefaultLabelOptions(), "About"),
 						),
 						ui.Button(
-							func() { buttonPressed <- 3 },
+							buttonPressed, 3,
 							ui.Label(ui.DefaultLabelOptions(), "Exit"),
 						),
 					)),

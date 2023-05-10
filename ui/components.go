@@ -313,7 +313,7 @@ func (l *LabelComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	return nil
 }
 
-type ButtonComponent struct {
+type ButtonComponent[T any] struct {
 	baseView
 
 	tex      types.Texture
@@ -321,43 +321,47 @@ type ButtonComponent struct {
 
 	child View
 
-	// transmits the button press event from Draw() to Update() (where the handler is called)
+	// transmits the button press event from Draw() to Update() (where the value to callback is sent)
 	// cleared on every Update()
-	pressed bool
-	handler func()
+	pressed  bool
+	value    T
+	callback chan T
 }
 
-func Button(handler func(), child View) *ButtonComponent {
-	b := &ButtonComponent{
+func Button[T any](callback chan T, value T, child View) *ButtonComponent[T] {
+	b := &ButtonComponent[T]{
 		tex:      asset_loader.Texture("button"),
 		texHover: asset_loader.Texture("button-hover"),
 
-		child:   child,
-		handler: handler,
+		child:    child,
+		value:    value,
+		callback: callback,
 	}
 	child.SetParent(b)
 	return b
 }
-func (b *ButtonComponent) MaxSize() (float64, float64) {
+func (b *ButtonComponent[T]) MaxSize() (float64, float64) {
 	return b.ComputedSize()
 }
-func (b *ButtonComponent) ComputedSize() (float64, float64) {
+func (b *ButtonComponent[T]) ComputedSize() (float64, float64) {
 	return b.tex.ScaledSize()
 }
-func (b *ButtonComponent) CapacityForChild(_ View) (float64, float64) {
+func (b *ButtonComponent[T]) CapacityForChild(_ View) (float64, float64) {
 	return b.ComputedSize()
 }
-func (b *ButtonComponent) Children() []View {
+func (b *ButtonComponent[T]) Children() []View {
 	return []View{b.child}
 }
-func (b *ButtonComponent) Update() error {
+func (b *ButtonComponent[T]) Update() error {
 	if b.pressed {
-		go b.handler()
+		go func() {
+			b.callback <- b.value
+		}()
 	}
 	b.pressed = false
 	return nil
 }
-func (b *ButtonComponent) Draw(screen *ebiten.Image, x, y float64) error {
+func (b *ButtonComponent[T]) Draw(screen *ebiten.Image, x, y float64) error {
 	opts := &ebiten.DrawImageOptions{}
 	opts.GeoM.Scale(config.UIScaling, config.UIScaling)
 	opts.GeoM.Translate(x, y)
@@ -382,10 +386,10 @@ func (b *ButtonComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	cw, ch := b.child.ComputedSize()
 	return b.child.Draw(screen, x+w/2-cw/2, y+h/2-ch/2)
 }
-func (b *ButtonComponent) IsPressed() bool {
+func (b *ButtonComponent[T]) IsPressed() bool {
 	return b.pressed
 }
-func (b *ButtonComponent) Press() {
+func (b *ButtonComponent[T]) Press() {
 	b.pressed = true
 }
 

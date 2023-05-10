@@ -42,7 +42,7 @@ func NewNewWorldScene() *NewWorldScene {
 					ui.FormPrompt{Title: "World name"},
 					ui.FormPrompt{Title: "World seed (optional)"},
 				),
-				ui.Button(func() { goBack <- true }, ui.Label(ui.DefaultLabelOptions(), "Go back")),
+				ui.Button(goBack, true, ui.Label(ui.DefaultLabelOptions(), "Go back")),
 			),
 		))),
 	}

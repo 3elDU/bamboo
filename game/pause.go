@@ -58,8 +58,8 @@ func newPauseMenu() *pauseMenu {
 			ui.Center(ui.Label(ui.LabelOptions{Color: colors.White, Scaling: 3.0}, "Paused")),
 
 			ui.Center(ui.Stack(ui.StackOptions{Direction: ui.VerticalStack, Spacing: 1},
-				ui.Button(func() { continueBtn <- true }, ui.Label(ui.DefaultLabelOptions(), "Continue")),
-				ui.Button(func() { exitBtn <- true }, ui.Label(ui.DefaultLabelOptions(), "Exit to main menu")),
+				ui.Button(continueBtn, true, ui.Label(ui.DefaultLabelOptions(), "Continue")),
+				ui.Button(exitBtn, true, ui.Label(ui.DefaultLabelOptions(), "Exit to main menu")),
 			)),
 		))),
 	}

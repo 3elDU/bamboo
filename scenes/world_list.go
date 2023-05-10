@@ -1,6 +1,7 @@
 package scenes
 
 import (
+	"bytes"
 	"encoding/gob"
 	"fmt"
 	"github.com/3elDU/bamboo/types"
@@ -49,16 +50,15 @@ func (s *WorldListScene) Scan() {
 		}
 
 		// read world metadata
-		worldInfo, err := os.Open(filepath.Join(path, "world.gob"))
+		worldInfo, err := os.ReadFile(filepath.Join(path, "world.gob"))
 		if err != nil {
 			// skip the directory, if it doesn't have the "world.gob" file inside of it,
 			// or if it is inaccesible for some other reason
 			// but don't throw an error!
 			return nil
 		}
-		defer worldInfo.Close()
 
-		decoder := gob.NewDecoder(worldInfo)
+		decoder := gob.NewDecoder(bytes.NewReader(worldInfo))
 		worldMetadata := new(types.Save)
 		if err = decoder.Decode(worldMetadata); err != nil {
 			return err
@@ -93,16 +93,16 @@ func (s *WorldListScene) UpdateUI() {
 				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Seed: %v", currentWorld.Seed)),
 			),
 			ui.Stack(ui.StackOptions{Direction: ui.HorizontalStack, Spacing: 1},
-				ui.Button(func() { s.selectedWorld <- currentWorld }, ui.Label(ui.DefaultLabelOptions(), "Play")),
-				ui.Button(func() { s.deleteWorld <- currentWorld }, ui.Label(ui.DefaultLabelOptions(), "Delete")),
+				ui.Button(s.selectedWorld, currentWorld, ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Play %v", currentWorld.Name))),
+				ui.Button(s.deleteWorld, currentWorld, ui.Label(ui.DefaultLabelOptions(), "Delete")),
 			),
 		))
 	}
 	view.AddChild(worldList)
 
 	view.AddChild(ui.Stack(ui.StackOptions{Direction: ui.HorizontalStack, Spacing: 1},
-		ui.Button(func() { s.newWorld <- true }, ui.Label(ui.DefaultLabelOptions(), "New world")),
-		ui.Button(func() { s.goBack <- true }, ui.Label(ui.DefaultLabelOptions(), "Go back")),
+		ui.Button(s.newWorld, true, ui.Label(ui.DefaultLabelOptions(), "New world")),
+		ui.Button(s.goBack, true, ui.Label(ui.DefaultLabelOptions(), "Go back")),
 	))
 
 	s.view = ui.Screen(
@@ -150,6 +150,7 @@ func (s *WorldListScene) Update() {
 	case id := <-s.deleteWorld:
 		world.DeleteWorld(id)
 		s.Scan()
+		s.UpdateUI()
 	default:
 	}
 }
