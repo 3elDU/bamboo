@@ -1,8 +1,6 @@
 package scenes
 
 import (
-	"bytes"
-	"encoding/binary"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/types"
 	"github.com/3elDU/bamboo/world_type"
@@ -56,8 +54,9 @@ func seedFromString(s string) (seed int64) {
 		seed = rand.Int63()
 		log.Println("seed: ", seed)
 	} else {
-		hash := fnv.New64a().Sum([]byte(s))
-		binary.Read(bytes.NewReader(hash), binary.BigEndian, &seed)
+		hasher := fnv.New64a()
+		hasher.Write([]byte(s))
+		seed = int64(hasher.Sum64())
 	}
 	return
 }

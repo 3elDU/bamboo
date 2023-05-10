@@ -60,6 +60,7 @@ type Block interface {
 	LoadState(interface{})
 }
 
+// A block that player can collide with
 type CollidableBlock interface {
 	Block
 	Collidable() bool
@@ -68,13 +69,21 @@ type CollidableBlock interface {
 	PlayerSpeed() float64
 }
 
+// A block that can be rendered onto the screen
 type DrawableBlock interface {
 	Block
 	Render(world World, screen *ebiten.Image, pos Vec2f)
 	TextureName() string
 }
 
+// A block that player can interact with
 type InteractiveBlock interface {
 	Block
 	Interact(world World, playerPosition Vec2f)
+}
+
+// A block that can be broken, and drops an item
+type BreakableBlock interface {
+	Block
+	Break() Item
 }

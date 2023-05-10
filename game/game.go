@@ -111,25 +111,25 @@ func (game *Game) processInput() {
 		log.Printf("Toggled visibility of debug info. (%v)", game.debugInfoVisible)
 
 	// Interact with the nearby block
-	case ebiten.IsKeyPressed(ebiten.KeyC):
-		block := game.world.BlockAt(uint64(game.player.X), uint64(game.player.Y))
-		drawable, ok := block.(types.DrawableBlock)
-		if !ok {
+	case inpututil.IsKeyJustPressed(ebiten.KeyC):
+		block, breakable := game.world.BlockAt(uint64(game.player.X), uint64(game.player.Y)).(types.BreakableBlock)
+		if !breakable {
 			break
 		}
 
-		item := types.NewBlockItem(drawable)
+		item := block.Break()
 		game.inventory.AddItem(item)
 
 	// Use the item in hand
-	case ebiten.IsKeyPressed(ebiten.KeyF):
+	case inpututil.IsKeyJustPressed(ebiten.KeyF):
 		itemInHand := game.inventory.Slots[game.inventory.SelectedSlot].Item
 		if itemInHand == nil {
 			break
 		}
+		lookingAt := game.player.LookingAt()
 		itemInHand.Use(game.world, types.Vec2u{
-			X: uint64(game.player.X),
-			Y: uint64(game.player.Y),
+			X: lookingAt.X,
+			Y: lookingAt.Y,
 		})
 
 	// Inventory slots selection

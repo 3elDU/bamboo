@@ -1,10 +1,13 @@
 package items_impl
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/gob"
 	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
+	"hash/fnv"
 )
 
 func init() {
@@ -33,6 +36,15 @@ func NewBlockItem(block types.DrawableBlock) types.Item {
 		texture:   asset_loader.Texture(block.TextureName()),
 		blockType: block.Type(),
 	}
+}
+
+func (i *BlockItem) Hash() uint64 {
+	buf := &bytes.Buffer{}
+	binary.Write(buf, binary.BigEndian, i.blockType)
+
+	hasher := fnv.New64a()
+	hasher.Write(buf.Bytes())
+	return hasher.Sum64()
 }
 
 func (i *BlockItem) Texture() *ebiten.Image {

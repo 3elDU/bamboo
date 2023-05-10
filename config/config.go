@@ -21,6 +21,8 @@ const (
 	WorldAutosaveDelay uint64 = 3600
 	ChunkUnloadDelay   uint64 = 600
 
+	InventoryFile = "inventory.gob"
+
 	UIScaling float64 = 2
 
 	OverworldSize = 1024

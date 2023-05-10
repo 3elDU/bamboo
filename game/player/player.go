@@ -13,7 +13,7 @@ type Player struct {
 	X, Y                 float64
 	xVelocity, yVelocity float64
 
-	movementDirection MovementDirection
+	MovementDirection MovementDirection
 	animationFrame    uint8
 	lastFrameChange   time.Time
 

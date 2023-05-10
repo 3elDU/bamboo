@@ -28,15 +28,15 @@ func (player *Player) updateMovementDirection() {
 	switch movementSide {
 	case Left:
 		if player.xVelocity > 0 {
-			player.movementDirection = Right
+			player.MovementDirection = Right
 		} else {
-			player.movementDirection = Left
+			player.MovementDirection = Left
 		}
 	case Up:
 		if player.yVelocity > 0 {
-			player.movementDirection = Down
+			player.MovementDirection = Down
 		} else {
-			player.movementDirection = Up
+			player.MovementDirection = Up
 		}
 	}
 }
@@ -137,6 +137,21 @@ func (player *Player) Move(vec types.Vec2f) {
 
 func (player *Player) Velocity() types.Vec2f {
 	return types.Vec2f{X: player.xVelocity, Y: player.yVelocity}
+}
+
+func (player *Player) LookingAt() types.Vec2u {
+	lookingX, lookingY := uint64(player.X), uint64(player.Y)
+	switch player.MovementDirection {
+	case Left:
+		lookingX--
+	case Right:
+		lookingX++
+	case Up:
+		lookingY--
+	case Down:
+		lookingY++
+	}
+	return types.Vec2u{X: lookingX, Y: lookingY}
 }
 
 // Update updates the player physics and animation
