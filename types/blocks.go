@@ -24,6 +24,7 @@ const (
 	CaveWallBlock
 	CaveFloorBlock
 	CaveExitBlock
+	PineSaplingBlock
 )
 
 var NewBlock func(id BlockType) Block
@@ -44,6 +45,7 @@ var (
 	NewCaveWallBlock      func() Block
 	NewCaveFloorBlock     func() Block
 	NewCaveExitBlock      func() Block
+	NewPineSaplingBlock   func() Block
 )
 
 type Block interface {
@@ -85,5 +87,5 @@ type InteractiveBlock interface {
 // A block that can be broken, and drops an item
 type BreakableBlock interface {
 	Block
-	Break() Item
+	Break()
 }

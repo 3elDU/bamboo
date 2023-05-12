@@ -6,13 +6,14 @@ type ItemType uint
 
 const (
 	BlockItem ItemType = iota
-	TestItem
+	TestItem           // Kept for backwards compatibility of IDs
+	PineSaplingItem
 )
 
 var NewItem func(id ItemType) Item
 var (
-	NewBlockItem func(block DrawableBlock) Item
-	NewTestItem  func() Item
+	NewBlockItem       func(block DrawableBlock) Item
+	NewPineSaplingItem func() Item
 )
 
 type Item interface {
@@ -25,5 +26,5 @@ type Item interface {
 	State() interface{}
 	LoadState(interface{})
 
-	Use(world World, pos Vec2u)
+	Use(pos Vec2u)
 }

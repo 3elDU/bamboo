@@ -46,10 +46,6 @@ func NewSandBlock(stones bool) types.Block {
 	}
 }
 
-func (b *SandBlock) Break() types.Item {
-	return types.NewTestItem()
-}
-
 func (b *SandBlock) State() interface{} {
 	return SandState{
 		BaseBlockState:       b.baseBlock.State().(BaseBlockState),

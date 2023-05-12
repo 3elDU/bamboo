@@ -9,23 +9,28 @@ type ItemSlot struct {
 
 // Returns true if item has been successfully added
 // False if there is no space, or item is of different type
-func (slot *ItemSlot) AddItem(item Item) bool {
+func (slot *ItemSlot) AddItem(other ItemSlot) bool {
+	// If a slot we're trying to add is empty, do not do anything
+	if other.Empty {
+		return true
+	}
+
 	if slot.Empty {
-		slot.Item = item
-		slot.Quantity = 1
+		slot.Item = other.Item
+		slot.Quantity = other.Quantity
 		slot.Empty = false
 		return true
 	}
 
-	if item.Hash() != slot.Item.Hash() {
+	if other.Item.Hash() != slot.Item.Hash() {
 		return false
 	}
 
-	if slot.Quantity > 50 {
+	if slot.Quantity+other.Quantity > 50 {
 		return false
 	}
 
-	slot.Quantity++
+	slot.Quantity += other.Quantity
 	return true
 }
 

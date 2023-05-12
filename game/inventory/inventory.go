@@ -1,8 +1,11 @@
 package inventory
 
 import (
+	"fmt"
 	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/config"
+	"github.com/3elDU/bamboo/font"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -15,17 +18,42 @@ type Inventory struct {
 }
 
 func NewInventory() *Inventory {
-	inv := Inventory{}
+	inv := &Inventory{}
 	for i := range inv.Slots {
 		inv.Slots[i] = new(types.ItemSlot)
 		inv.Slots[i].Empty = true
 	}
 
-	return &inv
+	types.SetInventory(inv)
+	return inv
+}
+
+func (inv *Inventory) Length() int {
+	return Size
+}
+
+func (inv *Inventory) At(i int) types.ItemSlot {
+	return *inv.Slots[i]
+}
+
+func (inv *Inventory) RemoveItem(item types.ItemSlot) bool {
+	for i, slot := range inv.Slots {
+		if slot.Item.Hash() != item.Item.Hash() {
+			continue
+		}
+
+		slot.RemoveItem(item.Quantity)
+		if slot.Quantity == 0 {
+			inv.Slots[i] = new(types.ItemSlot)
+			inv.Slots[i].Empty = true
+		}
+		return true
+	}
+	return false
 }
 
 // AddItem returns false if there is no space
-func (inv *Inventory) AddItem(item types.Item) bool {
+func (inv *Inventory) AddItem(item types.ItemSlot) bool {
 	for _, slot := range inv.Slots {
 		if slot.AddItem(item) {
 			return true
@@ -71,13 +99,16 @@ func (inv *Inventory) Render(screen *ebiten.Image) {
 		itemTex := slot.Item.Texture()
 		itemTexOpts := &ebiten.DrawImageOptions{}
 
+		// position of the item texture on the screen
+		x := ix + 4*float64(config.UIScaling) + (20 * float64(i) * config.UIScaling)
+		y := iy + 3*float64(config.UIScaling)
+
 		itemTexOpts.GeoM.Scale(config.UIScaling, config.UIScaling)
-		itemTexOpts.GeoM.Translate(
-			ix+4*float64(config.UIScaling)+(20*float64(i)*config.UIScaling),
-			iy+3*float64(config.UIScaling),
-		)
+		itemTexOpts.GeoM.Translate(x, y)
 
 		screen.DrawImage(itemTex, itemTexOpts)
+
+		font.RenderFont(screen, fmt.Sprintf("%v", slot.Quantity), x, y, colors.Black)
 	}
 
 	selectedSlotTex := asset_loader.Texture("selected_slot").Texture()

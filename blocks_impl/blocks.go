@@ -43,6 +43,8 @@ func newBlockByID(id types.BlockType) types.Block {
 		return NewCaveFloorBlock()
 	case types.CaveExitBlock:
 		return NewCaveExitBlock()
+	case types.PineSaplingBlock:
+		return NewPineSaplingBlock()
 	}
 
 	return NewEmptyBlock()

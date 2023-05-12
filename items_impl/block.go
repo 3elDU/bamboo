@@ -51,14 +51,13 @@ func (i *BlockItem) Texture() *ebiten.Image {
 	return i.texture.Texture()
 }
 
-func (i *BlockItem) Use(world types.World, pos types.Vec2u) {
+func (i *BlockItem) Use(pos types.Vec2u) {
 	// keep the block state, but create a new block instance
 	state := i.block.State()
 	block := types.NewBlock(i.blockType)
 	block.LoadState(state)
 
-	world.ChunkAtB(pos.X, pos.Y).
-		SetBlock(uint(pos.X%16), uint(pos.Y%16), block)
+	types.GetCurrentWorld().SetBlock(uint64(pos.X%16), uint64(pos.Y%16), block)
 }
 
 func (i *BlockItem) State() interface{} {

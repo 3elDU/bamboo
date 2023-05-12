@@ -112,13 +112,13 @@ func (game *Game) processInput() {
 
 	// Interact with the nearby block
 	case inpututil.IsKeyJustPressed(ebiten.KeyC):
-		block, breakable := game.world.BlockAt(uint64(game.player.X), uint64(game.player.Y)).(types.BreakableBlock)
+		lookingAt := game.player.LookingAt()
+		block, breakable := game.world.BlockAt(lookingAt.X, lookingAt.Y).(types.BreakableBlock)
 		if !breakable {
 			break
 		}
 
-		item := block.Break()
-		game.inventory.AddItem(item)
+		block.Break()
 
 	// Use the item in hand
 	case inpututil.IsKeyJustPressed(ebiten.KeyF):
@@ -127,7 +127,7 @@ func (game *Game) processInput() {
 			break
 		}
 		lookingAt := game.player.LookingAt()
-		itemInHand.Use(game.world, types.Vec2u{
+		itemInHand.Use(types.Vec2u{
 			X: lookingAt.X,
 			Y: lookingAt.Y,
 		})
@@ -223,6 +223,7 @@ func (game *Game) handleEvents() {
 }
 
 func (game *Game) Update() {
+	types.SetCurrentWorld(game.world)
 	game.processInput()
 	game.updateLogic()
 	game.handleEvents()

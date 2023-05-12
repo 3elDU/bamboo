@@ -35,11 +35,9 @@ func NewChunk(cx, cy uint64) *Chunk {
 }
 
 func (c *Chunk) Update(world types.World) {
-	if c.modified {
-		for x := 0; x < 16; x++ {
-			for y := 0; y < 16; y++ {
-				c.blocks[x][y].Update(world)
-			}
+	for x := 0; x < 16; x++ {
+		for y := 0; y < 16; y++ {
+			c.blocks[x][y].Update(world)
 		}
 	}
 }

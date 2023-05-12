@@ -6,6 +6,18 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+var currentWorld World
+
+// Sets a reference to currently loaded world
+func SetCurrentWorld(world World) {
+	currentWorld = world
+}
+
+// Returns reference to currently loaded World instance
+func GetCurrentWorld() World {
+	return currentWorld
+}
+
 type World interface {
 	BlockAt(bx uint64, by uint64) Block
 	SetBlock(bx, by uint64, block Block)

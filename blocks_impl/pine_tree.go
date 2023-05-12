@@ -2,6 +2,7 @@ package blocks_impl
 
 import (
 	"encoding/gob"
+	"math/rand"
 
 	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/types"
@@ -36,6 +37,14 @@ func NewPineTreeBlock() types.Block {
 			collisionPoints: defaultCollisionPoints(),
 		},
 	}
+}
+
+func (b *PineTreeBlock) Break() {
+	types.GetCurrentWorld().SetBlock(uint64(b.x), uint64(b.y), types.NewGrassBlock())
+	types.GetInventory().AddItem(types.ItemSlot{
+		Item:     types.NewPineSaplingItem(),
+		Quantity: uint8(1 + rand.Intn(2)),
+	})
 }
 
 func (b *PineTreeBlock) State() interface{} {
