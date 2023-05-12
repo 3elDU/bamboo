@@ -10,7 +10,17 @@ const (
 	PineSaplingItem
 )
 
-var NewItem func(id ItemType) Item
+func NewItem(id ItemType) Item {
+	switch id {
+	case BlockItem:
+		return NewBlockItem(NewEmptyBlock().(DrawableBlock))
+	case PineSaplingItem:
+		return NewPineSaplingItem()
+	}
+
+	return nil
+}
+
 var (
 	NewBlockItem       func(block DrawableBlock) Item
 	NewPineSaplingItem func() Item

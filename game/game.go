@@ -30,13 +30,13 @@ type Game struct {
 	debugInfoVisible bool
 }
 
-func newGame(gameWorld *world.World, playerStack *player.Stack) *Game {
+func newGame(gameWorld *world.World, playerStack *player.Stack, inventory *inventory.Inventory) *Game {
 	game := &Game{
 		pauseMenu: newPauseMenu(),
 
 		world:       gameWorld,
 		playerStack: playerStack,
-		inventory:   inventory.NewInventory(),
+		inventory:   inventory,
 
 		debugInfoVisible: false,
 	}
@@ -53,6 +53,7 @@ func NewGameScene(metadata types.Save) *Game {
 	game := newGame(
 		w,
 		stack,
+		inventory.NewInventory(),
 	)
 
 	// perform a save immediately after the scene creation
@@ -66,12 +67,14 @@ func LoadGameScene(metadata types.Save) *Game {
 	// load the player stack first, to determine which world to load
 	loadedPlayer := player.LoadPlayerStack(metadata.BaseUUID)
 	loadedWorld := world.Load(metadata.BaseUUID, loadedPlayer.Top().SelectedWorld.UUID)
-	return newGame(loadedWorld, loadedPlayer)
+	loadedInventory := inventory.LoadInventory(metadata.BaseUUID)
+	return newGame(loadedWorld, loadedPlayer, loadedInventory)
 }
 
 func (game *Game) Save() {
 	game.world.Save()
 	game.playerStack.Save(game.world.Metadata())
+	game.inventory.Save(game.world.Metadata())
 }
 
 func (game *Game) processInput() {

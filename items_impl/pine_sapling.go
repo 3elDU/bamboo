@@ -1,13 +1,21 @@
 package items_impl
 
 import (
+	"encoding/gob"
+
 	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 func init() {
+	gob.Register(PineSaplingItemState{})
 	types.NewPineSaplingItem = NewPineSaplingItem
+}
+
+type PineSaplingItemState struct {
+	BaseItemState
+	Tex string
 }
 
 type PineSaplingItem struct {
@@ -42,4 +50,17 @@ func (item *PineSaplingItem) Use(pos types.Vec2u) {
 		Item:     item,
 		Quantity: 1,
 	})
+}
+
+func (item *PineSaplingItem) State() interface{} {
+	return PineSaplingItemState{
+		BaseItemState: item.baseItem.State().(BaseItemState),
+		Tex:           item.Tex.Name(),
+	}
+}
+
+func (item *PineSaplingItem) LoadState(s interface{}) {
+	state := s.(PineSaplingItemState)
+	item.baseItem.LoadState(state.BaseItemState)
+	item.Tex = asset_loader.Texture(state.Tex)
 }
