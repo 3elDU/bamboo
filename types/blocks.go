@@ -27,7 +27,47 @@ const (
 	PineSaplingBlock
 )
 
-var NewBlock func(id BlockType) Block
+func NewBlock(id BlockType) Block {
+	switch id {
+	case EmptyBlock:
+		return NewEmptyBlock()
+	case StoneBlock:
+		return NewStoneBlock()
+	case WaterBlock:
+		return NewWaterBlock()
+	case SandBlock:
+		return NewSandBlock(false)
+	case GrassBlock:
+		return NewGrassBlock()
+	case SnowBlock:
+		return NewSnowBlock()
+	case ShortGrassBlock:
+		return NewShortGrassBlock()
+	case TallGrassBlock:
+		return NewTallGrassBlock()
+	case FlowersBlock:
+		return NewFlowersBlock()
+	case PineTreeBlock:
+		return NewPineTreeBlock()
+	case RedMushroomBlock:
+		return NewRedMushroomBlock()
+	case WhiteMushroomBlock:
+		return NewWhiteMushroomBlock()
+	case CaveEntranceBlock:
+		return NewCaveEntranceBlock(uuid.New())
+	case CaveWallBlock:
+		return NewCaveWallBlock()
+	case CaveFloorBlock:
+		return NewCaveFloorBlock()
+	case CaveExitBlock:
+		return NewCaveExitBlock()
+	case PineSaplingBlock:
+		return NewPineSaplingBlock()
+	}
+
+	return NewEmptyBlock()
+}
+
 var (
 	NewEmptyBlock         func() Block
 	NewStoneBlock         func() Block
@@ -84,7 +124,7 @@ type InteractiveBlock interface {
 	Interact(world World, playerPosition Vec2f)
 }
 
-// A block that can be broken, and drops an item
+// A block that can be broken. Does not necessarily mean that block drops an item.
 type BreakableBlock interface {
 	Block
 	Break()
