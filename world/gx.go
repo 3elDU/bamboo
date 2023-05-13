@@ -32,21 +32,27 @@ func (c *Chunk) Render(world types.World) {
 	c.needsRedraw = false
 }
 
-func (world *World) Render(screen *ebiten.Image, playerX, playerY, scaling float64) {
-	var (
-		screenWidth, screenHeight = screen.Bounds().Dx(), screen.Bounds().Dy()
-		screenWidthInChunks       = float64(screenWidth) / 256 / scaling
-		screenHeightInChunks      = float64(screenHeight) / 256 / scaling
-		opts                      = &ebiten.DrawImageOptions{}
-	)
+func BlockToScreen(screen *ebiten.Image, player types.Vec2f, block types.Vec2u, scaling float64) types.Vec2f {
+	screenWidth, screenHeight := screen.Bounds().Dx(), screen.Bounds().Dy()
+	return types.Vec2f{
+		X: (float64(block.X)-player.X)*16 + float64(screenWidth)/2 - (float64(screenWidth)/scaling*(scaling-1))/2,
+		Y: (float64(block.Y)-player.Y)*16 + float64(screenHeight)/2 - (float64(screenHeight)/scaling*(scaling-1))/2,
+	}
+}
 
-	// player is displayed in center of the screen
-	// but internally, player coordinates actually represent upper-left corner of the screen
-	// so, we need to adjust camera position a bit, so that the camera will be showing the right area
-	// hence, we subtract half of screen size, converted to blocks.
-	for x := playerX - screenWidthInChunks/2*16 - 16; x < playerX+screenWidthInChunks/2*16+16; x += 16 {
-		for y := playerY - screenHeightInChunks/2*16 - 16; y < playerY+screenHeightInChunks/2*16+16; y += 16 {
-			// If a chunk is out of world borders, skip it
+func (world *World) Render(screen *ebiten.Image, playerX, playerY, scaling float64) {
+	screenWidth, screenHeight := screen.Bounds().Dx(), screen.Bounds().Dy()
+	screenWidthInChunks := float64(screenWidth) / 256 / scaling
+	screenHeightInChunks := float64(screenHeight) / 256 / scaling
+	opts := &ebiten.DrawImageOptions{}
+
+	// Adjust camera position to show the right area
+	cameraOffsetX := screenWidthInChunks / 2 * 16
+	cameraOffsetY := screenHeightInChunks / 2 * 16
+
+	for x := playerX - cameraOffsetX - 16; x < playerX+cameraOffsetX+16; x += 16 {
+		for y := playerY - cameraOffsetY - 16; y < playerY+cameraOffsetY+16; y += 16 {
+			// Skip chunks that are out of world borders
 			if x < 0 || x > float64(world.metadata.Size.X) || y < 0 || y > float64(world.metadata.Size.Y) {
 				continue
 			}
@@ -54,10 +60,10 @@ func (world *World) Render(screen *ebiten.Image, playerX, playerY, scaling float
 			chunk := world.ChunkAtB(uint64(x), uint64(y))
 			chunk.Render(world)
 
-			var (
-				screenX = (x-playerX-math.Mod(x, 16))*16 + float64(screenWidth)/2 - (float64(screenWidth)/scaling*(scaling-1))/2
-				screenY = (y-playerY-math.Mod(y, 16))*16 + float64(screenHeight)/2 - (float64(screenHeight)/scaling*(scaling-1))/2
-			)
+			screenX := (x - playerX - math.Mod(x, 16)) * 16
+			screenX += float64(screenWidth)/2 - (float64(screenWidth)/scaling*(scaling-1))/2
+			screenY := (y - playerY - math.Mod(y, 16)) * 16
+			screenY += float64(screenHeight)/2 - (float64(screenHeight)/scaling*(scaling-1))/2
 
 			opts.GeoM.Reset()
 			opts.GeoM.Translate(screenX, screenY)
