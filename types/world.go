@@ -19,9 +19,17 @@ func GetCurrentWorld() World {
 }
 
 type World interface {
+	// There is no B suffix, because it's trivial that this function accepts block coordinates
 	BlockAt(bx uint64, by uint64) Block
 	SetBlock(bx, by uint64, block Block)
+	// Checks neighbors of the given chunk
+	// Returns false if at least one of them doesn't exist
+	// Automatically requests generation of neighbors
 	CheckNeighbors(cx uint64, cy uint64) bool
+	// Checks if each of 8 neighboring blocks type is in the list of allowed types
+	CheckBlockNeighbors(bx, by uint64, allowedTypes []BlockType) bool
+	// Checks if at least one of neighboring blocks type is in the list
+	BlockNeighboringWith(bx, by uint64, types []BlockType) bool
 	ChunkAt(cx uint64, cy uint64) Chunk
 	ChunkAtB(bx uint64, by uint64) Chunk
 	ChunkExists(cx uint64, cy uint64) bool

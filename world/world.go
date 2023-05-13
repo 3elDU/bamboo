@@ -1,8 +1,10 @@
 package world
 
 import (
-	"github.com/3elDU/bamboo/worldgen"
 	"log"
+
+	"github.com/3elDU/bamboo/worldgen"
+	"golang.org/x/exp/slices"
 
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/scene_manager"
@@ -18,7 +20,6 @@ type World struct {
 	chunks map[types.Vec2u]*Chunk
 }
 
-// Creates a new world, using given name and seed
 func NewWorld(metadata types.Save) *World {
 	log.Printf("NewWorld - %v", metadata)
 
@@ -38,7 +39,6 @@ func NewWorld(metadata types.Save) *World {
 	}
 }
 
-// Update - x and y are player coordinates
 func (world *World) Update() {
 	// receive newly generated chunks from world generator
 	chunks := world.generator.Receive()
@@ -111,7 +111,6 @@ func (world *World) ChunkAtB(bx, by uint64) types.Chunk {
 	return world.chunks[chunkCoordinates]
 }
 
-// There is no B suffix, because it's trivial that this function accepts block coordinates
 func (world *World) BlockAt(bx, by uint64) types.Block {
 	cx, cy := bx/16, by/16
 
@@ -161,9 +160,6 @@ func (world *World) GetNeighbors(cx, cy uint64) []types.Chunk {
 	return neighbors
 }
 
-// Checks neighbors of the given chunk
-// Returns false if at least one of them doesn't exist
-// Automatically requests generation of neighbors
 func (world *World) CheckNeighbors(cx, cy uint64) bool {
 	if !world.ChunkExists(cx, cy) {
 		// If the given chunk doesn't exist
@@ -171,6 +167,47 @@ func (world *World) CheckNeighbors(cx, cy uint64) bool {
 	}
 
 	return len(world.GetNeighbors(cx, cy)) == 4
+}
+
+func (world *World) CheckBlockNeighbors(bx, by uint64, allowedTypes []types.BlockType) bool {
+	sides := [][2]uint64{
+		{bx - 1, by - 1}, // top-left
+		{bx, by - 1},     // top
+		{bx + 1, by - 1}, // top-right
+		{bx - 1, by},     // left
+		{bx + 1, by},     // right
+		{bx - 1, by + 1}, // bottom-left
+		{bx, by + 1},     // bottom
+		{bx + 1, by + 1}, // bottom-right
+	}
+
+	for _, side := range sides {
+		if !slices.Contains(allowedTypes, world.BlockAt(side[0], side[1]).Type()) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (world *World) BlockNeighboringWith(bx, by uint64, types []types.BlockType) bool {
+	sides := [][2]uint64{
+		{bx - 1, by - 1}, // top-left
+		{bx, by - 1},     // top
+		{bx + 1, by - 1}, // top-right
+		{bx - 1, by},     // left
+		{bx + 1, by},     // right
+		{bx - 1, by + 1}, // bottom-left
+		{bx, by + 1},     // bottom
+		{bx + 1, by + 1}, // bottom-right
+	}
+
+	for _, side := range sides {
+		if slices.Contains(types, world.BlockAt(side[0], side[1]).Type()) {
+			return true
+		}
+	}
+	return false
 }
 
 func (world *World) Seed() int64 {

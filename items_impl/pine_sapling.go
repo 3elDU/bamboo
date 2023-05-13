@@ -6,6 +6,7 @@ import (
 	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
+	"golang.org/x/exp/slices"
 )
 
 func init() {
@@ -41,10 +42,16 @@ func (item *PineSaplingItem) Hash() uint64 {
 }
 
 func (item *PineSaplingItem) Use(pos types.Vec2u) {
-	// sapling can only be planted on empty grass
-	if types.GetCurrentWorld().BlockAt(pos.X, pos.Y).Type() != types.GrassBlock {
+	// sapling can only be planted on grass and it's derivatives
+	if !slices.Contains([]types.BlockType{types.GrassBlock, types.ShortGrassBlock, types.FlowersBlock}, types.GetCurrentWorld().BlockAt(pos.X, pos.Y).Type()) {
 		return
 	}
+
+	// sapling cannot grow near sand
+	if types.GetCurrentWorld().BlockNeighboringWith(pos.X, pos.Y, []types.BlockType{types.SandBlock}) {
+		return
+	}
+
 	types.GetCurrentWorld().SetBlock(pos.X, pos.Y, types.NewPineSaplingBlock())
 	types.GetInventory().RemoveItem(types.ItemSlot{
 		Item:     item,
