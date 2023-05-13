@@ -32,7 +32,7 @@ func (player *Player) Render(screen *ebiten.Image, scaling float64, paused bool)
 	opts.GeoM.Scale(scaling, scaling)
 	opts.GeoM.Translate(
 		float64(sw)/2-8*scaling,
-		float64(sh)/2-16*scaling,
+		float64(sh)/2-20*scaling,
 	)
 	screen.DrawImage(tex, opts)
 
