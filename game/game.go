@@ -2,6 +2,9 @@ package game
 
 import (
 	"fmt"
+	"log"
+
+	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/event"
@@ -15,7 +18,6 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"log"
 )
 
 type Game struct {
@@ -234,7 +236,17 @@ func (game *Game) Update() {
 
 func (game *Game) Draw(screen *ebiten.Image) {
 	game.world.Render(screen, game.player.X, game.player.Y, config.UIScaling)
+
+	if !game.inventory.Slots[game.inventory.SelectedSlot].Empty {
+		screenPos := world.BlockToScreen(screen, types.Vec2f{X: game.player.X, Y: game.player.Y}, game.player.LookingAt(), config.UIScaling)
+		tex := asset_loader.Texture("outline1").Texture()
+		opts := &ebiten.DrawImageOptions{}
+		opts.GeoM.Translate(screenPos.X, screenPos.Y)
+		opts.GeoM.Scale(config.UIScaling, config.UIScaling)
+		screen.DrawImage(tex, opts)
+	}
 	game.player.Render(screen, config.UIScaling, game.paused)
+
 	game.inventory.Render(screen)
 
 	if game.debugInfoVisible {
