@@ -9,12 +9,12 @@ require (
 	github.com/pkg/profile v1.7.0
 	github.com/teacat/noire v1.1.0
 	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
-	golang.org/x/image v0.7.0
 )
 
 require (
 	github.com/felixge/fgprof v0.9.3 // indirect
 	github.com/google/pprof v0.0.0-20230406165453-00490a63f317 // indirect
+	golang.org/x/image v0.7.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 )
 
