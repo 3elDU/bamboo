@@ -38,7 +38,7 @@ func (inv *Inventory) At(i int) types.ItemSlot {
 
 func (inv *Inventory) RemoveItem(item types.ItemSlot) bool {
 	for i, slot := range inv.Slots {
-		if slot.Item.Hash() != item.Item.Hash() {
+		if slot.Empty || slot.Item.Hash() != item.Item.Hash() {
 			continue
 		}
 
