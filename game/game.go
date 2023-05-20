@@ -13,6 +13,7 @@ import (
 	"github.com/3elDU/bamboo/game/player"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/types"
+	"github.com/3elDU/bamboo/ui"
 	"github.com/3elDU/bamboo/world"
 	"github.com/3elDU/bamboo/world_type"
 	"github.com/MakeNowJust/heredoc"
@@ -248,6 +249,21 @@ func (game *Game) Draw(screen *ebiten.Image) {
 	game.player.Render(screen, config.UIScaling, game.paused)
 
 	game.inventory.Render(screen)
+
+	// Check if cursor hovers over one of the items in inventory, and render item's tooltip
+	for i := 0; i < game.inventory.Length(); i++ {
+		slot := game.inventory.At(i)
+		if slot.Empty {
+			continue
+		}
+
+		if game.inventory.MouseOverSlot(screen, i) {
+			item := slot.Item
+			tooltipText := fmt.Sprintf("%v\n------\n%v", item.Name(), item.Description())
+			cx, cy := ebiten.CursorPosition()
+			ui.DrawTooltip(screen, cx, cy, ui.TopRight, tooltipText)
+		}
+	}
 
 	if game.debugInfoVisible {
 		font.RenderFont(screen,

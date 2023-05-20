@@ -17,6 +17,7 @@ type Inventory interface {
 	// Returns the number of total slots
 	Length() int
 	At(i int) ItemSlot
+	// AddItem returns false if there is no space
 	AddItem(item ItemSlot) bool
 	RemoveItem(item ItemSlot) bool
 	SelectSlot(i int)

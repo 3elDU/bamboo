@@ -33,6 +33,14 @@ func NewPineSaplingItem() types.Item {
 	}
 }
 
+func (item *PineSaplingItem) Name() string {
+	return "Pine sapling"
+}
+
+func (item *PineSaplingItem) Description() string {
+	return "Try to plant this in the ground with F"
+}
+
 func (item *PineSaplingItem) Texture() *ebiten.Image {
 	return item.Tex.Texture()
 }

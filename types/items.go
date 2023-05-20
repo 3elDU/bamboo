@@ -5,15 +5,13 @@ import "github.com/hajimehoshi/ebiten/v2"
 type ItemType uint
 
 const (
-	BlockItem ItemType = iota
-	TestItem           // Kept for backwards compatibility of IDs
+	BlockItem ItemType = iota // Kept for backwards compatibility of IDs
+	TestItem                  // Kept for backwards compatibility of IDs
 	PineSaplingItem
 )
 
 func NewItem(id ItemType) Item {
 	switch id {
-	case BlockItem:
-		return NewBlockItem(NewEmptyBlock().(DrawableBlock))
 	case PineSaplingItem:
 		return NewPineSaplingItem()
 	}
@@ -22,11 +20,13 @@ func NewItem(id ItemType) Item {
 }
 
 var (
-	NewBlockItem       func(block DrawableBlock) Item
 	NewPineSaplingItem func() Item
 )
 
 type Item interface {
+	Name() string
+	Description() string
+
 	Texture() *ebiten.Image
 	Type() ItemType
 	// Item's hash is calculated from Item's state.
