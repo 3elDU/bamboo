@@ -1,7 +1,7 @@
 package types
 
 type Vec2i struct {
-	X, Y int64
+	X, Y int
 }
 
 type Vec2u struct {

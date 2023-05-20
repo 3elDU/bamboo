@@ -34,7 +34,7 @@ func (b *connectedBlock) shouldConnect(other types.BlockType) bool {
 func (b *connectedBlock) Render(world types.World, screen *ebiten.Image, pos types.Vec2f) {
 	var connectedSides [4]bool
 	for i, side := range [4]types.Vec2i{{X: -1, Y: 0}, {X: 1, Y: 0}, {X: 0, Y: -1}, {X: 0, Y: 1}} {
-		x, y := int64(b.x)+side.X, int64(b.y)+side.Y
+		x, y := int(b.x)+side.X, int(b.y)+side.Y
 		neighbor := world.BlockAt(uint64(x), uint64(y))
 		if !b.shouldConnect(neighbor.Type()) {
 			continue
