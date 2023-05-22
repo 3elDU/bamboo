@@ -46,6 +46,19 @@ func NewSandBlock(stones bool) types.Block {
 	}
 }
 
+func (sand *SandBlock) Break() {
+	if sand.tex.Name() != "sand-stones" {
+		return
+	}
+	added := types.GetInventory().AddItem(types.ItemSlot{
+		Item:     types.NewFlintItem(),
+		Quantity: 1,
+	})
+	if added {
+		sand.tex = asset_loader.Texture("sand")
+	}
+}
+
 func (b *SandBlock) State() interface{} {
 	return SandState{
 		BaseBlockState:       b.baseBlock.State().(BaseBlockState),

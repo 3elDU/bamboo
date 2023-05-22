@@ -35,6 +35,7 @@ func NewGrassBlock() types.Block {
 				types.RedMushroomBlock, types.WhiteMushroomBlock,
 				types.StoneBlock,
 				types.CaveEntranceBlock,
+				types.CampfireBlock,
 			},
 		},
 		collidableBlock: collidableBlock{

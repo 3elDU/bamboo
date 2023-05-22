@@ -8,12 +8,18 @@ const (
 	BlockItem ItemType = iota // Kept for backwards compatibility of IDs
 	TestItem                  // Kept for backwards compatibility of IDs
 	PineSaplingItem
+	StickItem
+	FlintItem
 )
 
 func NewItem(id ItemType) Item {
 	switch id {
 	case PineSaplingItem:
 		return NewPineSaplingItem()
+	case StickItem:
+		return NewStickItem()
+	case FlintItem:
+		return NewFlintItem()
 	}
 
 	return nil
@@ -21,6 +27,8 @@ func NewItem(id ItemType) Item {
 
 var (
 	NewPineSaplingItem func() Item
+	NewStickItem       func() Item
+	NewFlintItem       func() Item
 )
 
 type Item interface {
@@ -37,4 +45,8 @@ type Item interface {
 	LoadState(interface{})
 
 	Use(pos Vec2u)
+}
+
+type BurnableItem interface {
+	BurningEnergy() float64
 }

@@ -41,6 +41,10 @@ func (item *PineSaplingItem) Description() string {
 	return "Try to plant this in the ground with F"
 }
 
+func (item *PineSaplingItem) BurningEnergy() float64 {
+	return 0.5
+}
+
 func (item *PineSaplingItem) Texture() *ebiten.Image {
 	return item.Tex.Texture()
 }

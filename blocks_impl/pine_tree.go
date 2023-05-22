@@ -40,14 +40,24 @@ func NewPineTreeBlock() types.Block {
 }
 
 func (b *PineTreeBlock) Break() {
-	added := types.GetInventory().AddItem(types.ItemSlot{
+	addedSaplingItem := types.GetInventory().AddItem(types.ItemSlot{
 		Item:     types.NewPineSaplingItem(),
 		Quantity: uint8(1 + rand.Intn(2)),
 	})
-	// if inventory is full, do not do anything
-	if added {
-		types.GetCurrentWorld().SetBlock(uint64(b.x), uint64(b.y), types.NewGrassBlock())
+
+	// add a stick to inventory with 50% chance
+	if rand.Float64() > 0.5 {
+		types.GetInventory().AddItem(types.ItemSlot{
+			Item:     types.NewStickItem(),
+			Quantity: 1,
+		})
 	}
+
+	// if inventory is full, do not do anything
+	if !addedSaplingItem {
+		return
+	}
+	types.GetCurrentWorld().SetBlock(uint64(b.x), uint64(b.y), types.NewGrassBlock())
 }
 
 func (b *PineTreeBlock) State() interface{} {

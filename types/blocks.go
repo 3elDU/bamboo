@@ -25,6 +25,7 @@ const (
 	CaveFloorBlock
 	CaveExitBlock
 	PineSaplingBlock
+	CampfireBlock
 )
 
 func NewBlock(id BlockType) Block {
@@ -63,6 +64,8 @@ func NewBlock(id BlockType) Block {
 		return NewCaveExitBlock()
 	case PineSaplingBlock:
 		return NewPineSaplingBlock()
+	case CampfireBlock:
+		return NewCampfireBlock()
 	}
 
 	return NewEmptyBlock()
@@ -86,6 +89,7 @@ var (
 	NewCaveFloorBlock     func() Block
 	NewCaveExitBlock      func() Block
 	NewPineSaplingBlock   func() Block
+	NewCampfireBlock      func() Block
 )
 
 type Block interface {
@@ -128,4 +132,9 @@ type InteractiveBlock interface {
 type BreakableBlock interface {
 	Block
 	Break()
+}
+
+type CampfireBlockI interface {
+	AddPiece(item BurnableItem)
+	LightUp() bool
 }
