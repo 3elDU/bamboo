@@ -3,10 +3,8 @@ package blocks_impl
 import (
 	"encoding/gob"
 	"fmt"
-	"log"
 
 	"github.com/3elDU/bamboo/asset_loader"
-	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -48,9 +46,6 @@ func (campfire *CampfireBlock) Update(world types.World) {
 	if campfire.burning {
 		// campfire burns 1 energy per minute
 		campfire.energy -= 1.0 / 3600
-		if scene_manager.Ticks()%60 == 0 {
-			log.Println(campfire.energy)
-		}
 
 		if campfire.energy < 0 {
 			campfire.burning = false
