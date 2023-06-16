@@ -9,6 +9,7 @@ import (
 	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/ui"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 type buttonPressedEvent int
@@ -84,6 +85,10 @@ func (p *pauseMenu) Draw(screen *ebiten.Image) error {
 func (p *pauseMenu) ButtonPressed() buttonPressedEvent {
 	if err := p.view.Update(); err != nil {
 		log.Panicf("pauseMenu.ButtonPressed() - %v", err)
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		return continueButtonPressed
 	}
 
 	select {

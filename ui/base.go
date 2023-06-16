@@ -34,6 +34,13 @@ type View interface {
 	ID() uint64
 }
 
+type TextView interface {
+	View
+
+	Text() string
+	SetText(text string)
+}
+
 // FocusView is an interface for components that can be focused
 type FocusView interface {
 	View

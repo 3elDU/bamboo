@@ -12,6 +12,7 @@ type Player struct {
 	// Note that these are block coordinates, not pixel coordinates
 	X, Y                 float64
 	xVelocity, yVelocity float64
+	input                MovementVector
 
 	MovementDirection MovementDirection
 	animationFrame    uint8

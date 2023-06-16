@@ -36,18 +36,51 @@ func (inv *Inventory) At(i int) types.ItemSlot {
 	return *inv.Slots[i]
 }
 
-func (inv *Inventory) RemoveItem(item types.ItemSlot) bool {
-	for i, slot := range inv.Slots {
-		if slot.Empty || slot.Item.Hash() != item.Item.Hash() {
+func (inv *Inventory) HasItemOfType(itemType types.ItemType, amount int) bool {
+	for _, slot := range inv.Slots {
+		if slot.Empty {
 			continue
 		}
 
-		slot.RemoveItem(item.Quantity)
-		if slot.Quantity == 0 {
-			inv.Slots[i] = new(types.ItemSlot)
-			inv.Slots[i].Empty = true
+		if slot.Item.Type() == itemType && slot.Quantity >= uint8(amount) {
+			return true
 		}
-		return true
+	}
+	return false
+}
+
+func (inv *Inventory) RemoveItem(item types.ItemSlot) bool {
+	for i, slot := range inv.Slots {
+		if slot.Empty {
+			continue
+		}
+
+		if slot.Item.Hash() == item.Item.Hash() && slot.Quantity >= item.Quantity {
+			slot.RemoveItem(item.Quantity)
+			if slot.Quantity == 0 {
+				inv.Slots[i] = new(types.ItemSlot)
+				inv.Slots[i].Empty = true
+			}
+			return true
+		}
+	}
+	return false
+}
+
+func (inv *Inventory) RemoveItemByType(itemType types.ItemType, amount int) bool {
+	for i, slot := range inv.Slots {
+		if slot.Empty {
+			continue
+		}
+
+		if slot.Item.Type() == itemType && slot.Quantity >= uint8(amount) {
+			slot.RemoveItem(uint8(amount))
+			if slot.Quantity == 0 {
+				inv.Slots[i] = new(types.ItemSlot)
+				inv.Slots[i].Empty = true
+			}
+			return true
+		}
 	}
 	return false
 }

@@ -312,6 +312,12 @@ func (l *LabelComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	font.RenderFontWithOptions(screen, l.text, x, y, l.opts.Color, l.opts.Scaling)
 	return nil
 }
+func (l *LabelComponent) Text() string {
+	return l.text
+}
+func (l *LabelComponent) SetText(text string) {
+	l.text = text
+}
 
 type ButtonComponent[T any] struct {
 	baseView
@@ -667,4 +673,42 @@ func (i *InputComponent) Input() string {
 }
 func (i *InputComponent) SetInput(input string) {
 	i.input = input
+}
+
+type TooltipComponent struct {
+	baseView
+	child View
+}
+
+func Tooltip(child View) *TooltipComponent {
+	tooltip := &TooltipComponent{
+		baseView: newBaseView(),
+		child:    child,
+	}
+	child.SetParent(tooltip)
+	return tooltip
+}
+
+func (tooltip *TooltipComponent) MaxSize() (float64, float64) {
+	return tooltip.ComputedSize()
+}
+func (tooltip *TooltipComponent) ComputedSize() (float64, float64) {
+	cw, ch := tooltip.child.ComputedSize()
+	return cw + 6*config.UIScaling, ch + 6*config.UIScaling
+}
+func (tooltip *TooltipComponent) CapacityForChild(_ View) (float64, float64) {
+	w, h := tooltip.parent.CapacityForChild(tooltip)
+	return w - 6*config.UIScaling, h - 6*config.UIScaling
+}
+func (tooltip *TooltipComponent) Children() []View {
+	return []View{tooltip.child}
+}
+
+func (tooltip *TooltipComponent) Update() error {
+	return tooltip.child.Update()
+}
+func (tooltip *TooltipComponent) Draw(screen *ebiten.Image, x, y float64) error {
+	w, h := tooltip.ComputedSize()
+	DrawBackground(screen, x, y, w, h)
+	return tooltip.child.Draw(screen, x+3*config.UIScaling, y+3*config.UIScaling)
 }

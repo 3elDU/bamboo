@@ -47,17 +47,20 @@ func (flint *FlintItem) Texture() *ebiten.Image {
 
 func (flint *FlintItem) Use(pos types.Vec2u) {
 	block := types.GetCurrentWorld().BlockAt(pos.X, pos.Y)
-	if block.Type() != types.CampfireBlock {
-		return
-	}
+	switch block.Type() {
+	case types.CampfireBlock:
+		if block.Type() != types.CampfireBlock {
+			return
+		}
 
-	campfire := block.(types.CampfireBlockI)
-	litUp := campfire.LightUp()
+		campfire := block.(types.CampfireBlockI)
+		litUp := campfire.LightUp()
 
-	if litUp {
-		types.GetInventory().RemoveItem(types.ItemSlot{
-			Item:     flint,
-			Quantity: 1,
-		})
+		if litUp {
+			types.GetInventory().RemoveItem(types.ItemSlot{
+				Item:     flint,
+				Quantity: 1,
+			})
+		}
 	}
 }

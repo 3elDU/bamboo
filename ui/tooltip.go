@@ -121,10 +121,16 @@ func positionTooltip(screen *ebiten.Image, cursorX, cursorY int, width, height f
 
 // Renders a tooltip at specified coordinates, with a specified side relative to the cursor.
 // Or, if no preferredSide is specified, an optimal side will be picked.
-func DrawTooltip(screen *ebiten.Image, cursorX, cursorY int, preferredSide TooltipSide, text string) {
+func DrawTextTooltip(screen *ebiten.Image, cursorX, cursorY int, preferredSide TooltipSide, text string) {
 	w, h := font.GetStringSize(text, 1)
 	x, y := positionTooltip(screen, cursorX, cursorY, w, h, preferredSide)
 
+	DrawBackground(screen, x, y, w, h)
+
+	font.RenderFont(screen, text, x+3*config.UIScaling, y+3*config.UIScaling, colors.White)
+}
+
+func DrawBackground(screen *ebiten.Image, x, y, w, h float64) {
 	opts := &ebiten.DrawImageOptions{}
 
 	// Top left corner
@@ -171,6 +177,4 @@ func DrawTooltip(screen *ebiten.Image, cursorX, cursorY int, preferredSide Toolt
 	opts.GeoM.Scale(w, h)
 	opts.GeoM.Translate(x+3*config.UIScaling, y+3*config.UIScaling)
 	screen.DrawImage(center, opts)
-
-	font.RenderFont(screen, text, x+3*config.UIScaling, y+3*config.UIScaling, colors.White)
 }

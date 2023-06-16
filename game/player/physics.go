@@ -156,8 +156,13 @@ func (player *Player) LookingAt() types.Vec2u {
 
 // Update updates the player physics and animation
 // FIXME: consider frame delta time in equations
-func (player *Player) Update(movement MovementVector, world types.World) {
-	dx, dy := movement.ToFloat()
+func (player *Player) UpdateInput(movement MovementVector) {
+	player.input = movement
+}
+
+func (player *Player) Update() {
+	world := types.GetCurrentWorld()
+	dx, dy := player.input.ToFloat()
 
 	player.xVelocity += dx * config.PlayerSpeed
 	player.yVelocity += dy * config.PlayerSpeed

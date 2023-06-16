@@ -25,6 +25,9 @@ type Game struct {
 	paused    bool
 	pauseMenu *pauseMenu
 
+	isCrafting   bool
+	craftingMenu *craftingMenu
+
 	world       *world.World
 	player      *player.Player
 	playerStack *player.Stack
@@ -35,7 +38,8 @@ type Game struct {
 
 func newGame(gameWorld *world.World, playerStack *player.Stack, inventory *inventory.Inventory) *Game {
 	game := &Game{
-		pauseMenu: newPauseMenu(),
+		pauseMenu:    newPauseMenu(),
+		craftingMenu: newCraftingMenu(inventory),
 
 		world:       gameWorld,
 		playerStack: playerStack,
@@ -81,16 +85,8 @@ func (game *Game) Save() {
 }
 
 func (game *Game) processInput() {
-	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		game.paused = !game.paused
-		log.Printf("Escape pressed. Toggled pause menu. (%v)", game.paused)
-
-		// trigger a world save when entering pause menu
-		if game.paused {
-			game.Save()
-		}
-	}
-
+	// "Escape" key is handled by the pause menu itself,
+	// because our code that handles escape key is unreachable
 	if game.paused {
 		switch game.pauseMenu.ButtonPressed() {
 		case continueButtonPressed:
@@ -100,24 +96,50 @@ func (game *Game) processInput() {
 			scene_manager.Pop()
 		}
 		return
+	} else if game.isCrafting {
+		toExit := game.craftingMenu.Update()
+		game.isCrafting = !toExit
 	}
 
-	game.player.Update(player.MovementVector{
+	game.player.UpdateInput(player.MovementVector{
 		Left:  ebiten.IsKeyPressed(ebiten.KeyA),
 		Right: ebiten.IsKeyPressed(ebiten.KeyD),
 		Up:    ebiten.IsKeyPressed(ebiten.KeyW),
 		Down:  ebiten.IsKeyPressed(ebiten.KeyS),
-	}, game.world)
+	})
 
 	// Check for key presses
 	switch {
+	// Escape key
+	// If pause or crafting menu is opened, close it
+	case inpututil.IsKeyJustPressed(ebiten.KeyEscape):
+		if game.isCrafting {
+			// Exit crafting menu
+			log.Println("Exiting crafting menu")
+			game.isCrafting = false
+		} else {
+			// Open pause menu with escape, if neither pause menu nor crafting menu is opened
+			log.Println("Entering pause menu")
+			game.paused = true
+
+			// trigger a world save when entering pause menu
+			if game.paused {
+				game.Save()
+			}
+		}
+
 	// F3 toggles visibility of debug widgets
 	case inpututil.IsKeyJustPressed(ebiten.KeyF3):
 		game.debugInfoVisible = !game.debugInfoVisible
 		log.Printf("Toggled visibility of debug info. (%v)", game.debugInfoVisible)
 
-	// Interact with the nearby block
+	// Open crafting menu
 	case inpututil.IsKeyJustPressed(ebiten.KeyC):
+		log.Println("Entering crafting menu")
+		game.isCrafting = true
+
+	// Break the block
+	case inpututil.IsKeyJustPressed(ebiten.KeyR):
 		lookingAt := game.player.LookingAt()
 		block, breakable := game.world.BlockAt(lookingAt.X, lookingAt.Y).(types.BreakableBlock)
 		if !breakable {
@@ -165,6 +187,7 @@ func (game *Game) updateLogic() {
 	}
 
 	game.world.Update()
+	game.player.Update()
 
 	// perform autosave each N ticks
 	if scene_manager.Ticks()%config.WorldAutosaveDelay == 0 {
@@ -259,9 +282,16 @@ func (game *Game) Draw(screen *ebiten.Image) {
 
 		if game.inventory.MouseOverSlot(screen, i) {
 			item := slot.Item
-			tooltipText := fmt.Sprintf("%v\n------\n%v", item.Name(), item.Description())
+
+			var tooltipText string
+			if item.Description() == "" {
+				tooltipText = item.Name()
+			} else {
+				tooltipText = fmt.Sprintf("%v\n------\n%v", item.Name(), item.Description())
+			}
+
 			cx, cy := ebiten.CursorPosition()
-			ui.DrawTooltip(screen, cx, cy, ui.TopRight, tooltipText)
+			ui.DrawTextTooltip(screen, cx, cy, ui.TopRight, tooltipText)
 		}
 	}
 
@@ -289,6 +319,8 @@ func (game *Game) Draw(screen *ebiten.Image) {
 		if err != nil {
 			log.Panicf("error while rendering pause menu - %v", err)
 		}
+	} else if game.isCrafting {
+		game.craftingMenu.Draw(screen)
 	}
 }
 
