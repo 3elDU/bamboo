@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"github.com/3elDU/bamboo/types"
-	"github.com/3elDU/bamboo/world_type"
 	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/3elDU/bamboo/types"
+	"github.com/3elDU/bamboo/world_type"
 
 	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/config"
@@ -22,7 +23,7 @@ import (
 
 type WorldListScene struct {
 	worldList []types.Save
-	view      ui.View
+	view      ui.Component
 
 	// when the world will be selected by the user,
 	// world name will be transmitted through this channel
@@ -37,7 +38,7 @@ type WorldListScene struct {
 }
 
 // Scan scans the save folder for worlds
-func (s *WorldListScene) Scan() {
+func (scene *WorldListScene) Scan() {
 	worldList := make([]types.Save, 0)
 	filepath.WalkDir(config.WorldSaveDirectory, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -72,42 +73,36 @@ func (s *WorldListScene) Scan() {
 
 		return nil
 	})
-	s.worldList = worldList
+	scene.worldList = worldList
 }
 
-func (s *WorldListScene) UpdateUI() {
-	view := ui.Stack(ui.StackOptions{
-		Direction: ui.VerticalStack,
-		Spacing:   3,
-	})
+func (scene *WorldListScene) UpdateUI() {
+	rootView := ui.VStack().WithSpacing(3)
+	worldList := ui.VStack().WithSpacing(1.0)
 
-	worldList := ui.Stack(ui.StackOptions{
-		Direction: ui.VerticalStack,
-		Spacing:   1,
-	})
-	for _, currentWorld := range s.worldList {
+	for _, currentWorld := range scene.worldList {
 		// assemble a view for each world
-		worldList.AddChild(ui.Stack(ui.StackOptions{Direction: ui.VerticalStack, Spacing: 0.5},
-			ui.Stack(ui.StackOptions{Direction: ui.HorizontalStack, Spacing: 1},
-				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Name: %v", currentWorld.Name)),
-				ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Seed: %v", currentWorld.Seed)),
+		worldList.AddChild(ui.VStack().WithSpacing(0.5).AlignChildren(ui.AlignCenter).WithChildren(
+			ui.HStack().WithSpacing(0.5).WithChildren(
+				ui.Label(fmt.Sprintf("Name: %v", currentWorld.Name)),
+				ui.Label(fmt.Sprintf("Seed: %v", currentWorld.Seed)),
 			),
-			ui.Stack(ui.StackOptions{Direction: ui.HorizontalStack, Spacing: 1},
-				ui.Button(s.selectedWorld, currentWorld, ui.Label(ui.DefaultLabelOptions(), fmt.Sprintf("Play %v", currentWorld.Name))),
-				ui.Button(s.deleteWorld, currentWorld, ui.Label(ui.DefaultLabelOptions(), "Delete")),
+			ui.HStack().WithSpacing(1).WithChildren(
+				ui.Button(scene.selectedWorld, currentWorld, ui.Label(fmt.Sprintf("Play %v", currentWorld.Name))),
+				ui.Button(scene.deleteWorld, currentWorld, ui.Label("Delete")),
 			),
 		))
 	}
-	view.AddChild(worldList)
+	rootView.AddChild(worldList)
 
-	view.AddChild(ui.Stack(ui.StackOptions{Direction: ui.HorizontalStack, Spacing: 1},
-		ui.Button(s.newWorld, true, ui.Label(ui.DefaultLabelOptions(), "New world")),
-		ui.Button(s.goBack, true, ui.Label(ui.DefaultLabelOptions(), "Go back")),
+	rootView.AddChild(ui.HStack().WithSpacing(1).WithChildren(
+		ui.Button(scene.newWorld, true, ui.Label("New world")),
+		ui.Button(scene.goBack, true, ui.Label("Go back")),
 	))
 
-	s.view = ui.Screen(
-		ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(),
-			ui.Center(view),
+	scene.view = ui.Screen(
+		ui.TileBackgroundImage(asset_loader.Texture("snow"),
+			ui.Center(rootView),
 		),
 	)
 }
@@ -124,42 +119,48 @@ func NewWorldListScene() *WorldListScene {
 	return scene
 }
 
-func (s *WorldListScene) Destroy() {
+func (scene *WorldListScene) Destroy() {
 	log.Println("worldListScene.Destroy() called")
 }
 
-func (s *WorldListScene) Update() {
+func (scene *WorldListScene) Update() {
 	// Rescan the saves folder each 60 ticks ( 1 second )
 	if scene_manager.Ticks()%60 == 0 {
-		s.Scan()
+		scene.Scan()
+		scene.UpdateUI()
 	}
 
-	if err := s.view.Update(); err != nil {
+	if err := scene.view.Update(); err != nil {
 		log.Panicf("failed to update a view: %v", err)
 	}
 
 	select {
-	case save := <-s.selectedWorld:
+	case save := <-scene.selectedWorld:
 		log.Printf("worldListScene - Selected world '%v'", save)
-		scene_manager.QPushAndSwitch(game.LoadGameScene(save))
-	case <-s.newWorld:
+		scene_manager.ReplaceAndSwitch(game.LoadGameScene(save))
+	case <-scene.newWorld:
 		log.Println("worldListScene - New world")
 		scene_manager.PushAndSwitch(NewNewWorldScene())
-	case <-s.goBack:
+	case <-scene.goBack:
 		scene_manager.Pop()
-	case id := <-s.deleteWorld:
-		world.DeleteWorld(id)
-		s.Scan()
-		s.UpdateUI()
+	case metadata := <-scene.deleteWorld:
+		scene_manager.PushAndSwitch(NewConfirmationScene(
+			fmt.Sprintf("Are you sure to do delete the world \"%v\"?", metadata.Name),
+			func() {
+				world.DeleteWorld(metadata)
+				scene.Scan()
+				scene.UpdateUI()
+			},
+		))
 	default:
 	}
 }
 
-func (s *WorldListScene) Draw(screen *ebiten.Image) {
-	if scene_manager.Ticks()%60 == 0 || s.view == nil {
-		s.UpdateUI()
+func (scene *WorldListScene) Draw(screen *ebiten.Image) {
+	if scene_manager.Ticks()%60 == 0 || scene.view == nil {
+		scene.UpdateUI()
 	}
-	if err := s.view.Draw(screen, 0, 0); err != nil {
+	if err := scene.view.Draw(screen, 0, 0); err != nil {
 		log.Panicf("worldListScene.view.Draw() - %v", err)
 	}
 }

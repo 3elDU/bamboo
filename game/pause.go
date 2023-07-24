@@ -23,7 +23,7 @@ const (
 // Pause menu is not a scene
 // It is displayed ON TOP of existing game scene
 type pauseMenu struct {
-	view ui.View
+	view ui.Component
 
 	// just a black texture
 	// it is used to "dim" the background
@@ -50,19 +50,22 @@ func newPauseMenu() *pauseMenu {
 		continueBtn: continueBtn,
 		exitBtn:     exitBtn,
 
-		view: ui.Screen(ui.Padding(1, ui.Stack(
-			ui.StackOptions{
-				Direction:   ui.VerticalStack,
-				Proportions: []float64{0.3},
-			},
+		view: ui.Screen(
+			ui.Padding(1,
+				ui.VStack().
+					WithProportions(0.3).
+					WithChildren(
+						ui.Center(
+							ui.CustomLabel("Paused", colors.C("white"), 3.0),
+						),
 
-			ui.Center(ui.Label(ui.LabelOptions{Color: colors.White, Scaling: 3.0}, "Paused")),
-
-			ui.Center(ui.Stack(ui.StackOptions{Direction: ui.VerticalStack, Spacing: 1},
-				ui.Button(continueBtn, true, ui.Label(ui.DefaultLabelOptions(), "Continue")),
-				ui.Button(exitBtn, true, ui.Label(ui.DefaultLabelOptions(), "Exit to main menu")),
-			)),
-		))),
+						ui.Center(ui.VStack().WithSpacing(1.0).WithChildren(
+							ui.Button(continueBtn, true, ui.Label("Continue")),
+							ui.Button(exitBtn, true, ui.Label("Exit to main menu")),
+						)),
+					),
+			),
+		),
 	}
 }
 

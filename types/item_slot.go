@@ -1,5 +1,7 @@
 package types
 
+import "github.com/3elDU/bamboo/config"
+
 // Holds multiple items of the same type
 type ItemSlot struct {
 	Item     Item
@@ -26,7 +28,7 @@ func (slot *ItemSlot) AddItem(other ItemSlot) bool {
 		return false
 	}
 
-	if slot.Quantity+other.Quantity > 50 {
+	if slot.Quantity+other.Quantity > config.SlotSize {
 		return false
 	}
 

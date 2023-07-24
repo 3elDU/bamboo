@@ -35,12 +35,22 @@ func init() {
 	asset_loader.LoadAssets(config.AssetDirectory)
 
 	// set window options
-	ebiten.SetWindowSize(640, 480)
+	ebiten.SetWindowSize(960, 640)
 	ebiten.SetWindowTitle("bamboo devtest")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 }
 
+func TestFunc1() {
+	fmt.Println("TestFunc1")
+}
+
+func TestFunc2() {
+	fmt.Println("TestFunc2")
+}
+
 func main() {
+	TestFunc1()
+
 	if slices.Contains(os.Environ(), "CPUPROFILE=1") {
 		log.Println("Starting with CPU profiling enabled")
 		defer profile.Start(profile.CPUProfile, profile.ProfilePath(".")).Stop()

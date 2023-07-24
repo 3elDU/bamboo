@@ -1,90 +1,128 @@
 package game
 
 import (
-	"fmt"
 	"image/color"
-	"strings"
 
+	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/crafting"
-	"github.com/3elDU/bamboo/game/inventory"
 	"github.com/3elDU/bamboo/types"
 	"github.com/3elDU/bamboo/ui"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"golang.org/x/exp/slices"
 )
 
 type craftingMenu struct {
-	selectedRecipe int
-	inventory      *inventory.Inventory
+	availableCrafts []types.Craft
+	selectedCraft   int
 
-	stack *ui.StackComponent
+	craftList                *ui.AvailableCraftsList
+	selectedCraftDescription *ui.CraftDescription
 }
 
-func newCraftingMenu(inventory *inventory.Inventory) *craftingMenu {
-	stack := ui.Stack(ui.StackOptions{Direction: ui.VerticalStack, Spacing: 1.0})
-	for _, craft := range crafting.Crafts {
-		if crafting.AbleToCraft(craft) {
-			stack.AddChild(ui.Label(ui.LabelOptions{Color: color.White, Scaling: 1.0}, craft.Name))
+func newCraftingMenu() *craftingMenu {
+	menu := &craftingMenu{selectedCraft: 0}
+	menu.craftList = ui.NewAvailableCraftsList(menu.availableCrafts, menu.selectedCraft)
+	menu.selectedCraftDescription = ui.NewCraftDescription(menu.SelectedCraft())
+	menu.UpdateAvailableRecipes()
+	return menu
+}
+
+func (menu *craftingMenu) SelectedCraft() types.Craft {
+	if len(menu.availableCrafts) <= menu.selectedCraft {
+		return types.Craft{}
+	}
+	return menu.availableCrafts[menu.selectedCraft]
+}
+
+func (menu *craftingMenu) setSelectedCraft(selectedCraft int) {
+	if selectedCraft < 0 {
+		selectedCraft = len(menu.availableCrafts) - 1
+	}
+	if selectedCraft > len(menu.availableCrafts)-1 {
+		selectedCraft = 0
+	}
+	menu.selectedCraft = selectedCraft
+	menu.craftList.SetSelectedCraft(selectedCraft)
+	menu.selectedCraftDescription.SetCraft(menu.SelectedCraft())
+}
+
+// Updates the list of recipes that can be crafted, and updated the UI accordingly.
+func (menu *craftingMenu) UpdateAvailableRecipes() {
+	menu.availableCrafts = []types.Craft{}
+	for _, recipe := range crafting.Crafts {
+		if recipe.AbleToCraft() {
+			menu.availableCrafts = append(menu.availableCrafts, recipe)
 		}
 	}
 
-	return &craftingMenu{
-		inventory: inventory,
-		stack:     stack,
-	}
+	// Sort the list of available crafts alphabetically
+	slices.SortStableFunc(menu.availableCrafts, func(a types.Craft, b types.Craft) bool {
+		for _, charA := range a.Name {
+			for _, charB := range b.Name {
+				if charA < charB {
+					return true
+				}
+			}
+		}
+		return false
+	})
+
+	menu.craftList.SetAvailableCrafts(menu.availableCrafts)
+	menu.setSelectedCraft(menu.selectedCraft)
 }
 
 func (menu *craftingMenu) Update() bool {
 	switch {
 	case inpututil.IsKeyJustPressed(ebiten.KeyEnter):
-		crafting.Craft(crafting.Crafts[menu.selectedRecipe])
-		return true
+		menu.SelectedCraft().Craft()
+		menu.UpdateAvailableRecipes()
+		return !ebiten.IsKeyPressed(ebiten.KeyShift)
+	}
 
+	// Return early if there are no available crafts.
+	// Handling up/down arrow keys makes no sense, when there is no items to choose from
+	if len(menu.availableCrafts) == 0 {
+		return false
+	}
+
+	switch {
 	case inpututil.IsKeyJustPressed(ebiten.KeyDown):
-		menu.selectedRecipe += 1
+		menu.setSelectedCraft(menu.selectedCraft + 1)
 	case inpututil.IsKeyJustPressed(ebiten.KeyUp):
-		menu.selectedRecipe -= 1
+		menu.setSelectedCraft(menu.selectedCraft - 1)
 	}
 	return false
 }
 
 func (menu *craftingMenu) Draw(screen *ebiten.Image) {
-	for i, child := range menu.stack.Children() {
-		textView := child.(ui.TextView)
-		text := textView.Text()
+	var view ui.Component
 
-		if i == menu.selectedRecipe && !strings.Contains(text, "-> ") {
-			text = "-> " + text
-		} else if i != menu.selectedRecipe {
-			text = strings.ReplaceAll(text, "-> ", "")
-		}
-		textView.SetText(text)
+	if len(menu.availableCrafts) > 0 {
+		view = ui.Screen(
+			ui.Padding(1.0, ui.VStack().WithSpacing(2.0).WithChildren(
+				ui.Background(colors.C("blue"),
+					ui.PaddingX(1.0, ui.CustomLabel("Crafting", colors.C("white"), 1.5)),
+				),
+				ui.HStack().WithSpacing(2.0).WithChildren(
+					ui.VStack(
+						ui.ColoredLabel("List", color.White),
+						ui.Tooltip(menu.craftList),
+					),
+					ui.VStack(
+						ui.ColoredLabel("Description", color.White),
+						ui.Tooltip(menu.selectedCraftDescription),
+					),
+				),
+			)))
+	} else {
+		// If there are no available crafts, show a placeholder text
+		view = ui.Screen(ui.Padding(1.0,
+			ui.Tooltip(ui.Padding(1.0,
+				ui.ColoredLabel("No crafts available!", color.White),
+			)),
+		))
 	}
 
-	craftInfo := ""
-	craftInfo += fmt.Sprintf("%v\n%v\n", crafting.Crafts[menu.selectedRecipe].Name, crafting.Crafts[menu.selectedRecipe].Description)
-	craftInfo += fmt.Sprintf("------ Ingredients:\n")
-	for i, ingredient := range crafting.Crafts[menu.selectedRecipe].Ingredients {
-		craftInfo += fmt.Sprintf("%v. %vx %v\n",
-			i+1,
-			ingredient.Amount,
-			types.NewItem(ingredient.Type).Name(),
-		)
-	}
-	craftInfo += fmt.Sprintf("------ Result\n")
-	for i, result := range crafting.Crafts[menu.selectedRecipe].Result {
-		craftInfo += fmt.Sprintf("%v. %vx %v\n",
-			i+1,
-			result.Amount,
-			types.NewItem(result.Type).Name(),
-		)
-	}
-
-	view := ui.Screen(
-		ui.Padding(1.0, ui.Stack(ui.StackOptions{Direction: ui.HorizontalStack, Spacing: 5.0},
-			ui.Tooltip(menu.stack),
-			ui.Tooltip(ui.Label(ui.LabelOptions{Color: color.White, Scaling: 1.0}, craftInfo)),
-		)),
-	)
 	view.Draw(screen, 0, 0)
 }

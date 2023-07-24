@@ -2,6 +2,7 @@ package inventory
 
 import (
 	"fmt"
+
 	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/config"
@@ -85,6 +86,18 @@ func (inv *Inventory) RemoveItemByType(itemType types.ItemType, amount int) bool
 	return false
 }
 
+func (inv *Inventory) CanAddItem(item types.ItemSlot) bool {
+	for _, slot := range inv.Slots {
+		if slot.Empty {
+			return true
+		}
+		if slot.Item.Type() == item.Item.Type() && slot.Quantity+item.Quantity <= config.SlotSize {
+			return true
+		}
+	}
+	return false
+}
+
 func (inv *Inventory) AddItem(item types.ItemSlot) bool {
 	for _, slot := range inv.Slots {
 		if slot.AddItem(item) {
@@ -156,7 +169,7 @@ func (inv *Inventory) Render(screen *ebiten.Image) {
 
 		screen.DrawImage(itemTex, itemTexOpts)
 
-		font.RenderFont(screen, fmt.Sprintf("%v", slot.Quantity), itemTexPos.X, itemTexPos.Y, colors.Black)
+		font.RenderFont(screen, fmt.Sprintf("%v", slot.Quantity), itemTexPos.X, itemTexPos.Y, colors.C("black"))
 	}
 
 	selectedSlotTex := asset_loader.Texture("selected_slot").Texture()

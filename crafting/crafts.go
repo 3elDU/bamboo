@@ -5,14 +5,32 @@ import "github.com/3elDU/bamboo/types"
 // A list of all available crafts
 var Crafts []types.Craft = []types.Craft{
 	{
-		Name: "1",
+		Name:        "Debug1",
+		Description: "Make a stick from a flint!\nHow convenient!",
+		Ingredients: []types.CraftIngredient{
+			{
+				Type:   types.FlintItem,
+				Amount: 1,
+			},
+		},
+		Results: []types.CraftIngredient{
+			{
+				Type:   types.StickItem,
+				Amount: 1,
+			},
+		},
+	},
+
+	{
+		Name:        "Debug2",
+		Description: "Make a flint from a stick!\nHow convenient!",
 		Ingredients: []types.CraftIngredient{
 			{
 				Type:   types.StickItem,
 				Amount: 1,
 			},
 		},
-		Result: []types.CraftIngredient{
+		Results: []types.CraftIngredient{
 			{
 				Type:   types.FlintItem,
 				Amount: 1,
@@ -21,45 +39,19 @@ var Crafts []types.Craft = []types.Craft{
 	},
 
 	{
-		Name: "2",
+		Name:        "Test3",
+		Description: "lorem ipsum dolor sit amet...",
 		Ingredients: []types.CraftIngredient{
 			{
-				Type:   types.StickItem,
-				Amount: 1,
+				Type:   types.FlintItem,
+				Amount: 30,
 			},
 		},
-		Result: []types.CraftIngredient{
+		Results: []types.CraftIngredient{
 			{
-				Type:   types.FlintItem,
-				Amount: 2,
+				Type:   types.StickItem,
+				Amount: 30,
 			},
 		},
 	},
-}
-
-// Returns true if the player has necessary ingredients to craft this item
-func AbleToCraft(craft types.Craft) bool {
-	for _, item := range craft.Ingredients {
-		if !types.GetInventory().HasItemOfType(item.Type, item.Amount) {
-			return false
-		}
-	}
-	return true
-}
-
-func Craft(craft types.Craft) bool {
-	for _, ingredient := range craft.Ingredients {
-		removed := types.GetInventory().RemoveItemByType(ingredient.Type, ingredient.Amount)
-		if !removed {
-			return false
-		}
-	}
-
-	for _, result := range craft.Result {
-		types.GetInventory().AddItem(types.ItemSlot{
-			Item:     types.NewItem(result.Type),
-			Quantity: uint8(result.Amount),
-		})
-	}
-	return true
 }

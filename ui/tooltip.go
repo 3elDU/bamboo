@@ -11,53 +11,86 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-var corner_top_left, corner_top_right, corner_bottom_left, corner_bottom_right *ebiten.Image
-var side_left, side_right, side_top, side_bottom *ebiten.Image
-var center *ebiten.Image
+var tooltip TooltipTexture
+var tooltip_button TooltipTexture
+var tooltip_button_hover TooltipTexture
+var tooltip_input TooltipTexture
+var tooltip_input_focused TooltipTexture
 
-func init() {
-	// Load all the textures
+type TooltipTexture struct {
+	TopLeft  *ebiten.Image
+	Top      *ebiten.Image
+	TopRight *ebiten.Image
 
-	tooltip := asset_loader.Texture("tooltip").Texture()
+	Left   *ebiten.Image
+	Center *ebiten.Image
+	Right  *ebiten.Image
 
-	corner_top_left = ebiten.NewImageFromImage(tooltip.SubImage(image.Rectangle{
+	BottomLeft  *ebiten.Image
+	Bottom      *ebiten.Image
+	BottomRight *ebiten.Image
+}
+
+// Divide the tooltip texture into sub-textures for rendering
+func AssembleTooltipTexture(texture *ebiten.Image) TooltipTexture {
+	topLeft := ebiten.NewImageFromImage(texture.SubImage(image.Rectangle{
 		Min: image.Point{X: 0, Y: 0},
 		Max: image.Point{X: 3, Y: 3},
 	}))
-	corner_top_right = ebiten.NewImageFromImage(tooltip.SubImage(image.Rectangle{
+	topRight := ebiten.NewImageFromImage(texture.SubImage(image.Rectangle{
 		Min: image.Point{X: 4, Y: 0},
 		Max: image.Point{X: 7, Y: 3},
 	}))
-	corner_bottom_left = ebiten.NewImageFromImage(tooltip.SubImage(image.Rectangle{
+	bottomLeft := ebiten.NewImageFromImage(texture.SubImage(image.Rectangle{
 		Min: image.Point{X: 0, Y: 4},
 		Max: image.Point{X: 3, Y: 7},
 	}))
-	corner_bottom_right = ebiten.NewImageFromImage(tooltip.SubImage(image.Rectangle{
+	bottomRight := ebiten.NewImageFromImage(texture.SubImage(image.Rectangle{
 		Min: image.Point{X: 4, Y: 4},
 		Max: image.Point{X: 7, Y: 7},
 	}))
 
-	side_left = ebiten.NewImageFromImage(tooltip.SubImage(image.Rectangle{
+	left := ebiten.NewImageFromImage(texture.SubImage(image.Rectangle{
 		Min: image.Point{X: 0, Y: 3},
 		Max: image.Point{X: 3, Y: 4},
 	}))
-	side_right = ebiten.NewImageFromImage(tooltip.SubImage(image.Rectangle{
+	right := ebiten.NewImageFromImage(texture.SubImage(image.Rectangle{
 		Min: image.Point{X: 4, Y: 3},
 		Max: image.Point{X: 7, Y: 4},
 	}))
-	side_top = ebiten.NewImageFromImage(tooltip.SubImage(image.Rectangle{
+	top := ebiten.NewImageFromImage(texture.SubImage(image.Rectangle{
 		Min: image.Point{X: 3, Y: 0},
 		Max: image.Point{X: 4, Y: 3},
 	}))
-	side_bottom = ebiten.NewImageFromImage(tooltip.SubImage(image.Rectangle{
+	bottom := ebiten.NewImageFromImage(texture.SubImage(image.Rectangle{
 		Min: image.Point{X: 3, Y: 4},
 		Max: image.Point{X: 4, Y: 7},
 	}))
 
-	center = ebiten.NewImageFromImage(tooltip.SubImage(image.Rectangle{
+	center := ebiten.NewImageFromImage(texture.SubImage(image.Rectangle{
 		Min: image.Point{X: 3, Y: 3},
 		Max: image.Point{X: 4, Y: 4},
 	}))
+
+	return TooltipTexture{
+		TopLeft:     topLeft,
+		Top:         top,
+		TopRight:    topRight,
+		Left:        left,
+		Center:      center,
+		Right:       right,
+		BottomLeft:  bottomLeft,
+		Bottom:      bottom,
+		BottomRight: bottomRight,
+	}
+}
+
+func init() {
+	tooltip = AssembleTooltipTexture(asset_loader.Texture("tooltip").Texture())
+	tooltip_button = AssembleTooltipTexture(asset_loader.Texture("tooltip_button").Texture())
+	tooltip_button_hover = AssembleTooltipTexture(asset_loader.Texture("tooltip_button_hover").Texture())
+	tooltip_input = AssembleTooltipTexture(asset_loader.Texture("tooltip_input").Texture())
+	tooltip_input_focused = AssembleTooltipTexture(asset_loader.Texture("tooltip_input_focused").Texture())
 }
 
 // Which side of the cursor to prefer for displaying the tooltip.
@@ -87,8 +120,8 @@ func positionTooltip(screen *ebiten.Image, cursorX, cursorY int, width, height f
 	sw, sh := screen.Bounds().Dx(), screen.Bounds().Dy()
 
 	sides := map[TooltipSide]types.Vec2i{
-		BottomRight: {X: cursorX, Y: cursorY},
-		BottomLeft:  {X: cursorX - int(width) - int(6*config.UIScaling), Y: cursorY},
+		BottomRight: {X: cursorX + int(3*config.UIScaling), Y: cursorY + int(3*config.UIScaling)},
+		BottomLeft:  {X: cursorX - int(width) - int(3*config.UIScaling), Y: cursorY + int(3*config.UIScaling)},
 		TopRight:    {X: cursorX, Y: cursorY - int(height) - int(6*config.UIScaling)},
 		TopLeft:     {X: cursorX - int(width) - int(6*config.UIScaling), Y: cursorY - int(height) - int(6*config.UIScaling)},
 	}
@@ -125,56 +158,74 @@ func DrawTextTooltip(screen *ebiten.Image, cursorX, cursorY int, preferredSide T
 	w, h := font.GetStringSize(text, 1)
 	x, y := positionTooltip(screen, cursorX, cursorY, w, h, preferredSide)
 
-	DrawBackground(screen, x, y, w, h)
+	DrawTooltipBackground(screen, x, y, w, h)
 
-	font.RenderFont(screen, text, x+3*config.UIScaling, y+3*config.UIScaling, colors.White)
+	font.RenderFont(screen, text, x+3*config.UIScaling, y+3*config.UIScaling, colors.C("white"))
 }
 
-func DrawBackground(screen *ebiten.Image, x, y, w, h float64) {
+func draw_tooltip(screen *ebiten.Image, texture TooltipTexture, x, y, w, h float64) {
 	opts := &ebiten.DrawImageOptions{}
 
 	// Top left corner
 	opts.GeoM.Scale(config.UIScaling, config.UIScaling)
 	opts.GeoM.Translate(x, y)
-	screen.DrawImage(corner_top_left, opts)
+	screen.DrawImage(texture.TopLeft, opts)
 
 	// Top right corner
 	opts.GeoM.Translate(w+3*config.UIScaling, 0)
-	screen.DrawImage(corner_top_right, opts)
+	screen.DrawImage(texture.TopRight, opts)
 
 	// Bottom left corner
 	opts.GeoM.Reset()
 	opts.GeoM.Scale(config.UIScaling, config.UIScaling)
 	opts.GeoM.Translate(x, y+h+3*config.UIScaling)
-	screen.DrawImage(corner_bottom_left, opts)
+	screen.DrawImage(texture.BottomLeft, opts)
 
 	// Bottom right corner
 	opts.GeoM.Translate(w+3*config.UIScaling, 0)
-	screen.DrawImage(corner_bottom_right, opts)
+	screen.DrawImage(texture.BottomRight, opts)
 
 	// Left side
 	opts.GeoM.Reset()
 	opts.GeoM.Scale(config.UIScaling, h)
 	opts.GeoM.Translate(x, y+3*config.UIScaling)
-	screen.DrawImage(side_left, opts)
+	screen.DrawImage(texture.Left, opts)
 
 	// Right side
 	opts.GeoM.Translate(w+3*config.UIScaling, 0)
-	screen.DrawImage(side_right, opts)
+	screen.DrawImage(texture.Right, opts)
 
 	// Top side
 	opts.GeoM.Reset()
 	opts.GeoM.Scale(w, config.UIScaling)
 	opts.GeoM.Translate(x+3*config.UIScaling, y)
-	screen.DrawImage(side_top, opts)
+	screen.DrawImage(texture.Top, opts)
 
 	// Bottom side
 	opts.GeoM.Translate(0, h+3*config.UIScaling)
-	screen.DrawImage(side_bottom, opts)
+	screen.DrawImage(texture.Bottom, opts)
 
 	// Center (background)
 	opts.GeoM.Reset()
 	opts.GeoM.Scale(w, h)
 	opts.GeoM.Translate(x+3*config.UIScaling, y+3*config.UIScaling)
-	screen.DrawImage(center, opts)
+	screen.DrawImage(texture.Center, opts)
+}
+
+func DrawTooltipBackground(screen *ebiten.Image, x, y, w, h float64) {
+	draw_tooltip(screen, tooltip, x, y, w, h)
+}
+func DrawButtonBackground(screen *ebiten.Image, hover bool, x, y, w, h float64) {
+	if hover {
+		draw_tooltip(screen, tooltip_button_hover, x, y, w, h)
+	} else {
+		draw_tooltip(screen, tooltip_button, x, y, w, h)
+	}
+}
+func DrawInputBackground(screen *ebiten.Image, focused bool, x, y, w, h float64) {
+	if focused {
+		draw_tooltip(screen, tooltip_input_focused, x, y, w, h)
+	} else {
+		draw_tooltip(screen, tooltip_input, x, y, w, h)
+	}
 }

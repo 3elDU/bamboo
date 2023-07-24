@@ -1,12 +1,13 @@
 package scenes
 
 import (
-	"github.com/3elDU/bamboo/config"
-	"github.com/3elDU/bamboo/types"
-	"github.com/3elDU/bamboo/world_type"
 	"hash/fnv"
 	"log"
 	"math/rand"
+
+	"github.com/3elDU/bamboo/types"
+	"github.com/3elDU/bamboo/world"
+	"github.com/3elDU/bamboo/world_type"
 
 	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/game"
@@ -17,7 +18,7 @@ import (
 )
 
 type NewWorldScene struct {
-	view ui.View
+	view ui.Component
 
 	// form results will be received through this channel
 	// first string is world name, second is world seed
@@ -35,14 +36,14 @@ func NewNewWorldScene() *NewWorldScene {
 		goBack:   goBack,
 
 		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(), ui.Center(
-			ui.Stack(ui.StackOptions{Direction: ui.VerticalStack},
+			ui.VStack(
 				ui.Form(
 					"Create a new world",
 					formData,
 					ui.FormPrompt{Title: "World name"},
 					ui.FormPrompt{Title: "World seed (optional)"},
 				),
-				ui.Button(goBack, true, ui.Label(ui.DefaultLabelOptions(), "Go back")),
+				ui.Button(goBack, true, ui.Label("Go back")),
 			),
 		))),
 	}
@@ -73,13 +74,13 @@ func (s *NewWorldScene) Update() {
 		worldName, seedString := formData[0], formData[1]
 		seed := seedFromString(seedString)
 
-		scene_manager.QPushAndSwitch(game.NewGameScene(types.Save{
+		scene_manager.ReplaceAndSwitch(game.NewGameScene(types.Save{
 			Name:      worldName,
 			BaseUUID:  uuid.New(),
 			UUID:      uuid.New(),
 			Seed:      seed,
 			WorldType: world_type.Overworld,
-			Size:      config.SizeForWorldType(world_type.Overworld),
+			Size:      world.SizeForWorldType(world_type.Overworld),
 		}))
 	default:
 	}

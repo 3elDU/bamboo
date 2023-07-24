@@ -18,6 +18,8 @@ type Inventory interface {
 	Length() int
 	At(i int) ItemSlot
 
+	// Checks if there is enough space in the inventory to add this item
+	CanAddItem(item ItemSlot) bool
 	// AddItem returns false if there is no space
 	AddItem(item ItemSlot) bool
 	RemoveItem(item ItemSlot) bool

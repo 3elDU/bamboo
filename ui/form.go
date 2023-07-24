@@ -19,11 +19,11 @@ type FormPrompt struct {
 
 // a simple wrapper around basic components, to simplify creation of prompts
 type FormComponent struct {
-	baseView
+	baseComponent
 
 	formData chan []string
 
-	view View
+	view Component
 	// slice with references to the input components themselves
 	prompts       []FormPrompt
 	composeButton ButtonView
@@ -33,13 +33,14 @@ type FormComponent struct {
 // in the proper order
 func Form(submitButtonTitle string, formData chan []string, prompts ...FormPrompt) *FormComponent {
 	form := &FormComponent{
-		baseView: newBaseView(),
-		formData: formData,
-		prompts:  make([]FormPrompt, len(prompts)),
+		baseComponent: newBaseComponent(),
+		formData:      formData,
+		prompts:       make([]FormPrompt, len(prompts)),
 	}
 
 	// assemble a view with the prompts
-	promptsStack := Stack(StackOptions{Direction: VerticalStack, Spacing: 2.0})
+	promptsStack := VStack().WithSpacing(2)
+	promptsStack.SetParent(form)
 
 	// assemble a view for each prompt
 	for i, prompt := range prompts {
@@ -53,8 +54,8 @@ func Form(submitButtonTitle string, formData chan []string, prompts ...FormPromp
 		inp := Input(func(s string) { log.Printf("%s - %s", prompt.Title, s) }, ebiten.KeyEnter, focus)
 
 		// create a view for the prompt
-		promptView := Stack(StackOptions{Direction: VerticalStack, Spacing: 1.0},
-			Label(DefaultLabelOptions(), prompt.Title), inp,
+		promptView := VStack().WithSpacing(1.0).WithChildren(
+			Label(prompt.Title), inp,
 		)
 
 		// add it to the stack
@@ -69,7 +70,7 @@ func Form(submitButtonTitle string, formData chan []string, prompts ...FormPromp
 	composeButton := Button(
 		// Leave the handler empty, because we'll check for the button press manually
 		make(chan interface{}), nil,
-		Label(DefaultLabelOptions(), submitButtonTitle),
+		Label(submitButtonTitle),
 	)
 	promptsStack.AddChild(composeButton)
 
@@ -84,11 +85,14 @@ func (f *FormComponent) MaxSize() (float64, float64) {
 func (f *FormComponent) ComputedSize() (float64, float64) {
 	return f.view.ComputedSize()
 }
-func (f *FormComponent) CapacityForChild(_ View) (float64, float64) {
+func (f *FormComponent) CapacityForChild(_ Component) (float64, float64) {
 	return 0, 0
 }
-func (f *FormComponent) Children() []View {
-	return []View{f.view}
+func (f *FormComponent) MaxCapacityForChild(_ Component) (float64, float64) {
+	return 0, 0
+}
+func (f *FormComponent) Children() []Component {
+	return []Component{f.view}
 }
 func (f *FormComponent) Update() error {
 	if f.composeButton.IsPressed() {

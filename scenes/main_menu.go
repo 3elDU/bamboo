@@ -4,14 +4,15 @@ import (
 	"log"
 
 	"github.com/3elDU/bamboo/asset_loader"
-	"github.com/3elDU/bamboo/colors"
+	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/ui"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 type MainMenu struct {
-	view ui.View
+	view ui.Component
 
 	// through this channel we will receive button ID, that was pressed
 	buttonPressed chan int
@@ -22,32 +23,44 @@ func NewMainMenuScene() *MainMenu {
 
 	return &MainMenu{
 		buttonPressed: buttonPressed,
-		view: ui.Screen(
-			ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(), ui.Padding(1,
-				ui.Stack(ui.StackOptions{Spacing: 0, Proportions: []float64{0.2}},
-					ui.Center(ui.Label(
-						ui.LabelOptions{
-							Color:   colors.Black,
-							Scaling: 2.5,
-						},
-						"bamboo devtest",
-					)),
-					ui.Center(ui.Stack(ui.StackOptions{Spacing: 0.5},
-						ui.Button(
-							buttonPressed, 1,
-							ui.Label(ui.DefaultLabelOptions(), "Singleplayer"),
+		view: ui.Screen(ui.TileBackgroundImage(asset_loader.Texture("snow"), ui.Padding(0.5,
+			ui.Overlay(
+				ui.VStack().WithProportions(0.4).WithChildren(
+					ui.Center(
+						ui.Label("Bamboo").WithTextSize(5),
+					),
+					ui.Center(ui.VStack().WithSpacing(0.5).WithChildren(
+						ui.Button(buttonPressed, 1,
+							ui.Label("Singleplayer"),
 						),
-						ui.Button(
-							buttonPressed, 2,
-							ui.Label(ui.DefaultLabelOptions(), "About"),
+						ui.Button(buttonPressed, 2,
+							ui.Label("About"),
 						),
-						ui.Button(
-							buttonPressed, 3,
-							ui.Label(ui.DefaultLabelOptions(), "Exit"),
+						ui.Button(buttonPressed, 3,
+							ui.Label("Exit"),
 						),
 					)),
 				),
-			)),
+
+				ui.PositionSelf(ui.PositionBottomRight,
+					ui.HStack(
+						ui.VStack().WithSpacing(0.2).AlignChildren(ui.AlignEnd).WithChildren(
+							ui.Label("Version: "),
+							ui.Label("Commit hash: "),
+							ui.Label("Build date: "),
+							ui.Label("Build machine: "),
+						),
+
+						ui.VStack().WithSpacing(0.2).AlignChildren(ui.AlignStart).WithChildren(
+							ui.Label(config.GitTag),
+							ui.Label(config.GitCommit),
+							ui.Label(config.BuildDate),
+							ui.Label(config.BuildMachine),
+						),
+					),
+				),
+			),
+		)),
 		),
 	}
 }
@@ -55,6 +68,11 @@ func NewMainMenuScene() *MainMenu {
 func (s *MainMenu) Update() {
 	if err := s.view.Update(); err != nil {
 		log.Panicf("failed to update a view: %v", err)
+	}
+
+	// Open debug menu on "D"
+	if inpututil.IsKeyJustPressed(ebiten.KeyD) {
+		scene_manager.PushAndSwitch(NewDebugMenu())
 	}
 
 	select {

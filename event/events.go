@@ -6,6 +6,8 @@ import "github.com/google/uuid"
 const (
 	CaveEnter Type = iota
 	CaveExit
+	// Reload graphic assets / etc.
+	Reload
 )
 
 type CaveEnteredArgs struct {

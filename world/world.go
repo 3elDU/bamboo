@@ -3,6 +3,7 @@ package world
 import (
 	"log"
 
+	"github.com/3elDU/bamboo/world_type"
 	"github.com/3elDU/bamboo/worldgen"
 	"golang.org/x/exp/slices"
 
@@ -18,6 +19,18 @@ type World struct {
 	metadata types.Save
 
 	chunks map[types.Vec2u]*Chunk
+}
+
+func SizeForWorldType(world world_type.WorldType) types.Vec2u {
+	switch world {
+	case world_type.Overworld:
+		return types.Vec2u{X: config.OverworldSize, Y: config.OverworldSize}
+	case world_type.Cave:
+		return types.Vec2u{X: config.Cave1Size, Y: config.Cave1Size}
+	}
+
+	log.Printf("Unable to retrieve world size for world type %v", world)
+	return types.Vec2u{X: 1024, Y: 1024}
 }
 
 func NewWorld(metadata types.Save) *World {

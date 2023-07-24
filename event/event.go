@@ -29,6 +29,12 @@ var eventList []Event
 
 func FireEvent(event Event) {
 	eventList = append(eventList, event)
+
+	for _, subscriber := range subscribers {
+		if subscriber.eventType == event.Type() {
+			subscriber.callback(event.Args())
+		}
+	}
 }
 
 func GetEvents() []Event {
@@ -36,4 +42,19 @@ func GetEvents() []Event {
 	copy(events, eventList)
 	eventList = []Event{}
 	return events
+}
+
+type eventSubscriber struct {
+	eventType Type
+	callback  func(args interface{})
+}
+
+var subscribers []eventSubscriber
+
+// Register a custom callback for a specific event, that will be called when the event is fired.
+func Subscribe(eventType Type, callback func(args interface{})) {
+	subscribers = append(subscribers, eventSubscriber{
+		eventType: eventType,
+		callback:  callback,
+	})
 }

@@ -8,11 +8,9 @@ import (
 	"fmt"
 	"image/color"
 	"log"
-	"math/rand"
 	"unicode/utf8"
 
 	"github.com/3elDU/bamboo/asset_loader"
-	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/font"
 	"github.com/3elDU/bamboo/types"
@@ -22,22 +20,33 @@ import (
 
 // ScreenComponent is the root component
 type ScreenComponent struct {
+	// keep the reference to the screen,
+	// to be able to access it during Update()
 	screen *ebiten.Image
-	child  View
+	style  ComponentStyle
+	child  Component
 	id     uint64
 }
 
-func Screen(child View) *ScreenComponent {
-	id := rand.Uint64()
-	s := &ScreenComponent{child: child, id: id}
+func Screen(child Component) *ScreenComponent {
+	id := _id
+	_id += 1
+	s := &ScreenComponent{
+		child: child,
+		style: defaultStyle,
+		id:    id,
+	}
 	child.SetParent(s)
 	return s
 }
 func (s *ScreenComponent) ID() uint64 {
 	return s.id
 }
-func (s *ScreenComponent) SetParent(_ View) {
+func (s *ScreenComponent) SetParent(_ Component) {
 	log.Panicln("Attempted to set parent for screen component")
+}
+func (s *ScreenComponent) Alignment() ComponentAlignment {
+	return AlignNone
 }
 func (s *ScreenComponent) MaxSize() (float64, float64) {
 	if s.screen == nil {
@@ -47,14 +56,17 @@ func (s *ScreenComponent) MaxSize() (float64, float64) {
 		return float64(bounds.Dx()), float64(bounds.Dy())
 	}
 }
-func (s *ScreenComponent) CapacityForChild(_ View) (float64, float64) {
+func (s *ScreenComponent) MaxCapacityForChild(_ Component) (float64, float64) {
+	return s.MaxSize()
+}
+func (s *ScreenComponent) CapacityForChild(_ Component) (float64, float64) {
 	return s.MaxSize()
 }
 func (s *ScreenComponent) ComputedSize() (float64, float64) {
 	return s.MaxSize()
 }
-func (s *ScreenComponent) Children() []View {
-	return []View{s.child}
+func (s *ScreenComponent) Children() []Component {
+	return []Component{s.child}
 }
 func (s *ScreenComponent) Update() error {
 	return s.child.Update()
@@ -64,37 +76,67 @@ func (s *ScreenComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	s.screen = screen
 	return s.child.Draw(screen, x, y)
 }
-
-type PaddingComponent struct {
-	baseView
-	child   View
-	padding float64
+func (s *ScreenComponent) HasCustomStyles() bool {
+	return false
+}
+func (s *ScreenComponent) Style() *ComponentStyle {
+	return &s.style
 }
 
-func Padding(amount float64, child View) *PaddingComponent {
-	p := &PaddingComponent{child: child, padding: amount, baseView: newBaseView()}
+type PaddingComponent struct {
+	baseComponent
+	child    Component
+	paddingX float64
+	paddingY float64
+}
+
+func _padding(x, y float64, child Component) *PaddingComponent {
+	p := &PaddingComponent{
+		baseComponent: newBaseComponent(),
+		child:         child,
+		paddingX:      x,
+		paddingY:      y,
+	}
 	child.SetParent(p)
 	return p
 }
+
+// Adds padding on all sides
+func Padding(amount float64, child Component) *PaddingComponent {
+	return _padding(amount, amount, child)
+}
+func PaddingX(amount float64, child Component) *PaddingComponent {
+	return _padding(amount, 0, child)
+}
+func PaddingY(amount float64, child Component) *PaddingComponent {
+	return _padding(0, amount, child)
+}
+func PaddingXY(amountX, amountY float64, child Component) *PaddingComponent {
+	return _padding(amountX, amountY, child)
+}
 func (p *PaddingComponent) MaxSize() (float64, float64) {
-	return p.parent.CapacityForChild(p)
+	return p.parent.MaxCapacityForChild(p)
 }
 func (p *PaddingComponent) ComputedSize() (float64, float64) {
-	w, h := p.MaxSize()
-	return w - p.padding*Em*2, h - p.padding*Em*2
+	w, h := p.child.ComputedSize()
+	return w + p.paddingX*Em*2, h + p.paddingY*Em*2
 }
-func (p *PaddingComponent) CapacityForChild(_ View) (float64, float64) {
-	w, h := p.MaxSize()
-	return w - p.padding*Em*2, h - p.padding*Em*2
+func (p *PaddingComponent) CapacityForChild(_ Component) (float64, float64) {
+	w, h := p.parent.CapacityForChild(p)
+	return w - p.paddingX*Em*2, h - p.paddingY*Em*2
 }
-func (p *PaddingComponent) Children() []View {
-	return []View{p.child}
+func (p *PaddingComponent) MaxCapacityForChild(_ Component) (float64, float64) {
+	w, h := p.parent.MaxCapacityForChild(p)
+	return w - p.paddingX*Em*2, h - p.paddingY*Em*2
+}
+func (p *PaddingComponent) Children() []Component {
+	return []Component{p.child}
 }
 func (p *PaddingComponent) Update() error {
 	return p.child.Update()
 }
 func (p *PaddingComponent) Draw(screen *ebiten.Image, x, y float64) error {
-	return p.child.Draw(screen, x+p.padding*Em, y+p.padding*Em)
+	return p.child.Draw(screen, x+p.paddingX*Em, y+p.paddingY*Em)
 }
 
 type StackDirection uint
@@ -105,31 +147,63 @@ const (
 )
 
 type StackOptions struct {
-	Direction   StackDirection
-	Spacing     float64   // spacing between each child
-	Proportions []float64 // how much % of the parent space will each child occupy
+	Direction     StackDirection
+	Spacing       float64            // spacing between each child
+	Proportions   []float64          // how much % of the parent space will each child occupy
+	AlignChildren ComponentAlignment // explicit alignment of all childrens
 }
 
 type StackComponent struct {
-	baseView
+	baseComponent
 
 	opts     StackOptions
-	children []View
+	children []Component
 }
 
-func Stack(opts StackOptions, children ...View) *StackComponent {
+func _stack(opts StackOptions, children []Component) *StackComponent {
 	s := &StackComponent{
-		baseView: newBaseView(),
-		opts:     opts,
-		children: children,
+		baseComponent: newBaseComponent(),
+		opts:          opts,
+		children:      children,
 	}
 	for _, child := range children {
 		child.SetParent(s)
 	}
 	return s
 }
+func HStack(children ...Component) *StackComponent {
+	return _stack(StackOptions{Direction: HorizontalStack}, children)
+}
+func VStack(children ...Component) *StackComponent {
+	return _stack(StackOptions{Direction: VerticalStack}, children)
+}
+
+func (s *StackComponent) WithDirection(direction StackDirection) *StackComponent {
+	s.opts.Direction = direction
+	return s
+}
+func (s *StackComponent) WithSpacing(spacing float64) *StackComponent {
+	s.opts.Spacing = spacing
+	return s
+}
+func (s *StackComponent) WithProportions(proportions ...float64) *StackComponent {
+	s.opts.Proportions = proportions
+	return s
+}
+func (s *StackComponent) AlignChildren(alignment ComponentAlignment) *StackComponent {
+	s.opts.AlignChildren = alignment
+	return s
+}
+func (s *StackComponent) WithChildren(children ...Component) *StackComponent {
+	s.children = children
+	for _, child := range s.children {
+		child.SetParent(s)
+	}
+	return s
+}
+
 func (s *StackComponent) MaxSize() (float64, float64) {
-	return s.parent.CapacityForChild(s)
+	return s.parent.MaxCapacityForChild(s)
 }
 func (s *StackComponent) ComputedSize() (w, h float64) {
 	for i, child := range s.children {
@@ -161,51 +235,77 @@ func (s *StackComponent) ComputedSize() (w, h float64) {
 
 	return
 }
-func (s *StackComponent) CapacityForChild(child View) (float64, float64) {
-	w, h := s.parent.CapacityForChild(child)
 
-	// index of the child
-	i := -1
+// w and h are parent's capacity for the stack itself
+func (s *StackComponent) _capacityForChild(parentCapacityW, parentCapacityH float64, child Component) (float64, float64) {
+	// Find index of the child
+	childIndex := -1
 	for j, c := range s.children {
 		if child.ID() == c.ID() {
-			i = j
+			childIndex = j
 			break
 		}
 	}
-	if i == -1 {
+	// Return if the child doesn't belong to this stack
+	if childIndex == -1 {
 		return 0, 0
 	}
 
-	space := 1.0
+	spaceRemaining := 1.0
 	// compute proportions
 	if len(s.opts.Proportions) > 0 {
-		for j, p := range s.opts.Proportions {
-			// if proportion exists for given child, return it
-			if j == i {
+		for j, proportion := range s.opts.Proportions {
+			// If proportion is defined for the child, return it
+			if j == childIndex {
 				if s.opts.Direction == VerticalStack {
-					return w, h * p
+					return parentCapacityW, parentCapacityH * proportion
 				} else {
-					return w * p, h
+					return parentCapacityW * proportion, parentCapacityH
 				}
 			}
-			space -= p
+			spaceRemaining -= proportion
 		}
 	}
-	// if there is no proportion for current child,
+	// if there is no proportion defined for current child,
 	// divide remaining space equally between all remaining children
 	if s.opts.Direction == VerticalStack {
-		return w, (h * space) / float64(len(s.children)-len(s.opts.Proportions))
+		return parentCapacityW, (parentCapacityH * spaceRemaining) / float64(len(s.children)-len(s.opts.Proportions))
 	} else {
-		return (w * space) / float64(len(s.children)-len(s.opts.Proportions)), h
+		return (parentCapacityW * spaceRemaining) / float64(len(s.children)-len(s.opts.Proportions)), parentCapacityH
 	}
 }
+func (s *StackComponent) CapacityForChild(child Component) (float64, float64) {
+	w, h := s.parent.CapacityForChild(s)
+	return s._capacityForChild(w, h, child)
+}
+func (s *StackComponent) MaxCapacityForChild(child Component) (float64, float64) {
+	w, h := s.parent.MaxCapacityForChild(s)
+	return s._capacityForChild(w, h, child)
+}
 
-func (s *StackComponent) Children() []View {
+func (s *StackComponent) Children() []Component {
 	return s.children
 }
-func (s *StackComponent) AddChild(child View) {
+func (s *StackComponent) AddChild(child Component) {
 	child.SetParent(s)
 	s.children = append(s.children, child)
+}
+func (s *StackComponent) ReplaceChild(oldChild Component, newChild Component) {
+	// find index of the child
+	childIndex := -1
+	for i, child := range s.children {
+		if child.ID() == oldChild.ID() {
+			childIndex = i
+			break
+		}
+	}
+
+	if childIndex == -1 {
+		return
+	}
+
+	newChild.SetParent(s)
+	s.children[childIndex] = newChild
 }
 func (s *StackComponent) Update() error {
 	for _, child := range s.children {
@@ -217,16 +317,45 @@ func (s *StackComponent) Update() error {
 	return nil
 }
 func (s *StackComponent) Draw(screen *ebiten.Image, x, y float64) error {
+	w, h := s.ComputedSize()
+
 	for _, child := range s.children {
+		cw, ch := child.ComputedSize()
+		// child position on the screen
+		cx, cy := x, y
+
+		childAlignment := child.Alignment()
+		// alignment of all children can be set explicitly by the container
+		if s.opts.AlignChildren != AlignNone {
+			childAlignment = s.opts.AlignChildren
+		}
+
+		// Align the child
+		switch childAlignment {
+		case AlignNone, AlignStart:
+			// AlignStart is the default position, no need to modify the child position
+		case AlignCenter:
+			if s.opts.Direction == VerticalStack {
+				cx = x + w/2 - cw/2
+			} else {
+				cy = y + h/2 - ch/2
+			}
+		case AlignEnd:
+			if s.opts.Direction == VerticalStack {
+				cx = x + w - cw
+			} else {
+				cy = y + h - ch
+			}
+		}
+
 		// there is multiple children in a stack,
 		// but we can't return multiple errors.
 		// instead, we return the first error, that we encountered
-		err := child.Draw(screen, x, y)
+		err := child.Draw(screen, cx, cy)
 		if err != nil {
 			return err
 		}
 
-		cw, ch := child.ComputedSize()
 		if s.opts.Direction == VerticalStack {
 			y += ch + s.opts.Spacing*Em
 		} else {
@@ -237,79 +366,149 @@ func (s *StackComponent) Draw(screen *ebiten.Image, x, y float64) error {
 }
 
 type CenterComponent struct {
-	baseView
-	child View
+	baseComponent
+	x bool
+	y bool
+
+	child Component
 }
 
-func Center(child View) *CenterComponent {
-	c := &CenterComponent{child: child, baseView: newBaseView()}
+func _center(child Component, x, y bool) *CenterComponent {
+	c := &CenterComponent{
+		baseComponent: newBaseComponent(),
+		x:             x,
+		y:             y,
+		child:         child,
+	}
 	child.SetParent(c)
 	return c
 }
+
+// Center the component on both Vertical and Horizontal axis
+func Center(child Component) *CenterComponent {
+	return _center(child, true, true)
+}
+func HCenter(child Component) *CenterComponent {
+	return _center(child, true, false)
+}
+func VCenter(child Component) *CenterComponent {
+	return _center(child, false, true)
+}
 func (c *CenterComponent) MaxSize() (float64, float64) {
+	return c.parent.MaxCapacityForChild(c)
+}
+func (c *CenterComponent) ComputedSize() (w, h float64) {
+	w, h = c.child.ComputedSize()
+	cw, ch := c.parent.CapacityForChild(c)
+	if c.x {
+		w = cw
+	}
+	if c.y {
+		h = ch
+	}
+
+	return
+}
+func (c *CenterComponent) CapacityForChild(_ Component) (float64, float64) {
 	return c.parent.CapacityForChild(c)
 }
-func (c *CenterComponent) ComputedSize() (float64, float64) {
-	return c.MaxSize()
+func (c *CenterComponent) MaxCapacityForChild(_ Component) (float64, float64) {
+	return c.parent.MaxCapacityForChild(c)
 }
-func (c *CenterComponent) CapacityForChild(_ View) (float64, float64) {
-	return c.MaxSize()
-}
-func (c *CenterComponent) Children() []View {
-	return []View{c.child}
+func (c *CenterComponent) Children() []Component {
+	return []Component{c.child}
 }
 func (c *CenterComponent) Update() error {
 	return c.child.Update()
 }
 func (c *CenterComponent) Draw(screen *ebiten.Image, x, y float64) error {
+	screenX, screenY := x, y
 	w, h := c.parent.CapacityForChild(c)
 	cw, ch := c.child.ComputedSize()
-	return c.child.Draw(screen, x+w/2-cw/2, y+h/2-ch/2)
-}
 
-type LabelOptions struct {
-	Color color.Color
-	// Font size, relative to UI scaling
-	Scaling float64
-}
-
-func DefaultLabelOptions() LabelOptions {
-	return LabelOptions{
-		Color:   colors.Black,
-		Scaling: 1,
+	if c.x {
+		screenX = x + w/2 - cw/2
 	}
+	if c.y {
+		screenY = y + h/2 - ch/2
+	}
+
+	return c.child.Draw(screen, screenX, screenY)
 }
 
 type LabelComponent struct {
-	baseView
-	opts LabelOptions
+	baseComponent
 	text string
 }
 
-func Label(options LabelOptions, s string) *LabelComponent {
+func CustomLabel(s string, color color.Color, scaling float64) *LabelComponent {
+	label := &LabelComponent{
+		text:          s,
+		baseComponent: newBaseComponent(),
+	}
+	label.style.TextColor = color
+	label.style.TextSize = scaling
+	label.style.Modified = true
+	return label
+}
+func Label(s string) *LabelComponent {
 	return &LabelComponent{
-		text:     s,
-		opts:     options,
-		baseView: newBaseView(),
+		text:          s,
+		baseComponent: newBaseComponent(),
 	}
 }
+func LabelF(format string, a ...any) *LabelComponent {
+	return &LabelComponent{
+		baseComponent: newBaseComponent(),
+		text:          fmt.Sprintf(format, a...),
+	}
+}
+func ColoredLabel(s string, color color.Color) *LabelComponent {
+	label := &LabelComponent{
+		text:          s,
+		baseComponent: newBaseComponent(),
+	}
+	label.style.TextColor = color
+	label.style.Modified = true
+	return label
+}
+
+func (l *LabelComponent) WithTextColor(newColor color.Color) *LabelComponent {
+	l.style.TextColor = newColor
+	l.style.Modified = true
+	return l
+}
+func (l *LabelComponent) WithTextSize(size float64) *LabelComponent {
+	l.style.TextSize = size
+	l.style.Modified = true
+	return l
+}
+func (l *LabelComponent) WithoutTextShadow() *LabelComponent {
+	l.style.TextShadow = false
+	l.style.Modified = true
+	return l
+}
+
 func (l *LabelComponent) MaxSize() (float64, float64) {
 	return l.parent.CapacityForChild(l)
 }
 func (l *LabelComponent) ComputedSize() (float64, float64) {
-	return font.GetStringSize(l.text, l.opts.Scaling)
+	return font.GetStringSize(l.text, l.Style().TextSize)
 }
-func (l *LabelComponent) CapacityForChild(_ View) (float64, float64) {
+func (l *LabelComponent) CapacityForChild(_ Component) (float64, float64) {
 	return 0, 0
 }
-func (l *LabelComponent) Children() []View {
-	return []View{}
+func (l *LabelComponent) MaxCapacityForChild(_ Component) (float64, float64) {
+	return 0, 0
+}
+func (l *LabelComponent) Children() []Component {
+	return []Component{}
 }
 func (l *LabelComponent) Update() error {
 	return nil
 }
 func (l *LabelComponent) Draw(screen *ebiten.Image, x, y float64) error {
-	font.RenderFontWithOptions(screen, l.text, x, y, l.opts.Color, l.opts.Scaling)
+	font.RenderFontWithOptions(screen, l.text, x, y, l.Style().TextColor, l.Style().TextSize, l.Style().TextShadow)
 	return nil
 }
 func (l *LabelComponent) Text() string {
@@ -320,28 +519,24 @@ func (l *LabelComponent) SetText(text string) {
 }
 
 type ButtonComponent[T any] struct {
-	baseView
+	baseComponent
 
-	tex      types.Texture
-	texHover types.Texture
-
-	child View
+	child Component
 
 	// transmits the button press event from Draw() to Update() (where the value to callback is sent)
 	// cleared on every Update()
-	pressed  bool
-	value    T
-	callback chan T
+	mouseOver bool
+	pressed   bool
+	value     T
+	callback  chan T
 }
 
-func Button[T any](callback chan T, value T, child View) *ButtonComponent[T] {
+func Button[T any](callback chan T, value T, child Component) *ButtonComponent[T] {
 	b := &ButtonComponent[T]{
-		tex:      asset_loader.Texture("button"),
-		texHover: asset_loader.Texture("button-hover"),
-
-		child:    child,
-		value:    value,
-		callback: callback,
+		baseComponent: newBaseComponent(),
+		child:         Padding(0.3, child),
+		value:         value,
+		callback:      callback,
 	}
 	child.SetParent(b)
 	return b
@@ -350,21 +545,28 @@ func (b *ButtonComponent[T]) MaxSize() (float64, float64) {
 	return b.ComputedSize()
 }
 func (b *ButtonComponent[T]) ComputedSize() (float64, float64) {
-	return b.tex.ScaledSize()
+	cw, ch := b.child.ComputedSize()
+	return cw + 6*config.UIScaling, ch + 6*config.UIScaling
+	// return b.child.ComputedSize()
 }
-func (b *ButtonComponent[T]) CapacityForChild(_ View) (float64, float64) {
-	return b.ComputedSize()
+func (b *ButtonComponent[T]) CapacityForChild(_ Component) (float64, float64) {
+	// w, h := b.parent.CapacityForChild(b)
+	// return w - 6*config.UIScaling, h - 6*config.UIScaling
+	return b.parent.CapacityForChild(b)
 }
-func (b *ButtonComponent[T]) Children() []View {
-	return []View{b.child}
+func (b *ButtonComponent[T]) MaxCapacityForChild(_ Component) (float64, float64) {
+	return b.parent.MaxCapacityForChild(b)
+}
+func (b *ButtonComponent[T]) Children() []Component {
+	return []Component{b.child}
 }
 func (b *ButtonComponent[T]) Update() error {
+	b.pressed = b.mouseOver && inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
 	if b.pressed {
 		go func() {
 			b.callback <- b.value
 		}()
 	}
-	b.pressed = false
 	return nil
 }
 func (b *ButtonComponent[T]) Draw(screen *ebiten.Image, x, y float64) error {
@@ -373,24 +575,14 @@ func (b *ButtonComponent[T]) Draw(screen *ebiten.Image, x, y float64) error {
 	opts.GeoM.Translate(x, y)
 
 	w, h := b.ComputedSize()
-	cx, cy := ebiten.CursorPosition()
+	cw, ch := b.child.ComputedSize()
 
 	// check if the cursor is hovering over the button
-	mouseOver := float64(cx) > x && float64(cy) > y && float64(cx) < x+w && float64(cy) < y+h
-	if mouseOver {
-		screen.DrawImage(b.texHover.Texture(), opts)
-	} else {
-		screen.DrawImage(b.tex.Texture(), opts)
-	}
+	cx, cy := ebiten.CursorPosition()
+	b.mouseOver = float64(cx) > x && float64(cy) > y && float64(cx) < x+w && float64(cy) < y+h
+	DrawButtonBackground(screen, b.mouseOver, x, y, cw, ch)
 
-	// check if button is pressed
-	if mouseOver && inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		b.pressed = true
-	}
-
-	// draw child in the center
-	cw, ch := b.child.ComputedSize()
-	return b.child.Draw(screen, x+w/2-cw/2, y+h/2-ch/2)
+	return b.child.Draw(screen, x+3*config.UIScaling, y+3*config.UIScaling)
 }
 func (b *ButtonComponent[T]) IsPressed() bool {
 	return b.pressed
@@ -407,24 +599,30 @@ const (
 )
 
 type BackgroundImageComponent struct {
-	baseView
-	child View
+	baseComponent
+	child Component
 
 	tex  *ebiten.Image
 	mode BackgroundImageRenderingMode
 	opts *ebiten.DrawImageOptions
 }
 
-func BackgroundImage(mode BackgroundImageRenderingMode, texture *ebiten.Image, child View) *BackgroundImageComponent {
+func BackgroundImage(mode BackgroundImageRenderingMode, texture *ebiten.Image, child Component) *BackgroundImageComponent {
 	bg := &BackgroundImageComponent{
-		baseView: newBaseView(),
-		child:    child,
-		tex:      texture,
-		mode:     mode,
-		opts:     &ebiten.DrawImageOptions{},
+		baseComponent: newBaseComponent(),
+		child:         child,
+		tex:           texture,
+		mode:          mode,
+		opts:          &ebiten.DrawImageOptions{},
 	}
 	child.SetParent(bg)
 	return bg
+}
+func TileBackgroundImage(texture types.Texture, child Component) *BackgroundImageComponent {
+	return BackgroundImage(BackgroundTile, texture.Texture(), child)
+}
+func StretchBackgroundImage(texture types.Texture, child Component) *BackgroundImageComponent {
+	return BackgroundImage(BackgroundStretch, texture.Texture(), child)
 }
 
 func (b *BackgroundImageComponent) MaxSize() (float64, float64) {
@@ -433,7 +631,10 @@ func (b *BackgroundImageComponent) MaxSize() (float64, float64) {
 func (b *BackgroundImageComponent) ComputedSize() (float64, float64) {
 	return b.MaxSize()
 }
-func (b *BackgroundImageComponent) CapacityForChild(_ View) (float64, float64) {
+func (b *BackgroundImageComponent) CapacityForChild(_ Component) (float64, float64) {
+	return b.MaxSize()
+}
+func (b *BackgroundImageComponent) MaxCapacityForChild(_ Component) (float64, float64) {
 	return b.MaxSize()
 }
 func (b *BackgroundImageComponent) Update() error {
@@ -457,30 +658,28 @@ func (b *BackgroundImageComponent) Draw(screen *ebiten.Image, x, y float64) erro
 
 	case BackgroundTile:
 		bounds := b.tex.Bounds()
-		w, h := bounds.Dx(), bounds.Dy()
-		sw, sh := b.parent.CapacityForChild(b)
-		for tx := 0; tx < int(sw); tx += w {
-			for ty := 0; ty < int(sh); ty += h {
+		textureWidth, textureHeight := float64(bounds.Dx()), float64(bounds.Dy())
+		screenWidth, screenHeight := b.parent.CapacityForChild(b)
+		for sx := 0.0; sx < screenWidth; sx += float64(textureWidth) * config.UIScaling {
+			for sy := 0.0; sy < screenHeight; sy += float64(textureHeight) * config.UIScaling {
 				b.opts.GeoM.Reset()
+				b.opts.GeoM.Scale(config.UIScaling, config.UIScaling)
 				switch {
 				// handle corners properly
-				case int(sw)-tx < w && int(sh)-ty < h:
+				case screenWidth-sx < textureWidth && screenHeight-sy < textureHeight:
 					b.opts.GeoM.Scale(-1, -1)
-					b.opts.GeoM.Translate(x+float64(tx)+(sw-float64(tx)), y+float64(ty)+(sh-float64(ty)))
-					// b.bgOpts.CompositeMode = ebiten.CompositeModeMultiply
+					b.opts.GeoM.Translate(x+sx+(screenWidth-sx), y+sy+(screenHeight-sy))
 
-				case int(sw)-tx < w:
+				case screenWidth-sx < textureWidth:
 					b.opts.GeoM.Scale(-1, 1)
-					b.opts.GeoM.Translate(x+float64(tx)+(sw-float64(tx)), y+float64(ty))
-					// b.bgOpts.CompositeMode = ebiten.CompositeModeMultiply
+					b.opts.GeoM.Translate(x+sx+(screenWidth-sx), y+sy)
 
-				case int(sh)-ty < h:
+				case screenHeight-sy < textureHeight:
 					b.opts.GeoM.Scale(1, -1)
-					b.opts.GeoM.Translate(x+float64(tx), y+float64(ty)+(sh-float64(ty)))
-					// b.bgOpts.CompositeMode = ebiten.CompositeModeMultiply
+					b.opts.GeoM.Translate(x+sx, y+sy+(screenHeight-sy))
 
 				default:
-					b.opts.GeoM.Translate(x+float64(tx), y+float64(ty))
+					b.opts.GeoM.Translate(x+sx, y+sy)
 				}
 				screen.DrawImage(b.tex, b.opts)
 			}
@@ -490,20 +689,22 @@ func (b *BackgroundImageComponent) Draw(screen *ebiten.Image, x, y float64) erro
 	// draw child
 	return b.child.Draw(screen, x, y)
 }
-func (b *BackgroundImageComponent) Children() []View {
-	return []View{b.child}
+func (b *BackgroundImageComponent) Children() []Component {
+	return []Component{b.child}
 }
 
 type BackgroundColorComponent struct {
-	baseView
-	child View
+	baseComponent
+	child Component
 
 	clr  color.Color
 	tex  *ebiten.Image
 	opts *ebiten.DrawImageOptions
+	// Whether to take all the available space, or only the space occupied by the child component
+	greedy bool
 }
 
-func BackgroundColor(clr color.Color, child View) *BackgroundColorComponent {
+func _bgcolor(clr color.Color, child Component, greedy bool) *BackgroundColorComponent {
 	// It may seem strange, that we create an entire texture, then resize it,
 	// just to fill the rectangle with color.
 	// But documentation says, ebitenutil.DrawRect() should be used ONLY for debugging and prototyping.
@@ -513,26 +714,50 @@ func BackgroundColor(clr color.Color, child View) *BackgroundColorComponent {
 	tex.Fill(clr)
 
 	bg := &BackgroundColorComponent{
-		baseView: newBaseView(),
-		child:    child,
+		baseComponent: newBaseComponent(),
+		child:         child,
 
-		clr:  clr,
-		tex:  tex,
-		opts: &ebiten.DrawImageOptions{},
+		clr:    clr,
+		tex:    tex,
+		opts:   &ebiten.DrawImageOptions{},
+		greedy: greedy,
 	}
 	child.SetParent(bg)
 
 	return bg
 }
 
+// Same as BackgroundColor, but draws a background with alpha value. Useful for modal dialogs
+func BackgroundColorAlpha(clr color.Color, alpha uint8, child Component) *BackgroundColorComponent {
+	r, g, b, _ := clr.RGBA()
+	r8, g8, b8 := uint8(r>>8), uint8(g>>8), uint8(b>>8)
+	clrRgba := color.RGBA{R: r8, G: g8, B: b8, A: alpha}
+	return _bgcolor(clrRgba, child, true)
+}
+func BackgroundColor(clr color.Color, child Component) *BackgroundColorComponent {
+	return _bgcolor(clr, child, true)
+}
+
+// Similar to BackgroundColor, but takes the same space occupied by the child, essentially drawing background "behind" the child component.
+func Background(clr color.Color, child Component) *BackgroundColorComponent {
+	return _bgcolor(clr, child, false)
+}
+
 func (b *BackgroundColorComponent) MaxSize() (float64, float64) {
-	return b.parent.CapacityForChild(b)
+	return b.parent.MaxCapacityForChild(b)
 }
 func (b *BackgroundColorComponent) ComputedSize() (float64, float64) {
-	return b.MaxSize()
+	if b.greedy {
+		return b.MaxSize()
+	} else {
+		return b.child.ComputedSize()
+	}
 }
-func (b *BackgroundColorComponent) CapacityForChild(_ View) (float64, float64) {
-	return b.MaxSize()
+func (b *BackgroundColorComponent) CapacityForChild(_ Component) (float64, float64) {
+	return b.parent.CapacityForChild(b)
+}
+func (b *BackgroundColorComponent) MaxCapacityForChild(_ Component) (float64, float64) {
+	return b.parent.MaxCapacityForChild(b)
 }
 func (b *BackgroundColorComponent) Update() error {
 	return b.child.Update()
@@ -547,12 +772,12 @@ func (b *BackgroundColorComponent) Draw(screen *ebiten.Image, x, y float64) erro
 	b.child.Draw(screen, x, y)
 	return nil
 }
-func (b *BackgroundColorComponent) Children() []View {
-	return []View{b.child}
+func (b *BackgroundColorComponent) Children() []Component {
+	return []Component{b.child}
 }
 
 type InputComponent struct {
-	baseView
+	baseComponent
 	baseFocusView
 
 	tex        types.Texture
@@ -569,15 +794,15 @@ type InputComponent struct {
 }
 
 func Input(handler func(string), enterKey ebiten.Key, initialFocus bool) *InputComponent {
-	return &InputComponent{
-		baseView:      newBaseView(),
+	inp := &InputComponent{
+		baseComponent: newBaseComponent(),
 		baseFocusView: baseFocusView{focused: initialFocus},
 
 		tex:        asset_loader.Texture("inputfield"),
 		texFocused: asset_loader.Texture("inputfield-focused"),
 		opts:       &ebiten.DrawImageOptions{},
 
-		label: Label(DefaultLabelOptions(), ""),
+		label: Label(""),
 
 		enterKey: enterKey,
 		input:    "",
@@ -585,6 +810,8 @@ func Input(handler func(string), enterKey ebiten.Key, initialFocus bool) *InputC
 
 		pressedKeys: make([]rune, 128),
 	}
+	inp.label.SetParent(inp)
+	return inp
 }
 
 func (i *InputComponent) MaxSize() (float64, float64) {
@@ -593,8 +820,12 @@ func (i *InputComponent) MaxSize() (float64, float64) {
 func (i *InputComponent) ComputedSize() (float64, float64) {
 	return i.tex.ScaledSize()
 }
-func (i *InputComponent) CapacityForChild(_ View) (float64, float64) {
-	return i.ComputedSize()
+func (i *InputComponent) CapacityForChild(_ Component) (float64, float64) {
+	w, h := i.tex.ScaledSize()
+	return w - 12*config.UIScaling, h - 6*config.UIScaling
+}
+func (i *InputComponent) MaxCapacityForChild(_ Component) (float64, float64) {
+	return i.parent.MaxCapacityForChild(i)
 }
 func (i *InputComponent) Update() error {
 	// if the element isn't focused, skip
@@ -618,7 +849,7 @@ func (i *InputComponent) Update() error {
 	default:
 		// if the input string doesn't fit in the texture, don't accept any more keys
 		texCapacity, _ := i.CapacityForChild(nil)
-		textSize := font.GetStringWidth(i.input, i.label.opts.Scaling)
+		textSize := font.GetStringWidth(i.input, i.Style().TextSize)
 		if textSize > texCapacity {
 			break
 		}
@@ -665,8 +896,8 @@ func (i *InputComponent) Draw(screen *ebiten.Image, x, y float64) error {
 
 	return nil
 }
-func (i *InputComponent) Children() []View {
-	return []View{}
+func (i *InputComponent) Children() []Component {
+	return []Component{i.label}
 }
 func (i *InputComponent) Input() string {
 	return i.input
@@ -676,39 +907,228 @@ func (i *InputComponent) SetInput(input string) {
 }
 
 type TooltipComponent struct {
-	baseView
-	child View
+	baseComponent
+	child Component
 }
 
-func Tooltip(child View) *TooltipComponent {
+func Tooltip(child Component) *TooltipComponent {
 	tooltip := &TooltipComponent{
-		baseView: newBaseView(),
-		child:    child,
+		baseComponent: newBaseComponent(),
+		child:         child,
 	}
 	child.SetParent(tooltip)
 	return tooltip
 }
-
 func (tooltip *TooltipComponent) MaxSize() (float64, float64) {
-	return tooltip.ComputedSize()
+	return tooltip.parent.MaxCapacityForChild(tooltip)
 }
 func (tooltip *TooltipComponent) ComputedSize() (float64, float64) {
 	cw, ch := tooltip.child.ComputedSize()
 	return cw + 6*config.UIScaling, ch + 6*config.UIScaling
 }
-func (tooltip *TooltipComponent) CapacityForChild(_ View) (float64, float64) {
+func (tooltip *TooltipComponent) CapacityForChild(_ Component) (float64, float64) {
 	w, h := tooltip.parent.CapacityForChild(tooltip)
 	return w - 6*config.UIScaling, h - 6*config.UIScaling
 }
-func (tooltip *TooltipComponent) Children() []View {
-	return []View{tooltip.child}
+func (tooltip *TooltipComponent) MaxCapacityForChild(_ Component) (float64, float64) {
+	w, h := tooltip.parent.MaxCapacityForChild(tooltip)
+	return w - 6*config.UIScaling, h - 6*config.UIScaling
+}
+func (tooltip *TooltipComponent) Children() []Component {
+	return []Component{tooltip.child}
 }
 
 func (tooltip *TooltipComponent) Update() error {
 	return tooltip.child.Update()
 }
 func (tooltip *TooltipComponent) Draw(screen *ebiten.Image, x, y float64) error {
-	w, h := tooltip.ComputedSize()
-	DrawBackground(screen, x, y, w, h)
+	w, h := tooltip.child.ComputedSize()
+	DrawTooltipBackground(screen, x, y, w, h)
 	return tooltip.child.Draw(screen, x+3*config.UIScaling, y+3*config.UIScaling)
+}
+
+type OverlayComponent struct {
+	baseComponent
+	children []Component
+}
+
+func Overlay(children ...Component) *OverlayComponent {
+	overlay := &OverlayComponent{
+		baseComponent: newBaseComponent(),
+		children:      children,
+	}
+	for _, child := range children {
+		child.SetParent(overlay)
+	}
+	return overlay
+}
+
+func (overlay *OverlayComponent) MaxSize() (float64, float64) {
+	return overlay.parent.MaxCapacityForChild(overlay)
+}
+func (overlay *OverlayComponent) ComputedSize() (float64, float64) {
+	return 0, 0
+}
+func (overlay *OverlayComponent) CapacityForChild(_ Component) (float64, float64) {
+	return overlay.parent.CapacityForChild(overlay)
+}
+func (overlay *OverlayComponent) MaxCapacityForChild(_ Component) (float64, float64) {
+	return overlay.parent.MaxCapacityForChild(overlay)
+}
+func (overlay *OverlayComponent) Children() []Component {
+	return overlay.children
+}
+func (overlay *OverlayComponent) Update() error {
+	for _, child := range overlay.children {
+		if err := child.Update(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (overlay *OverlayComponent) Draw(screen *ebiten.Image, x, y float64) error {
+	for _, child := range overlay.children {
+		if err := child.Draw(screen, x, y); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type Position int
+
+const (
+	PositionTopLeft Position = iota
+	PositionTop
+	PositionTopRight
+	PositionLeft
+	PositionCenter
+	PositionRight
+	PositionBottomLeft
+	PositionBottom
+	PositionBottomRight
+)
+
+type PositionComponent struct {
+	baseComponent
+
+	position Position
+	child    Component
+}
+
+// Position the component absolutely within the container
+func PositionSelf(position Position, child Component) *PositionComponent {
+	component := &PositionComponent{
+		baseComponent: newBaseComponent(),
+		position:      position,
+		child:         child,
+	}
+	child.SetParent(component)
+	return component
+}
+
+func (position *PositionComponent) MaxSize() (float64, float64) {
+	return position.parent.MaxCapacityForChild(position)
+}
+func (position *PositionComponent) ComputedSize() (float64, float64) {
+	return position.MaxSize()
+}
+func (position *PositionComponent) CapacityForChild(_ Component) (float64, float64) {
+	return position.parent.MaxCapacityForChild(position)
+}
+func (position *PositionComponent) MaxCapacityForChild(_ Component) (float64, float64) {
+	return position.parent.MaxCapacityForChild(position)
+}
+func (position *PositionComponent) Children() []Component {
+	return []Component{position.child}
+}
+func (position *PositionComponent) Update() error {
+	return position.child.Update()
+}
+func (position *PositionComponent) Draw(screen *ebiten.Image, x, y float64) error {
+	cw, ch := position.child.ComputedSize()
+	w, h := position.parent.MaxCapacityForChild(position)
+
+	switch position.position {
+	case PositionTopLeft:
+		return position.child.Draw(screen, x, y)
+	case PositionTop:
+		return position.child.Draw(screen, x+w/2-cw/2, 0)
+	case PositionTopRight:
+		return position.child.Draw(screen, x-cw, 0)
+
+	case PositionLeft:
+		return position.child.Draw(screen, 0, h/2-ch/2)
+	case PositionCenter:
+		return position.child.Draw(screen, w/2-cw/2, h/2-ch/2)
+	case PositionRight:
+		return position.child.Draw(screen, w-cw, h/2-ch/2)
+
+	case PositionBottomLeft:
+		return position.child.Draw(screen, 0, h-ch)
+	case PositionBottom:
+		return position.child.Draw(screen, w/2-cw/2, h-ch)
+	case PositionBottomRight:
+		return position.child.Draw(screen, w-cw, h-ch)
+	}
+
+	return nil
+}
+
+type StyledComponent struct {
+	baseComponent
+	child Component
+}
+
+// Apply custom styles to a child component
+func Styled(child Component) *StyledComponent {
+	styled := &StyledComponent{
+		baseComponent: newBaseComponent(),
+		child:         child,
+	}
+	child.SetParent(styled)
+	return styled
+}
+
+func (styled *StyledComponent) WithChild(child Component) *StyledComponent {
+	child.SetParent(styled)
+	styled.child = child
+	return styled
+}
+func (styled *StyledComponent) WithTextColor(color color.Color) *StyledComponent {
+	styled.style.TextColor = color
+	styled.style.Modified = true
+	return styled
+}
+func (styled *StyledComponent) WithTextSize(size float64) *StyledComponent {
+	styled.style.TextSize = size
+	styled.style.Modified = true
+	return styled
+}
+func (styled *StyledComponent) WithTextShadow(shadow bool) *StyledComponent {
+	styled.style.TextShadow = shadow
+	styled.style.Modified = true
+	return styled
+}
+
+func (styled *StyledComponent) MaxSize() (float64, float64) {
+	return styled.parent.MaxCapacityForChild(styled)
+}
+func (styled *StyledComponent) ComputedSize() (float64, float64) {
+	return styled.child.ComputedSize()
+}
+func (styled *StyledComponent) CapacityForChild(_ Component) (float64, float64) {
+	return styled.parent.CapacityForChild(styled)
+}
+func (styled *StyledComponent) MaxCapacityForChild(_ Component) (float64, float64) {
+	return styled.parent.MaxCapacityForChild(styled)
+}
+func (styled *StyledComponent) Children() []Component {
+	return []Component{styled.child}
+}
+func (styled *StyledComponent) Update() error {
+	return styled.child.Update()
+}
+func (styled *StyledComponent) Draw(screen *ebiten.Image, x, y float64) error {
+	return styled.child.Draw(screen, x, y)
 }

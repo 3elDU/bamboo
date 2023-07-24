@@ -5,22 +5,42 @@
 package ui
 
 import (
-	"math/rand"
+	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// View is the base interface for all components
-type View interface {
-	SetParent(parent View)
-	Children() []View
+type ComponentStyle struct {
+	Modified bool
 
+	TextColor  color.Color
+	TextShadow bool
+	TextSize   float64
+}
+
+var defaultStyle = ComponentStyle{
+	Modified:   false,
+	TextColor:  color.Black,
+	TextShadow: true,
+	TextSize:   1.0,
+}
+
+// Component is the base interface for all components
+type Component interface {
+	SetParent(parent Component)
+	Children() []Component
+
+	// Alignment of the child inside the parent container
+	Alignment() ComponentAlignment
 	// MaxSize returns maximum space that the component could theoretically occupy
 	MaxSize() (float64, float64)
-	// ComputedSize returns how much space the component takes in practice
+	// Returns actual size of the component
 	ComputedSize() (float64, float64)
-	// CapacityForChild returns practical maximum space, that the child could take in its parent
-	CapacityForChild(child View) (float64, float64)
+	// Returns available space that the child could take in its parent, considering the parent's current size.
+	CapacityForChild(child Component) (float64, float64)
+	// Returns practical maximum space, that the child could take in its parent
+	// For most component's this is the same as CapacityForChild
+	MaxCapacityForChild(child Component) (float64, float64)
 
 	// Update is pretty much useless,
 	// because for many widgets to update, we need to know their size,
@@ -32,10 +52,13 @@ type View interface {
 
 	// ID returns unique identifier of the component, so it can be compared to others
 	ID() uint64
+
+	Style() *ComponentStyle
+	HasCustomStyles() bool
 }
 
 type TextView interface {
-	View
+	Component
 
 	Text() string
 	SetText(text string)
@@ -43,7 +66,7 @@ type TextView interface {
 
 // FocusView is an interface for components that can be focused
 type FocusView interface {
-	View
+	Component
 
 	SetFocused(focus bool)
 	Focused() bool
@@ -51,7 +74,7 @@ type FocusView interface {
 
 // ButtonView is an interface for components that can be clicked
 type ButtonView interface {
-	View
+	Component
 
 	IsPressed() bool
 	Press()
@@ -65,27 +88,61 @@ type InputView interface {
 	SetInput(input string)
 }
 
-// baseView implements some common methods of View to reduce repeating code
-type baseView struct {
-	parent View
-	id     uint64
+// Used to hint the parent container how the component should be aligned inside it
+type ComponentAlignment int
+
+const (
+	AlignNone ComponentAlignment = iota
+	AlignStart
+	AlignCenter
+	AlignEnd
+)
+
+// baseComponent implements some common methods of View to reduce code repetition
+type baseComponent struct {
+	parent    Component
+	alignment ComponentAlignment
+	style     ComponentStyle
+	id        uint64
 }
 
-func newBaseView() baseView {
-	v := baseView{
-		parent: nil,
-		id:     rand.Uint64(),
+var _id uint64 = 0
+
+func newBaseComponent() baseComponent {
+	v := baseComponent{
+		parent:    nil,
+		alignment: AlignNone,
+		style:     defaultStyle,
+		id:        _id,
 	}
+	_id += 1
 	return v
 }
-func (b *baseView) ID() uint64 {
+func (b *baseComponent) ID() uint64 {
 	return b.id
 }
-func (b *baseView) SetParent(parent View) {
+func (b *baseComponent) SetParent(parent Component) {
 	b.parent = parent
 }
+func (b *baseComponent) Align(alignment ComponentAlignment) *baseComponent {
+	b.alignment = alignment
+	return b
+}
+func (b *baseComponent) Alignment() ComponentAlignment {
+	return b.alignment
+}
 
-// baseFocusView implements some common methods of FocusView to reduce repeating code
+func (b *baseComponent) Style() *ComponentStyle {
+	if !b.HasCustomStyles() {
+		return b.parent.Style()
+	}
+	return &b.style
+}
+func (b *baseComponent) HasCustomStyles() bool {
+	return b.style.Modified
+}
+
+// baseFocusView implements some common methods of FocusView to reduce code repetition
 type baseFocusView struct {
 	focused bool
 }

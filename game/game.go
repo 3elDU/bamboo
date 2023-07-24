@@ -39,7 +39,7 @@ type Game struct {
 func newGame(gameWorld *world.World, playerStack *player.Stack, inventory *inventory.Inventory) *Game {
 	game := &Game{
 		pauseMenu:    newPauseMenu(),
-		craftingMenu: newCraftingMenu(inventory),
+		craftingMenu: newCraftingMenu(),
 
 		world:       gameWorld,
 		playerStack: playerStack,
@@ -137,6 +137,7 @@ func (game *Game) processInput() {
 	case inpututil.IsKeyJustPressed(ebiten.KeyC):
 		log.Println("Entering crafting menu")
 		game.isCrafting = true
+		game.craftingMenu.UpdateAvailableRecipes()
 
 	// Break the block
 	case inpututil.IsKeyJustPressed(ebiten.KeyR):
@@ -218,7 +219,7 @@ func (game *Game) handleEvents() {
 				UUID:      caveID,
 				Seed:      int64(caveID.ID()),
 				WorldType: world_type.Cave,
-				Size:      config.SizeForWorldType(world_type.Cave),
+				Size:      world.SizeForWorldType(world_type.Cave),
 			}
 
 			var newWorld *world.World
@@ -308,7 +309,7 @@ func (game *Game) Draw(screen *ebiten.Image) {
 				`),
 				game.player.X, game.player.Y, game.world.Seed(), config.UIScaling, ebiten.ActualFPS(), ebiten.ActualTPS(),
 			),
-			0, 0, colors.Black,
+			0, 0, colors.C("black"),
 		)
 
 	}

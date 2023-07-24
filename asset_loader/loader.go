@@ -8,8 +8,16 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/3elDU/bamboo/config"
+	"github.com/3elDU/bamboo/event"
 	"github.com/hajimehoshi/ebiten/v2"
 )
+
+func init() {
+	event.Subscribe(event.Reload, func(_ interface{}) {
+		LoadAssets(config.AssetDirectory)
+	})
+}
 
 func parseTexture(assetList *AssetList, path string) error {
 	data, err := os.ReadFile(path)

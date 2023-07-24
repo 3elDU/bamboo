@@ -11,7 +11,7 @@ import (
 )
 
 type AboutScene struct {
-	view        ui.View
+	view        ui.Component
 	goBackEvent chan int
 }
 
@@ -20,16 +20,16 @@ func NewAboutScene() *AboutScene {
 
 	return &AboutScene{
 		goBackEvent: goBackEvent,
-		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(),
-			ui.Center(ui.Stack(ui.StackOptions{Direction: ui.VerticalStack, Spacing: 1},
-				ui.Label(ui.DefaultLabelOptions(), heredoc.Doc(`
+		view: ui.Screen(ui.TileBackgroundImage(asset_loader.Texture("snow"),
+			ui.Center(ui.VStack().WithSpacing(1).WithChildren(
+				ui.Label(heredoc.Doc(`
 					Very important text...
 					Blah blah blah...
 					// TODO: Actually write something here
 				`)),
 				ui.Button(
 					goBackEvent, 1,
-					ui.Label(ui.DefaultLabelOptions(), "Back"),
+					ui.Label("Back"),
 				),
 			)),
 		)),

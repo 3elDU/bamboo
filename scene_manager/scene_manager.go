@@ -5,7 +5,9 @@ import (
 	"log"
 	"reflect"
 
+	"github.com/3elDU/bamboo/event"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"golang.org/x/exp/slices"
 )
 
@@ -95,9 +97,9 @@ func PushAndSwitch(next Scene) {
 	manager.printQueue("PushAndSwitch")
 }
 
-// QPushAndSwitch Behaves similarly to PushAndSwitch, but the main difference is,
-// QPushAndSwitch completely replaces current scene with new one
-func QPushAndSwitch(next Scene) {
+// ReplaceAndSwitch Behaves similarly to PushAndSwitch, but the main difference is,
+// ReplaceAndSwitch completely replaces current scene with new one
+func ReplaceAndSwitch(next Scene) {
 	manager.currentScene = next
 	manager.printQueue("QPushAndSwitch")
 }
@@ -133,6 +135,12 @@ func (manager *sceneManager) Update() error {
 			log.Println("SceneManager.Update() - No scenes left to display. Exiting!")
 			return fmt.Errorf("exit")
 		}
+	}
+
+	// Ctrl+F5 to reload everything
+	if ebiten.IsKeyPressed(ebiten.KeyControlLeft) && inpututil.IsKeyJustPressed(ebiten.KeyF5) {
+		log.Println("Reloading!")
+		event.FireEvent(event.NewEvent(event.Reload, nil))
 	}
 
 	manager.currentScene.Update()

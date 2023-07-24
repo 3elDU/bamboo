@@ -5,11 +5,13 @@
 package font
 
 import (
-	"github.com/3elDU/bamboo/colors"
 	"image"
 	"image/color"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/3elDU/bamboo/colors"
+	"github.com/3elDU/bamboo/event"
 
 	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/config"
@@ -20,7 +22,7 @@ import (
 // Do not change this unless you really know what you are doing
 const (
 	CharWidth  = 5
-	CharHeight = 7
+	CharHeight = 10
 )
 
 var charMap = map[rune]types.Vec2u{
@@ -38,85 +40,95 @@ var charMap = map[rune]types.Vec2u{
 	'L': {X: 55, Y: 0},
 	'M': {X: 60, Y: 0},
 
-	'N': {X: 0, Y: 7},
-	'O': {X: 5, Y: 7},
-	'P': {X: 10, Y: 7},
-	'Q': {X: 15, Y: 7},
-	'R': {X: 20, Y: 7},
-	'S': {X: 25, Y: 7},
-	'T': {X: 30, Y: 7},
-	'U': {X: 35, Y: 7},
-	'V': {X: 40, Y: 7},
-	'W': {X: 45, Y: 7},
-	'X': {X: 50, Y: 7},
-	'Y': {X: 55, Y: 7},
-	'Z': {X: 60, Y: 7},
+	'N': {X: 0, Y: 10},
+	'O': {X: 5, Y: 10},
+	'P': {X: 10, Y: 10},
+	'Q': {X: 15, Y: 10},
+	'R': {X: 20, Y: 10},
+	'S': {X: 25, Y: 10},
+	'T': {X: 30, Y: 10},
+	'U': {X: 35, Y: 10},
+	'V': {X: 40, Y: 10},
+	'W': {X: 45, Y: 10},
+	'X': {X: 50, Y: 10},
+	'Y': {X: 55, Y: 10},
+	'Z': {X: 60, Y: 10},
 
-	'a': {X: 0, Y: 14},
-	'b': {X: 5, Y: 14},
-	'c': {X: 10, Y: 14},
-	'd': {X: 15, Y: 14},
-	'e': {X: 20, Y: 14},
-	'f': {X: 25, Y: 14},
-	'g': {X: 30, Y: 14},
-	'h': {X: 35, Y: 14},
-	'i': {X: 40, Y: 14},
-	'j': {X: 45, Y: 14},
-	'k': {X: 50, Y: 14},
-	'l': {X: 55, Y: 14},
-	'm': {X: 60, Y: 14},
+	'a': {X: 0, Y: 20},
+	'b': {X: 5, Y: 20},
+	'c': {X: 10, Y: 20},
+	'd': {X: 15, Y: 20},
+	'e': {X: 20, Y: 20},
+	'f': {X: 25, Y: 20},
+	'g': {X: 30, Y: 20},
+	'h': {X: 35, Y: 20},
+	'i': {X: 40, Y: 20},
+	'j': {X: 45, Y: 20},
+	'k': {X: 50, Y: 20},
+	'l': {X: 55, Y: 20},
+	'm': {X: 60, Y: 20},
 
-	'n': {X: 0, Y: 21},
-	'o': {X: 5, Y: 21},
-	'p': {X: 10, Y: 21},
-	'q': {X: 15, Y: 21},
-	'r': {X: 20, Y: 21},
-	's': {X: 25, Y: 21},
-	't': {X: 30, Y: 21},
-	'u': {X: 35, Y: 21},
-	'v': {X: 40, Y: 21},
-	'w': {X: 45, Y: 21},
-	'x': {X: 50, Y: 21},
-	'y': {X: 55, Y: 21},
-	'z': {X: 60, Y: 21},
+	'n': {X: 0, Y: 30},
+	'o': {X: 5, Y: 30},
+	'p': {X: 10, Y: 30},
+	'q': {X: 15, Y: 30},
+	'r': {X: 20, Y: 30},
+	's': {X: 25, Y: 30},
+	't': {X: 30, Y: 30},
+	'u': {X: 35, Y: 30},
+	'v': {X: 40, Y: 30},
+	'w': {X: 45, Y: 30},
+	'x': {X: 50, Y: 30},
+	'y': {X: 55, Y: 30},
+	'z': {X: 60, Y: 30},
 
-	'.': {X: 0, Y: 28},
-	',': {X: 5, Y: 28},
-	';': {X: 10, Y: 28},
-	'/': {X: 15, Y: 28},
-	'(': {X: 20, Y: 28},
-	')': {X: 25, Y: 28},
-	'{': {X: 30, Y: 28},
-	'}': {X: 35, Y: 28},
-	'?': {X: 40, Y: 28},
-	'-': {X: 45, Y: 28},
-	'+': {X: 50, Y: 28},
-	'%': {X: 55, Y: 28},
-	'$': {X: 60, Y: 28},
+	'.': {X: 0, Y: 40},
+	',': {X: 5, Y: 40},
+	';': {X: 10, Y: 40},
+	'/': {X: 15, Y: 40},
+	'(': {X: 20, Y: 40},
+	')': {X: 25, Y: 40},
+	'{': {X: 30, Y: 40},
+	'}': {X: 35, Y: 40},
+	'?': {X: 40, Y: 40},
+	'-': {X: 45, Y: 40},
+	'+': {X: 50, Y: 40},
+	'%': {X: 55, Y: 40},
+	'$': {X: 60, Y: 40},
 
-	'1':  {X: 0, Y: 35},
-	'2':  {X: 5, Y: 35},
-	'3':  {X: 10, Y: 35},
-	'4':  {X: 15, Y: 35},
-	'5':  {X: 20, Y: 35},
-	'6':  {X: 25, Y: 35},
-	'7':  {X: 30, Y: 35},
-	'8':  {X: 35, Y: 35},
-	'9':  {X: 40, Y: 35},
-	'0':  {X: 45, Y: 35},
-	'"':  {X: 50, Y: 35},
-	'\'': {X: 55, Y: 35},
-	':':  {X: 60, Y: 35},
+	'1':  {X: 0, Y: 50},
+	'2':  {X: 5, Y: 50},
+	'3':  {X: 10, Y: 50},
+	'4':  {X: 15, Y: 50},
+	'5':  {X: 20, Y: 50},
+	'6':  {X: 25, Y: 50},
+	'7':  {X: 30, Y: 50},
+	'8':  {X: 35, Y: 50},
+	'9':  {X: 40, Y: 50},
+	'0':  {X: 45, Y: 50},
+	'"':  {X: 50, Y: 50},
+	'\'': {X: 55, Y: 50},
+	':':  {X: 60, Y: 50},
+
+	'>': {X: 0, Y: 60},
+	'<': {X: 5, Y: 60},
 }
 
 var cacheMap map[rune]*ebiten.Image
 
-func init() {
+// drops the cache
+func reload(_ interface{}) {
 	cacheMap = make(map[rune]*ebiten.Image)
 }
 
-func RenderFontWithOptions(dest *ebiten.Image, s string, x, y float64, clr color.Color, scaling float64) {
+func init() {
+	cacheMap = make(map[rune]*ebiten.Image)
+	event.Subscribe(event.Reload, reload)
+}
+
+func RenderFontWithOptions(dest *ebiten.Image, s string, x, y float64, clr color.Color, scaling float64, shadow bool) {
 	scaling *= config.UIScaling
+	complementaryClr := colors.Complementary(clr)
 
 	lines := strings.Split(s, "\n")
 
@@ -126,38 +138,39 @@ func RenderFontWithOptions(dest *ebiten.Image, s string, x, y float64, clr color
 	for j, line := range lines {
 		for i, char := range line {
 
-			img, exists := cacheMap[char]
-
-			if !exists {
+			img, cached := cacheMap[char]
+			if !cached {
 				coords, exists := charMap[char]
 				if !exists {
 					continue
 				}
 
 				img = ebiten.NewImageFromImage(asset_loader.DefaultFont().SubImage(
-					image.Rect(int(coords.X), int(coords.Y), int(coords.X+5), int(coords.Y+7))))
+					image.Rect(int(coords.X), int(coords.Y), int(coords.X+CharWidth), int(coords.Y+CharHeight))))
 				cacheMap[char] = img
 			}
 
 			opts.GeoM.Reset()
 			opts.GeoM.Scale(scaling, scaling)
 			opts.GeoM.Translate(
-				x+float64(i)*(float64(6)*scaling),
-				y+float64(j)*(float64(8)*scaling),
+				x+float64(i)*(float64(CharWidth+1)*scaling),
+				y+float64(j)*(float64(CharHeight+1)*scaling),
 			)
 			opts.ColorScale.Reset()
 			opts.ColorScale.ScaleWithColor(clr)
 
-			opts2.GeoM.Reset()
-			opts2.GeoM.Scale(scaling, scaling)
-			opts2.GeoM.Translate(
-				x+float64(i)*(float64(6)*scaling)+scaling,
-				y+float64(j)*(float64(8)*scaling)+scaling,
-			)
-			opts2.ColorScale.Reset()
-			opts2.ColorScale.ScaleWithColor(colors.Complementary(clr))
+			if shadow {
+				opts2.GeoM.Reset()
+				opts2.GeoM.Scale(scaling, scaling)
+				opts2.GeoM.Translate(
+					x+float64(i)*(float64(CharWidth+1)*scaling)+scaling,
+					y+float64(j)*(float64(CharHeight+1)*scaling)+scaling,
+				)
+				opts2.ColorScale.Reset()
+				opts2.ColorScale.ScaleWithColor(complementaryClr)
+				dest.DrawImage(img, opts2)
+			}
 
-			dest.DrawImage(img, opts2)
 			dest.DrawImage(img, opts)
 		}
 	}
@@ -171,6 +184,7 @@ func RenderFont(dest *ebiten.Image, s string, x, y float64, clr color.Color) {
 		x, y,
 		clr,
 		1,
+		true,
 	)
 }
 
