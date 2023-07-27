@@ -10,6 +10,9 @@ jobs:
                 os: [ubuntu-latest, windows-latest, macos-latest]
                 arch: [amd64, arm64]
         runs-on: ${{ matrix.os }}
+        defaults:
+            run:
+                shell: bash
         steps:
             - name: Checkout code
               uses: actions/checkout@v3
@@ -17,14 +20,22 @@ jobs:
             - uses: actions/setup-go@v4
               with:
                 go-version: '>=1.18'
+                cache: true
 
             - name: Echo os
               run:
                 echo ${{ matrix.arch }}
 
-            - name: Install apt dependencies
-              if: matrix.os == 'ubuntu-latest'
-              run: sudo apt install mesa-common-dev libglfw3-dev libx11-dev libc6-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev libasound2-dev pkg-config
+            - name: Install dependencies
+              if: runner.os == 'Linux'
+              run: |
+                sudo apt-get update
+                sudo apt-get install libasound2-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev
+
+            - name: Xvfb
+              if: runner.os == 'Linux'
+              run: |
+                Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
             
             - name: Build
               run: bash ./build.sh ${{ matrix.arch }}
