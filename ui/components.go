@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"image/color"
 	"log"
+	"math"
 	"unicode/utf8"
 
-	"github.com/3elDU/bamboo/asset_loader"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/font"
 	"github.com/3elDU/bamboo/types"
@@ -546,13 +546,12 @@ func (b *ButtonComponent[T]) MaxSize() (float64, float64) {
 }
 func (b *ButtonComponent[T]) ComputedSize() (float64, float64) {
 	cw, ch := b.child.ComputedSize()
+	cw = math.Max(MinInputWidth, cw)
 	return cw + 6*config.UIScaling, ch + 6*config.UIScaling
-	// return b.child.ComputedSize()
 }
 func (b *ButtonComponent[T]) CapacityForChild(_ Component) (float64, float64) {
-	// w, h := b.parent.CapacityForChild(b)
-	// return w - 6*config.UIScaling, h - 6*config.UIScaling
-	return b.parent.CapacityForChild(b)
+	w, h := b.parent.CapacityForChild(b)
+	return w - 6*config.UIScaling, h - 6*config.UIScaling
 }
 func (b *ButtonComponent[T]) MaxCapacityForChild(_ Component) (float64, float64) {
 	return b.parent.MaxCapacityForChild(b)
@@ -580,9 +579,10 @@ func (b *ButtonComponent[T]) Draw(screen *ebiten.Image, x, y float64) error {
 	// check if the cursor is hovering over the button
 	cx, cy := ebiten.CursorPosition()
 	b.mouseOver = float64(cx) > x && float64(cy) > y && float64(cx) < x+w && float64(cy) < y+h
-	DrawButtonBackground(screen, b.mouseOver, x, y, cw, ch)
+	DrawButtonBackground(screen, b.mouseOver, x, y, w-6*config.UIScaling, h-6*config.UIScaling)
 
-	return b.child.Draw(screen, x+3*config.UIScaling, y+3*config.UIScaling)
+	// Draw the child centered horizontally and vertically
+	return b.child.Draw(screen, x+w/2-cw/2, y+h/2-ch/2)
 }
 func (b *ButtonComponent[T]) IsPressed() bool {
 	return b.pressed
@@ -779,55 +779,66 @@ func (b *BackgroundColorComponent) Children() []Component {
 type InputComponent struct {
 	baseComponent
 	baseFocusView
-
-	tex        types.Texture
-	texFocused types.Texture
-	opts       *ebiten.DrawImageOptions
+	mouseOver bool
 
 	label *LabelComponent
+	child Component
 
-	enterKey ebiten.Key
-	input    string
-	handler  func(string)
+	enterKey       ebiten.Key
+	input          string
+	maxInputLength int
+	handler        func(string)
 
 	pressedKeys []rune
 }
 
 func Input(handler func(string), enterKey ebiten.Key, initialFocus bool) *InputComponent {
+	label := Label("")
 	inp := &InputComponent{
 		baseComponent: newBaseComponent(),
 		baseFocusView: baseFocusView{focused: initialFocus},
 
-		tex:        asset_loader.Texture("inputfield"),
-		texFocused: asset_loader.Texture("inputfield-focused"),
-		opts:       &ebiten.DrawImageOptions{},
+		label: label,
+		child: Padding(0.3, label),
 
-		label: Label(""),
-
-		enterKey: enterKey,
-		input:    "",
-		handler:  handler,
+		enterKey:       enterKey,
+		input:          "",
+		maxInputLength: 4096,
+		handler:        handler,
 
 		pressedKeys: make([]rune, 128),
 	}
-	inp.label.SetParent(inp)
+	inp.child.SetParent(inp)
 	return inp
+}
+
+// Sets maximum input length
+func (i *InputComponent) WithMaxInputLength(length int) *InputComponent {
+	i.maxInputLength = length
+	return i
 }
 
 func (i *InputComponent) MaxSize() (float64, float64) {
 	return i.ComputedSize()
 }
 func (i *InputComponent) ComputedSize() (float64, float64) {
-	return i.tex.ScaledSize()
+	cw, ch := i.child.ComputedSize()
+	cw = math.Max(MinInputWidth, cw)
+	return cw + 6*config.UIScaling, ch + 6*config.UIScaling
 }
 func (i *InputComponent) CapacityForChild(_ Component) (float64, float64) {
-	w, h := i.tex.ScaledSize()
-	return w - 12*config.UIScaling, h - 6*config.UIScaling
+	w, h := i.parent.CapacityForChild(i)
+	return w - 6*config.UIScaling, h - 6*config.UIScaling
 }
 func (i *InputComponent) MaxCapacityForChild(_ Component) (float64, float64) {
 	return i.parent.MaxCapacityForChild(i)
 }
 func (i *InputComponent) Update() error {
+	// check for mouse presses, and update focus accordingly
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		i.SetFocused(i.mouseOver)
+	}
+
 	// if the element isn't focused, skip
 	if !i.baseFocusView.focused {
 		return nil
@@ -847,10 +858,8 @@ func (i *InputComponent) Update() error {
 		i.input = i.input[:len(i.input)-1]
 
 	default:
-		// if the input string doesn't fit in the texture, don't accept any more keys
-		texCapacity, _ := i.CapacityForChild(nil)
-		textSize := font.GetStringWidth(i.input, i.Style().TextSize)
-		if textSize > texCapacity {
+		// if the input is longer than maxInputLength, don't accept any more input
+		if utf8.RuneCountInString(i.input) > i.maxInputLength {
 			break
 		}
 
@@ -861,43 +870,31 @@ func (i *InputComponent) Update() error {
 		}
 	}
 
+	i.label.SetText(i.input)
 	return nil
 }
 func (i *InputComponent) Draw(screen *ebiten.Image, x, y float64) error {
-	// check for mouse presses, and update focus accordingly
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		_cx, _cy := ebiten.CursorPosition()
-		cx, cy := float64(_cx), float64(_cy)
-		w, h := i.ComputedSize()
-
-		if cx > x && cx < x+w && cy > y && cy < y+h {
-			// if this input was pressed, set the focus to true
-			i.SetFocused(true)
-		} else {
-			i.SetFocused(false)
-		}
-	}
-
-	i.opts.GeoM.Reset()
-	i.opts.GeoM.Scale(config.UIScaling, config.UIScaling)
-	i.opts.GeoM.Translate(x, y)
-
-	if i.baseFocusView.focused {
-		screen.DrawImage(i.texFocused.Texture(), i.opts)
-	} else {
-		screen.DrawImage(i.tex.Texture(), i.opts)
-	}
-
-	i.label.text = i.input
-
 	w, h := i.ComputedSize()
-	cw, ch := i.label.ComputedSize()
-	i.label.Draw(screen, x+w/2-cw/2, y+h/2-ch/2)
+
+	// Check if the mouse is hovering over the component
+	_cx, _cy := ebiten.CursorPosition()
+	cx, cy := float64(_cx), float64(_cy)
+
+	if cx > x && cx < x+w && cy > y && cy < y+h {
+		i.mouseOver = true
+	} else {
+		i.mouseOver = false
+	}
+
+	cw, ch := i.child.ComputedSize()
+
+	DrawInputBackground(screen, i.baseFocusView.focused, x, y, w-6*config.UIScaling, h-6*config.UIScaling)
+	i.child.Draw(screen, x+w/2-cw/2, y+h/2-ch/2)
 
 	return nil
 }
 func (i *InputComponent) Children() []Component {
-	return []Component{i.label}
+	return []Component{i.child}
 }
 func (i *InputComponent) Input() string {
 	return i.input

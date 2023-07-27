@@ -39,7 +39,7 @@ func Form(submitButtonTitle string, formData chan []string, prompts ...FormPromp
 	}
 
 	// assemble a view with the prompts
-	promptsStack := VStack().WithSpacing(2)
+	promptsStack := VStack().WithSpacing(2).AlignChildren(AlignCenter)
 	promptsStack.SetParent(form)
 
 	// assemble a view for each prompt

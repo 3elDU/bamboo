@@ -36,7 +36,7 @@ func NewNewWorldScene() *NewWorldScene {
 		goBack:   goBack,
 
 		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(), ui.Center(
-			ui.VStack(
+			ui.VStack().WithSpacing(1.0).AlignChildren(ui.AlignCenter).WithChildren(
 				ui.Form(
 					"Create a new world",
 					formData,

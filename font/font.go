@@ -112,6 +112,13 @@ var charMap = map[rune]types.Vec2u{
 
 	'>': {X: 0, Y: 60},
 	'<': {X: 5, Y: 60},
+	'!': {X: 10, Y: 60},
+	'#': {X: 15, Y: 60},
+	'&': {X: 20, Y: 60},
+	'*': {X: 25, Y: 60},
+	'^': {X: 30, Y: 60},
+	'_': {X: 35, Y: 60},
+	'@': {X: 40, Y: 60},
 }
 
 var cacheMap map[rune]*ebiten.Image

@@ -77,18 +77,18 @@ func (scene *WorldListScene) Scan() {
 }
 
 func (scene *WorldListScene) UpdateUI() {
-	rootView := ui.VStack().WithSpacing(3)
-	worldList := ui.VStack().WithSpacing(1.0)
+	rootView := ui.VStack().WithSpacing(3).AlignChildren(ui.AlignCenter)
+	worldList := ui.VStack().WithSpacing(2.0).AlignChildren(ui.AlignCenter)
 
 	for _, currentWorld := range scene.worldList {
 		// assemble a view for each world
-		worldList.AddChild(ui.VStack().WithSpacing(0.5).AlignChildren(ui.AlignCenter).WithChildren(
-			ui.HStack().WithSpacing(0.5).WithChildren(
+		worldList.AddChild(ui.VStack().AlignChildren(ui.AlignCenter).WithChildren(
+			ui.HStack().WithSpacing(2).WithChildren(
 				ui.Label(fmt.Sprintf("Name: %v", currentWorld.Name)),
 				ui.Label(fmt.Sprintf("Seed: %v", currentWorld.Seed)),
 			),
 			ui.HStack().WithSpacing(1).WithChildren(
-				ui.Button(scene.selectedWorld, currentWorld, ui.Label(fmt.Sprintf("Play %v", currentWorld.Name))),
+				ui.Button(scene.selectedWorld, currentWorld, ui.Label("Play")),
 				ui.Button(scene.deleteWorld, currentWorld, ui.Label("Delete")),
 			),
 		))
