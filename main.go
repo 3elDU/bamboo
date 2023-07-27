@@ -40,17 +40,7 @@ func init() {
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 }
 
-func TestFunc1() {
-	fmt.Println("TestFunc1")
-}
-
-func TestFunc2() {
-	fmt.Println("TestFunc2")
-}
-
 func main() {
-	TestFunc1()
-
 	if slices.Contains(os.Environ(), "CPUPROFILE=1") {
 		log.Println("Starting with CPU profiling enabled")
 		defer profile.Start(profile.CPUProfile, profile.ProfilePath(".")).Stop()
