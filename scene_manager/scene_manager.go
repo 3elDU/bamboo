@@ -173,6 +173,7 @@ func (manager *sceneManager) printQueue(originFunc string) {
 func Run() {
 	if err := ebiten.RunGame(manager); err != nil {
 		switch err.Error() {
+		// When the window was closed by the user
 		case "exit":
 			break
 		default:

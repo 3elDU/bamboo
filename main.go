@@ -22,6 +22,9 @@ import (
 )
 
 func init() {
+	// create logs directory automatically, if it doesn't exist
+	os.Mkdir("logs", os.ModePerm)
+
 	// init logging
 	logFilename := "Log-" + time.Now().Format("02-Jan-2006_15-04-05-MST") + ".txt"
 	file, err := os.Create(filepath.Join("logs", logFilename))
@@ -53,6 +56,6 @@ func main() {
 	// init scene manager, and scenes
 	scene_manager.Push(scenes.NewMainMenuScene())
 
-	// run main loop!
+	// run the main loop
 	scene_manager.Run()
 }
