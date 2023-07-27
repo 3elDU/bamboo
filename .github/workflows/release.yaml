@@ -20,7 +20,7 @@ jobs:
 
             - name: Echo os
               run:
-                echo ${{ matrix.os }}
+                echo ${{ matrix.arch }}
 
             - name: Install apt dependencies
               if: matrix.os == 'ubuntu-latest'
