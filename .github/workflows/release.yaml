@@ -32,11 +32,11 @@ jobs:
 
             - name: Package everything into an archive (Windows)
               if: runner.os == 'Windows'
-              run: tar -czvf Bamboo-Windows.tar.gz bamboo.exe assets
+              run: zip Bamboo-Windows.zip bamboo.exe assets
 
             - name: Package everything into an archive (Unix)
               if: runner.os != 'Windows'
-              run: tar -czvf Bamboo-${{ runner.os }}.tar.gz bamboo assets
+              run: zip Bamboo-${{runner.os}}.zip bamboo assets
 
             - name: Generate release description
               run: git log $(git describe HEAD~ --tags --abbrev=0)..HEAD --pretty='format:* %h %s%n  * %an <%ae>' --no-merges >> ".github/RELEASE-TEMPLATE.md"
@@ -45,6 +45,6 @@ jobs:
               uses: softprops/action-gh-release@v1
               with:
                 body_path: ".github/RELEASE-TEMPLATE.md"
-                files: Bamboo-${{runner.os}}.tar.gz
+                files: Bamboo-${{runner.os}}.zip
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
