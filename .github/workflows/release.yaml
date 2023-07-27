@@ -19,29 +19,28 @@ jobs:
             - uses: actions/setup-go@v4
               with:
                 go-version: '>=1.18'
-                cache: true
 
-            - name: Install dependencies
+            - name: 💿 Install dependencies (Ubuntu)
               if: runner.os == 'Linux'
               run: |
                 sudo apt-get update
                 sudo apt-get install libasound2-dev libgl1-mesa-dev xorg-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev
             
-            - name: Build
+            - name: 🔨 Build
               run: bash ./build.sh
 
-            - name: Package everything into an archive (Windows)
+            - name: 📦 Package everything into an archive (Windows)
               if: runner.os == 'Windows'
               run: 7z a Bamboo-Windows.zip bamboo.exe assets
 
-            - name: Package everything into an archive (Unix)
+            - name: 📦 Package everything into an archive (Unix)
               if: runner.os != 'Windows'
               run: zip Bamboo-${{runner.os}}.zip bamboo assets
 
-            - name: Generate release description
-              run: git log $(git describe HEAD~ --tags --abbrev=0)..HEAD --pretty='format:* %h %s%n  * %an <%ae>' --no-merges >> ".github/RELEASE-TEMPLATE.md"
+            - name: 📝 Generate release description
+              run: git log $(git describe HEAD~1 --tags --abbrev=0)..HEAD --pretty='format:* %h %s%n  * %an <%ae>' --no-merges >> ".github/RELEASE-TEMPLATE.md"
 
-            - name: Publish release
+            - name: 🎉 Publish release
               uses: softprops/action-gh-release@v1
               with:
                 body_path: ".github/RELEASE-TEMPLATE.md"
