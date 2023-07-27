@@ -35,7 +35,7 @@ jobs:
             
             - name: Build
               run: |
-                ./build.sh
+                bash ./build.sh
             
             - name: Release notes
               run:
