@@ -25,27 +25,17 @@ jobs:
             - name: Install apt dependencies
               if: matrix.os == 'ubuntu-latest'
               run: sudo apt install libc6-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev libasound2-dev pkg-config
-
-            - name: Get OS and arch info
-              run: |
-                GOARCH=${GOOSARCH#*/}
-                BINARY_NAME=${{ github.repository }}-$GOOS-$GOARCH
-                echo "BINARY_NAME=$BINARY_NAME" >> $GITHUB_ENV
-                echo "GOOS=$GOOS" >> $GITHUB_ENV
-                echo "GOARCH=$GOARCH" >> $GITHUB_ENV
             
             - name: Build
-              run: |
-                bash ./build.sh
+              run: bash ./build.sh ${{ matrix.arch }}
             
-            - name: Release notes
-              run:
-                git log $(git describe HEAD~ --tags --abbrev=0)..HEAD --pretty='format:* %h %s%n  * %an <%ae>' --no-merges >> ".github/RELEASE-TEMPLATE.md"
+            - name: Generate release description
+              run: bash ./generate-release-description.sh
 
             - name: Release!
               uses: softprops/action-gh-release@v1
               with:
                 body_path: ".github/RELEASE-TEMPLATE.md"
-                files: ${{env.BINARY_NAME}}
+                files: ${{github.repository}}-${{matrix.arch}}
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
