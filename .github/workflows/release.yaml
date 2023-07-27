@@ -32,7 +32,7 @@ jobs:
 
             - name: Package everything into an archive (Windows)
               if: runner.os == 'Windows'
-              run: zip Bamboo-Windows.zip bamboo.exe assets
+              run: 7z a Bamboo-Windows.zip bamboo.exe assets
 
             - name: Package everything into an archive (Unix)
               if: runner.os != 'Windows'
