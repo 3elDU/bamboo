@@ -30,7 +30,7 @@ jobs:
               if: runner.os == 'Linux'
               run: |
                 sudo apt-get update
-                sudo apt-get install libasound2-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev
+                sudo apt-get install libasound2-dev libgl1-mesa-dev xorg-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev
 
             - name: Xvfb
               if: runner.os == 'Linux'
@@ -41,12 +41,12 @@ jobs:
               run: bash ./build.sh ${{ matrix.arch }}
             
             - name: Generate release description
-              run: bash ./generate-release-description.sh
+              run: git log $(git describe HEAD~ --tags --abbrev=0)..HEAD --pretty='format:* %h %s%n  * %an <%ae>' --no-merges >> ".github/RELEASE-TEMPLATE.md"
 
             - name: Release!
               uses: softprops/action-gh-release@v1
               with:
                 body_path: ".github/RELEASE-TEMPLATE.md"
-                files: ${{github.repository}}-${{matrix.arch}}
+                files: bamboo-${{matrix.arch}}
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
