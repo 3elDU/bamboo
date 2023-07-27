@@ -11,6 +11,6 @@ bamboo
 *mem.prof
 *.pprof
 .idea
-logs/Log*
-saves/*
+logs
+saves
 **/.DS_Store
