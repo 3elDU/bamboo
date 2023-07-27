@@ -8,7 +8,6 @@ jobs:
         strategy:
             matrix:
                 os: [ubuntu-latest, windows-latest, macos-latest]
-                arch: [amd64, arm64]
         runs-on: ${{ matrix.os }}
         defaults:
             run:
@@ -22,23 +21,14 @@ jobs:
                 go-version: '>=1.18'
                 cache: true
 
-            - name: Echo os
-              run:
-                echo ${{ matrix.arch }}
-
             - name: Install dependencies
               if: runner.os == 'Linux'
               run: |
                 sudo apt-get update
                 sudo apt-get install libasound2-dev libgl1-mesa-dev xorg-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev
-
-            - name: Xvfb
-              if: runner.os == 'Linux'
-              run: |
-                Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
             
             - name: Build
-              run: bash ./build.sh ${{ matrix.arch }}
+              run: bash ./build.sh ${{ runner.os }}
             
             - name: Generate release description
               run: git log $(git describe HEAD~ --tags --abbrev=0)..HEAD --pretty='format:* %h %s%n  * %an <%ae>' --no-merges >> ".github/RELEASE-TEMPLATE.md"
@@ -47,6 +37,6 @@ jobs:
               uses: softprops/action-gh-release@v1
               with:
                 body_path: ".github/RELEASE-TEMPLATE.md"
-                files: bamboo-${{matrix.arch}}
+                files: bamboo-${{runner.os}}
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -2,8 +2,7 @@
 
 CONFIG_MOD="github.com/3elDU/bamboo/config"
 
-export GOARCH=$1
-echo "Binary name: 'bamboo-$GOARCH'"
+echo "Binary name: 'bamboo-$1'"
 
 GIT_COMMIT=$(git rev-parse --short HEAD)
 GIT_TAG=$(git describe --tags --abbrev=0)
@@ -13,4 +12,4 @@ go build -ldflags "-X \"$CONFIG_MOD.GitCommit=$GIT_COMMIT\" \
                    -X \"$CONFIG_MOD.GitTag=$GIT_TAG\" \
                    -X \"$CONFIG_MOD.BuildMachine=$BUILD_MACHINE\" \
                    -X \"$CONFIG_MOD.BuildDate=$BUILD_DATE\""  \
-                   -o "bamboo-$GOARCH"
+                   -o "bamboo-$1"
