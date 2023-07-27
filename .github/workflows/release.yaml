@@ -30,18 +30,13 @@ jobs:
             - name: Build
               run: bash ./build.sh
 
-            - name: Calculate executable name
-              run:
-                if [[ ${{runner.os}} == "Windows" ]]; then
-                    EXECUTABLE_NAME="bamboo.exe"
-                else
-                    EXECUTABLE_NAME="bamboo"
-                fi
-                echo "EXECUTABLE_NAME=$EXECUTABLE_NAME" >> $GITHUB_ENV
-                echo Executable name is $EXECUTABLE_NAME
+            - name: Package everything into an archive (Windows)
+              if: runner.os == 'Windows'
+              run: tar -czvf Bamboo-Windows.tar.gz bamboo.exe assets
 
-            - name: Package everything into an archive
-              run: tar -cvf Bamboo-${{ runner.os }}.tar.gz $EXECUTABLE_NAME assets
+            - name: Package everything into an archive (Unix)
+              if: runner.os != 'Windows'
+              run: tar -czvf Bamboo-${{ runner.os }}.tar.gz bamboo assets
 
             - name: Generate release description
               run: git log $(git describe HEAD~ --tags --abbrev=0)..HEAD --pretty='format:* %h %s%n  * %an <%ae>' --no-merges >> ".github/RELEASE-TEMPLATE.md"
