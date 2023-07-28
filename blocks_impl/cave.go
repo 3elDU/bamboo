@@ -2,7 +2,8 @@ package blocks_impl
 
 import (
 	"encoding/gob"
-	"github.com/3elDU/bamboo/asset_loader"
+
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/event"
 	"github.com/3elDU/bamboo/types"
 	"github.com/google/uuid"
@@ -32,7 +33,7 @@ func NewCaveEntranceBlock(id uuid.UUID) types.Block {
 			blockType: types.CaveEntranceBlock,
 		},
 		texturedBlock: texturedBlock{
-			tex: asset_loader.Texture("cave"),
+			tex: assets.Texture("cave"),
 		},
 		id: id,
 	}

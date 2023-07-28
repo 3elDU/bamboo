@@ -4,7 +4,7 @@ import (
 	"encoding/gob"
 	"math/rand"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/types"
 )
 
@@ -29,7 +29,7 @@ func NewPineTreeBlock() types.Block {
 			baseBlock: baseBlock{
 				blockType: types.PineTreeBlock,
 			},
-			tex:        asset_loader.ConnectedTexture("pine", false, false, false, false),
+			tex:        assets.ConnectedTexture("pine", false, false, false, false),
 			connectsTo: []types.BlockType{types.PineTreeBlock},
 		},
 		collidableBlock: collidableBlock{

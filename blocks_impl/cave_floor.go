@@ -2,7 +2,8 @@ package blocks_impl
 
 import (
 	"encoding/gob"
-	"github.com/3elDU/bamboo/asset_loader"
+
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/types"
 )
 
@@ -27,7 +28,7 @@ func NewCaveFloorBlock() types.Block {
 			blockType: types.CaveFloorBlock,
 		},
 		texturedBlock: texturedBlock{
-			tex:      asset_loader.Texture("cave_floor"),
+			tex:      assets.Texture("cave_floor"),
 			rotation: 0,
 		},
 	}

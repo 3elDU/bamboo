@@ -12,7 +12,7 @@ import (
 	"github.com/3elDU/bamboo/types"
 	"github.com/3elDU/bamboo/world_type"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/game"
 	"github.com/3elDU/bamboo/scene_manager"
@@ -101,7 +101,7 @@ func (scene *WorldListScene) UpdateUI() {
 	))
 
 	scene.view = ui.Screen(
-		ui.TileBackgroundImage(asset_loader.Texture("snow"),
+		ui.TileBackgroundImage(assets.Texture("snow"),
 			ui.Center(rootView),
 		),
 	)

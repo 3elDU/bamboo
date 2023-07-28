@@ -9,7 +9,7 @@ import (
 	"github.com/3elDU/bamboo/world"
 	"github.com/3elDU/bamboo/world_type"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/game"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/ui"
@@ -35,7 +35,7 @@ func NewNewWorldScene() *NewWorldScene {
 		formData: formData,
 		goBack:   goBack,
 
-		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, asset_loader.Texture("snow").Texture(), ui.Center(
+		view: ui.Screen(ui.BackgroundImage(ui.BackgroundTile, assets.Texture("snow").Texture(), ui.Center(
 			ui.VStack().WithSpacing(1.0).AlignChildren(ui.AlignCenter).WithChildren(
 				ui.Form(
 					"Create a new world",

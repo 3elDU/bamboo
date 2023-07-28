@@ -3,7 +3,7 @@ package ui
 import (
 	"image"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/font"
@@ -86,11 +86,11 @@ func AssembleTooltipTexture(texture *ebiten.Image) TooltipTexture {
 }
 
 func init() {
-	tooltip = AssembleTooltipTexture(asset_loader.Texture("tooltip").Texture())
-	tooltip_button = AssembleTooltipTexture(asset_loader.Texture("tooltip_button").Texture())
-	tooltip_button_hover = AssembleTooltipTexture(asset_loader.Texture("tooltip_button_hover").Texture())
-	tooltip_input = AssembleTooltipTexture(asset_loader.Texture("tooltip_input").Texture())
-	tooltip_input_focused = AssembleTooltipTexture(asset_loader.Texture("tooltip_input_focused").Texture())
+	tooltip = AssembleTooltipTexture(assets.Texture("tooltip").Texture())
+	tooltip_button = AssembleTooltipTexture(assets.Texture("tooltip_button").Texture())
+	tooltip_button_hover = AssembleTooltipTexture(assets.Texture("tooltip_button_hover").Texture())
+	tooltip_input = AssembleTooltipTexture(assets.Texture("tooltip_input").Texture())
+	tooltip_input_focused = AssembleTooltipTexture(assets.Texture("tooltip_input_focused").Texture())
 }
 
 // Which side of the cursor to prefer for displaying the tooltip.

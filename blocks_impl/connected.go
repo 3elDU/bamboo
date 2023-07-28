@@ -4,7 +4,7 @@ import (
 	"encoding/gob"
 	"log"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/exp/slices"
@@ -72,5 +72,5 @@ func (b *connectedBlock) LoadState(s interface{}) {
 	}
 
 	b.baseBlock.LoadState(state.BaseBlockState)
-	b.tex = asset_loader.ConnectedTextureFromArray(state.Texture, state.SidesConnected)
+	b.tex = assets.ConnectedTextureFromArray(state.Texture, state.SidesConnected)
 }

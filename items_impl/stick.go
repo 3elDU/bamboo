@@ -3,7 +3,7 @@ package items_impl
 import (
 	"encoding/gob"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -28,7 +28,7 @@ func NewStickItem() types.Item {
 		baseItem: baseItem{
 			id: types.StickItem,
 		},
-		Tex: asset_loader.Texture("stick_item"),
+		Tex: assets.Texture("stick_item"),
 	}
 }
 
@@ -85,5 +85,5 @@ func (item *StickItem) State() interface{} {
 func (item *StickItem) LoadState(s interface{}) {
 	state := s.(StickItemState)
 	item.baseItem.LoadState(state.BaseItemState)
-	item.Tex = asset_loader.Texture(state.Tex)
+	item.Tex = assets.Texture(state.Tex)
 }

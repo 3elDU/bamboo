@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/types"
 )
@@ -33,7 +33,7 @@ func NewPineSaplingBlock() types.Block {
 			blockType: types.PineSaplingBlock,
 		},
 		texturedBlock: texturedBlock{
-			tex: asset_loader.Texture("sapling_block1"),
+			tex: assets.Texture("sapling_block1"),
 		},
 		stage: 1,
 	}
@@ -47,7 +47,7 @@ func (block *PineSaplingBlock) Update(world types.World) {
 		if block.stage == 5 {
 			world.SetBlock(uint64(block.x), uint64(block.y), types.NewPineTreeBlock())
 		} else {
-			block.tex = asset_loader.Texture(fmt.Sprintf("sapling_block%v", block.stage))
+			block.tex = assets.Texture(fmt.Sprintf("sapling_block%v", block.stage))
 		}
 	}
 }

@@ -1,4 +1,4 @@
-package asset_loader
+package assets
 
 import (
 	"github.com/3elDU/bamboo/config"

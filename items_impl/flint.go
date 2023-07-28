@@ -3,7 +3,7 @@ package items_impl
 import (
 	"encoding/gob"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -42,7 +42,7 @@ func (flint *FlintItem) Hash() uint64 {
 }
 
 func (flint *FlintItem) Texture() *ebiten.Image {
-	return asset_loader.Texture("flint").Texture()
+	return assets.Texture("flint").Texture()
 }
 
 func (flint *FlintItem) Use(pos types.Vec2u) {

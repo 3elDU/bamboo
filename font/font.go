@@ -13,7 +13,7 @@ import (
 	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/event"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -152,7 +152,7 @@ func RenderFontWithOptions(dest *ebiten.Image, s string, x, y float64, clr color
 					continue
 				}
 
-				img = ebiten.NewImageFromImage(asset_loader.DefaultFont().SubImage(
+				img = ebiten.NewImageFromImage(assets.DefaultFont().SubImage(
 					image.Rect(int(coords.X), int(coords.Y), int(coords.X+CharWidth), int(coords.Y+CharHeight))))
 				cacheMap[char] = img
 			}

@@ -2,9 +2,10 @@ package blocks_impl
 
 import (
 	"encoding/gob"
+
 	"github.com/3elDU/bamboo/types"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 )
 
 func init() {
@@ -28,7 +29,7 @@ func NewTallGrassBlock() types.Block {
 			blockType: types.TallGrassBlock,
 		},
 		texturedBlock: texturedBlock{
-			tex:      asset_loader.Texture("tall_grass"),
+			tex:      assets.Texture("tall_grass"),
 			rotation: 0,
 		},
 	}

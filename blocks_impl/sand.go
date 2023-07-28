@@ -2,9 +2,10 @@ package blocks_impl
 
 import (
 	"encoding/gob"
+
 	"github.com/3elDU/bamboo/types"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/util"
 )
 
@@ -36,7 +37,7 @@ func NewSandBlock(stones bool) types.Block {
 			blockType: types.SandBlock,
 		},
 		texturedBlock: texturedBlock{
-			tex:      asset_loader.Texture(texVariant),
+			tex:      assets.Texture(texVariant),
 			rotation: float64(util.RandomChoice([]int{0, 90, 180, 270})),
 		},
 		collidableBlock: collidableBlock{
@@ -55,7 +56,7 @@ func (sand *SandBlock) Break() {
 		Quantity: 1,
 	})
 	if added {
-		sand.tex = asset_loader.Texture("sand")
+		sand.tex = assets.Texture("sand")
 	}
 }
 

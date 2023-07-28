@@ -3,7 +3,7 @@ package inventory
 import (
 	"fmt"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/font"
@@ -123,7 +123,7 @@ func (inv *Inventory) ItemInHand() types.Item {
 
 // Returns a position of inventory slot on the screen
 func (inv *Inventory) SlotToScreenCoords(screen *ebiten.Image, slot int) types.Vec2f {
-	inventoryTexture := asset_loader.Texture("inventory")
+	inventoryTexture := assets.Texture("inventory")
 	w, h := inventoryTexture.ScaledSize()
 	sw, sh := screen.Bounds().Dx(), screen.Bounds().Dy()
 	return types.Vec2f{
@@ -139,7 +139,7 @@ func (inv *Inventory) MouseOverSlot(screen *ebiten.Image, slot int) bool {
 }
 
 func (inv *Inventory) Render(screen *ebiten.Image) {
-	inventoryTexture := asset_loader.Texture("inventory")
+	inventoryTexture := assets.Texture("inventory")
 	inventoryDrawOpts := &ebiten.DrawImageOptions{}
 
 	w, h := inventoryTexture.ScaledSize()
@@ -172,7 +172,7 @@ func (inv *Inventory) Render(screen *ebiten.Image) {
 		font.RenderFont(screen, fmt.Sprintf("%v", slot.Quantity), itemTexPos.X, itemTexPos.Y, colors.C("black"))
 	}
 
-	selectedSlotTex := asset_loader.Texture("selected_slot").Texture()
+	selectedSlotTex := assets.Texture("selected_slot").Texture()
 	selectedSlotTexOpts := &ebiten.DrawImageOptions{}
 	selectedSlotTexOpts.GeoM.Scale(config.UIScaling, config.UIScaling)
 	selectedSlotTexOpts.GeoM.Translate(
@@ -182,6 +182,6 @@ func (inv *Inventory) Render(screen *ebiten.Image) {
 	screen.DrawImage(selectedSlotTex, selectedSlotTexOpts)
 
 	// draw inventory badges on top of everything, so they will be always visible
-	inventoryBadgesTex := asset_loader.Texture("inventory_badges").Texture()
+	inventoryBadgesTex := assets.Texture("inventory_badges").Texture()
 	screen.DrawImage(inventoryBadgesTex, inventoryDrawOpts)
 }

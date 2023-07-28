@@ -4,7 +4,7 @@ import (
 	"log"
 	"math"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -54,6 +54,6 @@ func (b *texturedBlock) LoadState(s interface{}) {
 		log.Panicf("%T - invalid state type; expected %T, got %T", b, TexturedBlockState{}, state)
 	}
 
-	b.tex = asset_loader.Texture(state.Name)
+	b.tex = assets.Texture(state.Name)
 	b.rotation = state.Rotation
 }

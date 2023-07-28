@@ -3,7 +3,7 @@ package scenes
 import (
 	"log"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/ui"
 	"github.com/MakeNowJust/heredoc"
@@ -20,7 +20,7 @@ func NewAboutScene() *AboutScene {
 
 	return &AboutScene{
 		goBackEvent: goBackEvent,
-		view: ui.Screen(ui.TileBackgroundImage(asset_loader.Texture("snow"),
+		view: ui.Screen(ui.TileBackgroundImage(assets.Texture("snow"),
 			ui.Center(ui.VStack().WithSpacing(1).WithChildren(
 				ui.Label(heredoc.Doc(`
 					Very important text...

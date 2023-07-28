@@ -2,9 +2,10 @@ package blocks_impl
 
 import (
 	"encoding/gob"
+
 	"github.com/3elDU/bamboo/types"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 )
 
 func init() {
@@ -29,7 +30,7 @@ func NewRedMushroomBlock() types.Block {
 			blockType: types.RedMushroomBlock,
 		},
 		texturedBlock: texturedBlock{
-			tex: asset_loader.Texture("red-mushroom"),
+			tex: assets.Texture("red-mushroom"),
 		},
 	}
 }
@@ -40,7 +41,7 @@ func NewWhiteMushroomBlock() types.Block {
 			blockType: types.WhiteMushroomBlock,
 		},
 		texturedBlock: texturedBlock{
-			tex: asset_loader.Texture("white-mushroom"),
+			tex: assets.Texture("white-mushroom"),
 		},
 	}
 }

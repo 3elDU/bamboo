@@ -3,7 +3,7 @@ package scenes
 import (
 	"log"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/ui"
@@ -23,7 +23,7 @@ func NewMainMenuScene() *MainMenu {
 
 	return &MainMenu{
 		buttonPressed: buttonPressed,
-		view: ui.Screen(ui.TileBackgroundImage(asset_loader.Texture("snow"), ui.Padding(0.5,
+		view: ui.Screen(ui.TileBackgroundImage(assets.Texture("snow"), ui.Padding(0.5,
 			ui.Overlay(
 				ui.VStack().WithProportions(0.4).WithChildren(
 					ui.Center(

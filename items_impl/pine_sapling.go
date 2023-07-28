@@ -3,7 +3,7 @@ package items_impl
 import (
 	"encoding/gob"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/exp/slices"
@@ -29,7 +29,7 @@ func NewPineSaplingItem() types.Item {
 		baseItem: baseItem{
 			id: types.PineSaplingItem,
 		},
-		Tex: asset_loader.Texture("sapling_item"),
+		Tex: assets.Texture("sapling_item"),
 	}
 }
 
@@ -81,5 +81,5 @@ func (item *PineSaplingItem) State() interface{} {
 func (item *PineSaplingItem) LoadState(s interface{}) {
 	state := s.(PineSaplingItemState)
 	item.baseItem.LoadState(state.BaseItemState)
-	item.Tex = asset_loader.Texture(state.Tex)
+	item.Tex = assets.Texture(state.Tex)
 }

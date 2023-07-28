@@ -3,7 +3,7 @@ package blocks_impl
 import (
 	"encoding/gob"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/types"
 )
 
@@ -28,7 +28,7 @@ func NewWaterBlock() types.Block {
 			baseBlock: baseBlock{
 				blockType: types.WaterBlock,
 			},
-			tex:        asset_loader.ConnectedTexture("lake", false, false, false, false),
+			tex:        assets.ConnectedTexture("lake", false, false, false, false),
 			connectsTo: []types.BlockType{types.WaterBlock},
 		},
 		collidableBlock: collidableBlock{

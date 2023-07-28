@@ -2,7 +2,7 @@
 	Loads all assets from the folder
 */
 
-package asset_loader
+package assets
 
 import (
 	_ "image/png"

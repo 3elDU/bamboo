@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/3elDU/bamboo/asset_loader"
-	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/scenes"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -33,9 +31,6 @@ func init() {
 	}
 	w := io.MultiWriter(file, os.Stdout)
 	log.SetOutput(w)
-
-	log.Printf("Loading assets from '%v'", config.AssetDirectory)
-	asset_loader.LoadAssets(config.AssetDirectory)
 
 	// set window options
 	ebiten.SetWindowSize(960, 640)

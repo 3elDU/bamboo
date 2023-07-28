@@ -4,7 +4,7 @@ import (
 	"encoding/gob"
 	"fmt"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -57,7 +57,7 @@ func (campfire *CampfireBlock) Update(world types.World) {
 func (campfire *CampfireBlock) Render(_ types.World, screen *ebiten.Image, pos types.Vec2f) {
 	opts := &ebiten.DrawImageOptions{}
 	opts.GeoM.Translate(pos.X, pos.Y)
-	screen.DrawImage(asset_loader.Texture(campfire.TextureName()).Texture(), opts)
+	screen.DrawImage(assets.Texture(campfire.TextureName()).Texture(), opts)
 }
 
 func (campfire *CampfireBlock) TextureName() string {

@@ -2,7 +2,8 @@ package blocks_impl
 
 import (
 	"encoding/gob"
-	"github.com/3elDU/bamboo/asset_loader"
+
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/event"
 	"github.com/3elDU/bamboo/types"
 )
@@ -28,7 +29,7 @@ func NewCaveExitBlock() types.Block {
 			blockType: types.CaveExitBlock,
 		},
 		texturedBlock: texturedBlock{
-			tex: asset_loader.Texture("cave_exit"),
+			tex: assets.Texture("cave_exit"),
 		},
 	}
 }

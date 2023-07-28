@@ -1,26 +1,25 @@
-package asset_loader
+package assets
 
 import (
 	"bytes"
+	"embed"
 	"image"
 	"io/fs"
 	"log"
-	"os"
 	"path/filepath"
 
-	"github.com/3elDU/bamboo/config"
-	"github.com/3elDU/bamboo/event"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+//go:embed assets
+var assets embed.FS
+
 func init() {
-	event.Subscribe(event.Reload, func(_ interface{}) {
-		LoadAssets(config.AssetDirectory)
-	})
+	LoadAssets()
 }
 
 func parseTexture(assetList *AssetList, path string) error {
-	data, err := os.ReadFile(path)
+	data, err := fs.ReadFile(assets, path)
 	if err != nil {
 		return err
 	}
@@ -35,7 +34,7 @@ func parseTexture(assetList *AssetList, path string) error {
 }
 
 func parseConnectedTexture(assetList *AssetList, path string) error {
-	data, err := os.ReadFile(filepath.Join(path, "atlas.png"))
+	data, err := fs.ReadFile(assets, filepath.Join(path, "atlas.png"))
 	if err != nil {
 		// Ignore folders without a texture atlas
 		return nil
@@ -78,14 +77,14 @@ func parseConnectedTexture(assetList *AssetList, path string) error {
 	return nil
 }
 
-// LoadAssets loads assets from directory dir to global variable GlobalAssets
-func LoadAssets(dir string) {
+// LoadAssets walks the assets directory and loads all the assets
+func LoadAssets() {
 	assetList := &AssetList{
 		Textures:          make(map[string]*ebiten.Image),
 		ConnectedTextures: make(map[connectedTexture]*ebiten.Image),
 	}
 
-	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(assets, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

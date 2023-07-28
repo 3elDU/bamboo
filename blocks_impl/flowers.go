@@ -2,9 +2,10 @@ package blocks_impl
 
 import (
 	"encoding/gob"
+
 	"github.com/3elDU/bamboo/types"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 )
 
 func init() {
@@ -28,7 +29,7 @@ func NewFlowersBlock() types.Block {
 			blockType: types.FlowersBlock,
 		},
 		texturedBlock: texturedBlock{
-			tex:      asset_loader.Texture("flowers"),
+			tex:      assets.Texture("flowers"),
 			rotation: 0,
 		},
 	}

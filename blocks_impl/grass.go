@@ -3,7 +3,7 @@ package blocks_impl
 import (
 	"encoding/gob"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/types"
 )
 
@@ -28,7 +28,7 @@ func NewGrassBlock() types.Block {
 			baseBlock: baseBlock{
 				blockType: types.GrassBlock,
 			},
-			tex: asset_loader.ConnectedTexture("grass", true, true, true, true),
+			tex: assets.ConnectedTexture("grass", true, true, true, true),
 			connectsTo: []types.BlockType{
 				types.GrassBlock, types.ShortGrassBlock, types.TallGrassBlock, types.FlowersBlock, types.PineSaplingBlock,
 				types.PineTreeBlock,

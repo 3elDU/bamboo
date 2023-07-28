@@ -8,7 +8,7 @@ import (
 	"image"
 	"time"
 
-	"github.com/3elDU/bamboo/asset_loader"
+	"github.com/3elDU/bamboo/assets"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -23,7 +23,7 @@ func (player *Player) Render(screen *ebiten.Image, scaling float64, paused bool)
 	opts := &ebiten.DrawImageOptions{}
 	sw, sh := screen.Bounds().Dx(), screen.Bounds().Dy()
 	tex := ebiten.NewImageFromImage(
-		asset_loader.Texture(textureMap[player.MovementDirection]).Texture().SubImage(
+		assets.Texture(textureMap[player.MovementDirection]).Texture().SubImage(
 			image.Rect(int(player.animationFrame)*16, 0, int(player.animationFrame)*16+16, 32),
 		),
 	)
