@@ -35,7 +35,7 @@ jobs:
 
             - name: 📦 Package everything into an archive (Unix)
               if: runner.os != 'Windows'
-              run: zip Bamboo-${{runner.os}}.zip bamboo assets
+              run: zip -r Bamboo-${{runner.os}}.zip bamboo assets
 
             - name: 📝 Generate release description
               run: git log $(git describe HEAD~1 --tags --abbrev=0)..HEAD --pretty='format:* %h %s%n  * %an <%ae>' --no-merges >> ".github/RELEASE-TEMPLATE.md"
