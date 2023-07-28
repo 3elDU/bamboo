@@ -10,14 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 )
-
-func init() {
-	LoadAssets(config.AssetDirectory)
-}
 
 type AssetList struct {
 	Textures          map[string]*ebiten.Image

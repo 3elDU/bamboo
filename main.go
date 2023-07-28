@@ -34,7 +34,7 @@ func init() {
 	w := io.MultiWriter(file, os.Stdout)
 	log.SetOutput(w)
 
-	// load assets
+	log.Printf("Loading assets from '%v'", config.AssetDirectory)
 	asset_loader.LoadAssets(config.AssetDirectory)
 
 	// set window options

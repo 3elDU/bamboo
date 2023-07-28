@@ -1,5 +1,10 @@
 package config
 
+import (
+	"os"
+	"path/filepath"
+)
+
 // Set externally at build time
 var (
 	GitCommit string = "unknown"
@@ -13,8 +18,6 @@ var (
 // 1 second == 60 ticks
 const (
 	PerlinNoiseScaleFactor float64 = 128
-
-	AssetDirectory = "./assets/"
 
 	PlayerSpeed    float64 = 0.02
 	PlayerInfoFile         = "player.gob"
@@ -32,3 +35,12 @@ const (
 	OverworldSize = 1024
 	Cave1Size     = 256
 )
+
+var AssetDirectory = "assets"
+
+func init() {
+	// Find the asset directory by looking at os.Args[0].
+	// This is necessary because asset directory location is relative to the binary,
+	// and the CWD could be different from the directory where the game binary is.
+	AssetDirectory = filepath.Join(filepath.Dir(os.Args[0]), AssetDirectory)
+}
