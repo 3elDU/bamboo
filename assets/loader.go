@@ -11,7 +11,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-//go:embed assets
+//go:embed assets/*
 var assets embed.FS
 
 func init() {
@@ -34,7 +34,7 @@ func parseTexture(assetList *AssetList, path string) error {
 }
 
 func parseConnectedTexture(assetList *AssetList, path string) error {
-	data, err := fs.ReadFile(assets, filepath.Join(path, "atlas.png"))
+	data, err := fs.ReadFile(assets, filepath.ToSlash(filepath.Join(path, "atlas.png")))
 	if err != nil {
 		// Ignore folders without a texture atlas
 		return nil
@@ -84,7 +84,7 @@ func LoadAssets() {
 		ConnectedTextures: make(map[connectedTexture]*ebiten.Image),
 	}
 
-	err := fs.WalkDir(assets, ".", func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(assets, "assets", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
