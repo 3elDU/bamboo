@@ -157,7 +157,8 @@ func (manager *sceneManager) Draw(screen *ebiten.Image) {
 }
 
 func (manager *sceneManager) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return outsideWidth, outsideHeight
+	scaleFactor := ebiten.DeviceScaleFactor()
+	return int(scaleFactor * float64(outsideWidth)), int(scaleFactor * float64(outsideHeight))
 }
 
 func (manager *sceneManager) printQueue(originFunc string) {
