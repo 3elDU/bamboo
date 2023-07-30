@@ -21,6 +21,9 @@ type Chunk struct {
 	// resets on Chunk.Render()
 	needsRedraw  bool
 	lastAccessed uint64
+
+	// Prevents the chunks from being saved to the disk
+	preventSaving bool
 }
 
 // NewChunk creates new empty Chunk at specified chunk coordinates
@@ -32,6 +35,12 @@ func NewChunk(cx, cy uint64) *Chunk {
 		needsRedraw:  true,
 		lastAccessed: scene_manager.Ticks(),
 	}
+}
+
+// Prevents the chunk from saving in future.
+// This is useful for dummy chunks for example, which are not meant to be saved.
+func (c *Chunk) PreventSaving() {
+	c.preventSaving = true
 }
 
 func (c *Chunk) Update(world types.World) {

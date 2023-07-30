@@ -219,8 +219,7 @@ func LoadChunk(metadata types.Save, x, y uint64) *Chunk {
 }
 
 func (c *Chunk) Save(metadata types.Save) {
-	// if chunk wasn't modified, saving is unnecessary
-	if !c.modified {
+	if !c.modified || c.preventSaving {
 		return
 	}
 

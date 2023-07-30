@@ -116,6 +116,7 @@ func (world *World) ChunkAtB(bx, by uint64) types.Chunk {
 			world.generator.Generate(chunk)
 		}
 		dummyChunk := NewChunk(cx, cy)
+		dummyChunk.PreventSaving()
 		world.generator.GenerateDummy(dummyChunk)
 		world.chunks[chunkCoordinates] = dummyChunk
 	}
