@@ -54,7 +54,7 @@ func (campfire *CampfireBlock) Update(world types.World) {
 	}
 }
 
-func (campfire *CampfireBlock) Render(_ types.World, screen *ebiten.Image, pos types.Vec2f) {
+func (campfire *CampfireBlock) Render(_ types.World, screen *ebiten.Image, pos types.Vec2f, _ bool) {
 	opts := &ebiten.DrawImageOptions{}
 	opts.GeoM.Translate(pos.X, pos.Y)
 	screen.DrawImage(assets.Texture(campfire.TextureName()).Texture(), opts)
@@ -83,6 +83,7 @@ func (campfire *CampfireBlock) Break() {
 func (campfire *CampfireBlock) AddPiece(item types.BurnableItem) {
 	if campfire.pieces < 4 {
 		campfire.pieces++
+		campfire.parentChunk.MarkAsModified()
 	}
 
 	campfire.energy += item.BurningEnergy()
@@ -94,6 +95,7 @@ func (campfire *CampfireBlock) LightUp() bool {
 	}
 
 	campfire.burning = true
+	campfire.parentChunk.MarkAsModified()
 	return true
 }
 
