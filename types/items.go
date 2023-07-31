@@ -10,6 +10,8 @@ const (
 	PineSaplingItem
 	StickItem
 	FlintItem
+	BerryItem
+	ClayItem
 )
 
 func NewItem(id ItemType) Item {
@@ -20,6 +22,10 @@ func NewItem(id ItemType) Item {
 		return NewStickItem()
 	case FlintItem:
 		return NewFlintItem()
+	case BerryItem:
+		return NewBerryItem()
+	case ClayItem:
+		return NewClayItem()
 	}
 
 	return nil
@@ -29,6 +35,8 @@ var (
 	NewPineSaplingItem func() Item
 	NewStickItem       func() Item
 	NewFlintItem       func() Item
+	NewBerryItem       func() Item
+	NewClayItem        func() Item
 )
 
 type Item interface {

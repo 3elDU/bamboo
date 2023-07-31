@@ -3,9 +3,8 @@ package blocks_impl
 import (
 	"encoding/gob"
 
-	"github.com/3elDU/bamboo/types"
-
 	"github.com/3elDU/bamboo/assets"
+	"github.com/3elDU/bamboo/types"
 )
 
 func init() {
@@ -15,35 +14,35 @@ func init() {
 
 type ShortGrassState struct {
 	BaseBlockState
-	TexturedBlockState
 }
 
 type ShortGrassBlock struct {
-	baseBlock
-	texturedBlock
+	connectedBlock
 }
 
 func NewShortGrassBlock() types.Block {
 	return &ShortGrassBlock{
-		baseBlock: baseBlock{
-			blockType: types.ShortGrassBlock,
-		},
-		texturedBlock: texturedBlock{
-			tex:      assets.Texture("short_grass"),
-			rotation: 0,
+		connectedBlock: connectedBlock{
+			baseBlock: baseBlock{
+				blockType: types.ShortGrassBlock,
+			},
+			tex: assets.ConnectedTexture("short_grass", true, true, true, true),
+			connectsTo: []types.BlockType{
+				types.ShortGrassBlock,
+				types.FlowersBlock,
+				types.RedMushroomBlock, types.WhiteMushroomBlock,
+			},
 		},
 	}
 }
 
 func (b *ShortGrassBlock) State() interface{} {
 	return ShortGrassState{
-		BaseBlockState:     b.baseBlock.State().(BaseBlockState),
-		TexturedBlockState: b.texturedBlock.State().(TexturedBlockState),
+		BaseBlockState: b.baseBlock.State().(BaseBlockState),
 	}
 }
 
 func (b *ShortGrassBlock) LoadState(s interface{}) {
 	state := s.(ShortGrassState)
 	b.baseBlock.LoadState(state.BaseBlockState)
-	b.texturedBlock.LoadState(state.TexturedBlockState)
 }

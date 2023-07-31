@@ -5,6 +5,7 @@ import (
 	"log"
 	"reflect"
 
+	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/event"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -141,6 +142,11 @@ func (manager *sceneManager) Update() error {
 	if ebiten.IsKeyPressed(ebiten.KeyControlLeft) && inpututil.IsKeyJustPressed(ebiten.KeyF5) {
 		log.Println("Reloading!")
 		event.FireEvent(event.NewEvent(event.Reload, nil))
+	}
+
+	// F3 to toggle debug mode on/off
+	if inpututil.IsKeyJustPressed(ebiten.KeyF3) {
+		config.DebugMode = !config.DebugMode
 	}
 
 	manager.currentScene.Update()

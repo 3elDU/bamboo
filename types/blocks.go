@@ -26,6 +26,9 @@ const (
 	CaveExitBlock
 	PineSaplingBlock
 	CampfireBlock
+	BerryBushBlock
+	SandWithStonesBlock
+	SandWithClayBlock
 )
 
 func NewBlock(id BlockType) Block {
@@ -37,7 +40,7 @@ func NewBlock(id BlockType) Block {
 	case WaterBlock:
 		return NewWaterBlock()
 	case SandBlock:
-		return NewSandBlock(false)
+		return NewSandBlock()
 	case GrassBlock:
 		return NewGrassBlock()
 	case SnowBlock:
@@ -66,30 +69,39 @@ func NewBlock(id BlockType) Block {
 		return NewPineSaplingBlock()
 	case CampfireBlock:
 		return NewCampfireBlock()
+	case BerryBushBlock:
+		return NewBerryBushBlock(0)
+	case SandWithStonesBlock:
+		return NewSandWithStonesBlock()
+	case SandWithClayBlock:
+		return NewSandWithClayBlock()
 	}
 
 	return NewEmptyBlock()
 }
 
 var (
-	NewEmptyBlock         func() Block
-	NewStoneBlock         func() Block
-	NewWaterBlock         func() Block
-	NewSandBlock          func(stones bool) Block
-	NewGrassBlock         func() Block
-	NewSnowBlock          func() Block
-	NewShortGrassBlock    func() Block
-	NewTallGrassBlock     func() Block
-	NewFlowersBlock       func() Block
-	NewPineTreeBlock      func() Block
-	NewRedMushroomBlock   func() Block
-	NewWhiteMushroomBlock func() Block
-	NewCaveEntranceBlock  func(uuid uuid.UUID) Block
-	NewCaveWallBlock      func() Block
-	NewCaveFloorBlock     func() Block
-	NewCaveExitBlock      func() Block
-	NewPineSaplingBlock   func() Block
-	NewCampfireBlock      func() Block
+	NewEmptyBlock          func() Block
+	NewStoneBlock          func() Block
+	NewWaterBlock          func() Block
+	NewSandBlock           func() Block
+	NewGrassBlock          func() Block
+	NewSnowBlock           func() Block
+	NewShortGrassBlock     func() Block
+	NewTallGrassBlock      func() Block
+	NewFlowersBlock        func() Block
+	NewPineTreeBlock       func() Block
+	NewRedMushroomBlock    func() Block
+	NewWhiteMushroomBlock  func() Block
+	NewCaveEntranceBlock   func(uuid uuid.UUID) Block
+	NewCaveWallBlock       func() Block
+	NewCaveFloorBlock      func() Block
+	NewCaveExitBlock       func() Block
+	NewPineSaplingBlock    func() Block
+	NewCampfireBlock       func() Block
+	NewBerryBushBlock      func(berries int) Block
+	NewSandWithStonesBlock func() Block
+	NewSandWithClayBlock   func() Block
 )
 
 type Block interface {

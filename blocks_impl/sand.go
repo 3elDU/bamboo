@@ -6,7 +6,6 @@ import (
 	"github.com/3elDU/bamboo/types"
 
 	"github.com/3elDU/bamboo/assets"
-	"github.com/3elDU/bamboo/util"
 )
 
 func init() {
@@ -16,29 +15,23 @@ func init() {
 
 type SandState struct {
 	BaseBlockState
-	TexturedBlockState
-	CollidableBlockState
 }
 
 type SandBlock struct {
-	baseBlock
-	texturedBlock
+	connectedBlock
 	collidableBlock
 }
 
-func NewSandBlock(stones bool) types.Block {
-	texVariant := "sand"
-	if stones {
-		texVariant = "sand-stones"
-	}
-
+func NewSandBlock() types.Block {
 	return &SandBlock{
-		baseBlock: baseBlock{
-			blockType: types.SandBlock,
-		},
-		texturedBlock: texturedBlock{
-			tex:      assets.Texture(texVariant),
-			rotation: float64(util.RandomChoice([]int{0, 90, 180, 270})),
+		connectedBlock: connectedBlock{
+			baseBlock: baseBlock{
+				blockType: types.SandBlock,
+			},
+			tex: assets.ConnectedTexture("sand", true, true, true, true),
+			connectsTo: []types.BlockType{
+				types.SandBlock,
+			},
 		},
 		collidableBlock: collidableBlock{
 			collidable:  false,
@@ -47,30 +40,13 @@ func NewSandBlock(stones bool) types.Block {
 	}
 }
 
-func (sand *SandBlock) Break() {
-	if sand.tex.Name() != "sand-stones" {
-		return
-	}
-	added := types.GetInventory().AddItem(types.ItemSlot{
-		Item:     types.NewFlintItem(),
-		Quantity: 1,
-	})
-	if added {
-		sand.tex = assets.Texture("sand")
-	}
-}
-
 func (b *SandBlock) State() interface{} {
 	return SandState{
-		BaseBlockState:       b.baseBlock.State().(BaseBlockState),
-		TexturedBlockState:   b.texturedBlock.State().(TexturedBlockState),
-		CollidableBlockState: b.collidableBlock.State().(CollidableBlockState),
+		BaseBlockState: b.baseBlock.State().(BaseBlockState),
 	}
 }
 
 func (b *SandBlock) LoadState(s interface{}) {
 	state := s.(SandState)
 	b.baseBlock.LoadState(state.BaseBlockState)
-	b.texturedBlock.LoadState(state.TexturedBlockState)
-	b.collidableBlock.LoadState(state.CollidableBlockState)
 }

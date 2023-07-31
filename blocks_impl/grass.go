@@ -14,12 +14,10 @@ func init() {
 
 type GrassBlockState struct {
 	ConnectedBlockState
-	CollidableBlockState
 }
 
 type GrassBlock struct {
 	connectedBlock
-	collidableBlock
 }
 
 func NewGrassBlock() types.Block {
@@ -30,7 +28,7 @@ func NewGrassBlock() types.Block {
 			},
 			tex: assets.ConnectedTexture("grass", true, true, true, true),
 			connectsTo: []types.BlockType{
-				types.GrassBlock, types.ShortGrassBlock, types.TallGrassBlock, types.FlowersBlock, types.PineSaplingBlock,
+				types.GrassBlock, types.ShortGrassBlock, types.TallGrassBlock, types.FlowersBlock, types.PineSaplingBlock, types.BerryBushBlock,
 				types.PineTreeBlock,
 				types.RedMushroomBlock, types.WhiteMushroomBlock,
 				types.StoneBlock,
@@ -38,22 +36,16 @@ func NewGrassBlock() types.Block {
 				types.CampfireBlock,
 			},
 		},
-		collidableBlock: collidableBlock{
-			collidable:  false,
-			playerSpeed: 1,
-		},
 	}
 }
 
 func (b *GrassBlock) State() interface{} {
 	return GrassBlockState{
-		ConnectedBlockState:  b.connectedBlock.State().(ConnectedBlockState),
-		CollidableBlockState: b.collidableBlock.State().(CollidableBlockState),
+		ConnectedBlockState: b.connectedBlock.State().(ConnectedBlockState),
 	}
 }
 
 func (b *GrassBlock) LoadState(s interface{}) {
 	state := s.(GrassBlockState)
 	b.connectedBlock.LoadState(state.ConnectedBlockState)
-	b.collidableBlock.LoadState(state.CollidableBlockState)
 }

@@ -49,6 +49,7 @@ func (block *PineSaplingBlock) Update(world types.World) {
 		} else {
 			block.tex = assets.Texture(fmt.Sprintf("sapling_block%v", block.stage))
 		}
+		block.parentChunk.MarkAsModified()
 	}
 }
 

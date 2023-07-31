@@ -4,9 +4,10 @@ Functions related to world generation
 package worldgen
 
 import (
-	"github.com/google/uuid"
 	"log"
 	"math/rand"
+
+	"github.com/google/uuid"
 
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/types"
@@ -27,8 +28,11 @@ const (
 	// Height, below which foliage will generate
 	FoliageHeight = 1.3
 
-	// %Chance of stones on sand being generated
-	SandStoneChance = 0.03
+	// %Chance of on sand being generated wuth stones or clay on it
+	SandWithParticlesChance = 0.03
+
+	// %Chance of generating a berry bush
+	BerryBushChance = 0.005
 	// %Chance of generating a mushroom
 	MushroomChance = 0.015
 	// %Chance of generating a flower
@@ -73,7 +77,7 @@ func (generator *OverworldGenerator) genBase(x, y uint64) types.Block {
 	case baseHeight <= WaterHeight: // Water
 		return types.NewWaterBlock()
 	case baseHeight <= SandHeight: // Sand
-		return types.NewSandBlock(false)
+		return types.NewSandBlock()
 	default: // Grass
 		return types.NewGrassBlock()
 	}
@@ -110,9 +114,13 @@ func (generator *OverworldGenerator) genFeatures(previous types.Block, x, y uint
 
 	switch previous.Type() {
 	case types.SandBlock:
-		// With 3% change, generate sand with stones
-		if features.f1 <= SandStoneChance {
-			return types.NewSandBlock(true)
+		// With 3% change, generate sand with flint or clay
+		if features.f1 <= SandWithParticlesChance {
+			if features.f2 <= 0.5 {
+				return types.NewSandWithStonesBlock()
+			} else {
+				return types.NewSandWithClayBlock()
+			}
 		}
 	case types.GrassBlock:
 		// generate features on grass, only if it is surrounded by grass on all sides
@@ -125,6 +133,9 @@ func (generator *OverworldGenerator) genFeatures(previous types.Block, x, y uint
 			return previous
 		case secondaryHeight <= FoliageHeight: // Foliage
 			switch {
+			case features.f1 <= BerryBushChance:
+				// Berry bush can be generated with 0-2 berries randomly
+				return types.NewBerryBushBlock(int(features.f2) * 2)
 			case features.f1 <= MushroomChance:
 				if features.f2 <= 0.5 {
 					return types.NewRedMushroomBlock()
