@@ -32,8 +32,6 @@ type Game struct {
 	player      *player.Player
 	playerStack *player.Stack
 	inventory   *inventory.Inventory
-
-	debugInfoVisible bool
 }
 
 func newGame(gameWorld *world.World, playerStack *player.Stack, inventory *inventory.Inventory) *Game {
@@ -44,8 +42,6 @@ func newGame(gameWorld *world.World, playerStack *player.Stack, inventory *inven
 		world:       gameWorld,
 		playerStack: playerStack,
 		inventory:   inventory,
-
-		debugInfoVisible: false,
 	}
 	game.player = playerStack.Top()
 
@@ -127,11 +123,6 @@ func (game *Game) processInput() {
 				game.Save()
 			}
 		}
-
-	// F3 toggles visibility of debug widgets
-	case inpututil.IsKeyJustPressed(ebiten.KeyF3):
-		game.debugInfoVisible = !game.debugInfoVisible
-		log.Printf("Toggled visibility of debug info. (%v)", game.debugInfoVisible)
 
 	// Open crafting menu
 	case inpututil.IsKeyJustPressed(ebiten.KeyC):
@@ -296,7 +287,7 @@ func (game *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 
-	if game.debugInfoVisible {
+	if config.DebugMode {
 		font.RenderFont(screen,
 			fmt.Sprintf(
 				heredoc.Doc(`

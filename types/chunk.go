@@ -13,6 +13,7 @@ type Chunk interface {
 	Save(metadata Save)
 	SetBlock(x uint, y uint, block Block)
 	Update(world World)
-	TriggerRedraw()
+	TriggerRedraw(recursive bool)
+	MarkAsModified()
 	Texture() *ebiten.Image
 }

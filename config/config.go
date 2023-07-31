@@ -9,6 +9,11 @@ var (
 	BuildDate    string = "unknown"
 )
 
+// Can be turned on/off with F3
+var (
+	DebugMode bool = false
+)
+
 // All values with type uint64 are measured in ticks, unless noted otherwise
 // 1 second == 60 ticks
 const (

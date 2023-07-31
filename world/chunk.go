@@ -19,7 +19,9 @@ type Chunk struct {
 	modified bool
 	// similar to modified, but indicates that redraw is required
 	// resets on Chunk.Render()
-	needsRedraw  bool
+	needsRedraw     bool
+	recursiveRedraw bool
+
 	lastAccessed uint64
 
 	// Prevents the chunks from being saved to the disk
@@ -78,10 +80,18 @@ func (c *Chunk) SetBlock(x, y uint, block types.Block) {
 	c.lastAccessed = scene_manager.Ticks()
 	c.modified = true
 	c.needsRedraw = true
+	c.recursiveRedraw = true
 }
 
-func (c *Chunk) TriggerRedraw() {
+func (c *Chunk) TriggerRedraw(recursive bool) {
 	c.needsRedraw = true
+	c.recursiveRedraw = recursive
+}
+
+// Manually mark chunk as modified
+func (c *Chunk) MarkAsModified() {
+	c.modified = true
+	c.TriggerRedraw(true)
 }
 
 func (c *Chunk) Texture() *ebiten.Image {

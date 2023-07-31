@@ -3,6 +3,9 @@ package world
 import (
 	"math"
 
+	"github.com/3elDU/bamboo/colors"
+	"github.com/3elDU/bamboo/config"
+	"github.com/3elDU/bamboo/font"
 	"github.com/3elDU/bamboo/types"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -25,11 +28,12 @@ func (c *Chunk) Render(world types.World) {
 			drawableBlock.Render(world, c.Texture(), types.Vec2f{
 				X: float64(x) * 16,
 				Y: float64(y) * 16,
-			})
+			}, c.recursiveRedraw)
 		}
 	}
 
 	c.needsRedraw = false
+	c.recursiveRedraw = false
 }
 
 func BlockToScreen(screen *ebiten.Image, player types.Vec2f, block types.Vec2u, scaling float64) types.Vec2f {
@@ -58,6 +62,7 @@ func (world *World) Render(screen *ebiten.Image, playerX, playerY, scaling float
 			}
 
 			chunk := world.ChunkAtB(uint64(x), uint64(y))
+			needsRedraw := chunk.(*Chunk).needsRedraw
 			chunk.Render(world)
 
 			screenX := (x - playerX - math.Mod(x, 16)) * 16
@@ -69,6 +74,10 @@ func (world *World) Render(screen *ebiten.Image, playerX, playerY, scaling float
 			opts.GeoM.Translate(screenX, screenY)
 			opts.GeoM.Scale(scaling, scaling)
 			screen.DrawImage(chunk.Texture(), opts)
+
+			if config.DebugMode && needsRedraw {
+				font.RenderFontWithOptions(screen, "REDRAW", screenX*scaling, screenY*scaling, colors.C("red"), 1.0, false)
+			}
 		}
 	}
 }

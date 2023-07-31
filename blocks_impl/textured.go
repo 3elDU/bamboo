@@ -20,7 +20,7 @@ type texturedBlock struct {
 	rotation float64 // in degrees
 }
 
-func (b *texturedBlock) Render(_ types.World, screen *ebiten.Image, pos types.Vec2f) {
+func (b *texturedBlock) Render(_ types.World, screen *ebiten.Image, pos types.Vec2f, _ bool) {
 	opts := &ebiten.DrawImageOptions{}
 
 	if b.rotation != 0 {

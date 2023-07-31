@@ -118,13 +118,16 @@ type CollidableBlock interface {
 // A block that can be rendered onto the screen
 type DrawableBlock interface {
 	Block
-	Render(world World, screen *ebiten.Image, pos Vec2f)
+	// recursiveRedraw means that a block can trigger a redraw of other blocks/chunks
+	// if it is set to false, the block shouldn't attempt to trigger redraw of other chunks/blocks
+	Render(world World, screen *ebiten.Image, pos Vec2f, recursiveRedraw bool)
 	TextureName() string
 }
 
-// A block that player can interact with
+// A block that reacts to player colliding with it
 type InteractiveBlock interface {
 	Block
+	// Called when player collides(touches) with the block
 	Interact(world World, playerPosition Vec2f)
 }
 

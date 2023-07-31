@@ -59,7 +59,7 @@ func (world *World) Update() {
 		world.chunks[chunk.Coords()] = chunk.(*Chunk)
 		// Request redraw of each neighbor
 		for _, neighbor := range world.GetNeighbors(chunk.Coords().X, chunk.Coords().Y) {
-			neighbor.TriggerRedraw()
+			neighbor.TriggerRedraw(true)
 		}
 	}
 
@@ -69,7 +69,7 @@ func (world *World) Update() {
 			world.chunks[chunk.Coords()] = chunk
 			// Request redraw of each neighbor
 			for _, neighbor := range world.GetNeighbors(chunk.Coords().X, chunk.Coords().Y) {
-				neighbor.TriggerRedraw()
+				neighbor.TriggerRedraw(true)
 			}
 		} else {
 			break
