@@ -53,7 +53,7 @@ func (flint *FlintItem) Use(pos types.Vec2u) {
 			return
 		}
 
-		campfire := block.(types.CampfireBlockI)
+		campfire := block.(types.ICampfireBlock)
 		litUp := campfire.LightUp()
 
 		if litUp {

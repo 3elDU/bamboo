@@ -53,7 +53,7 @@ func (item *StickItem) Hash() uint64 {
 }
 
 func (item *StickItem) Use(pos types.Vec2u) {
-	b, ok := types.GetCurrentWorld().BlockAt(pos.X, pos.Y).(types.CampfireBlockI)
+	b, ok := types.GetCurrentWorld().BlockAt(pos.X, pos.Y).(types.ICampfireBlock)
 	if ok {
 		// if used on campfire block, add a piece to it
 		b.AddPiece(item)

@@ -80,7 +80,7 @@ func (campfire *CampfireBlock) Break() {
 	}
 }
 
-func (campfire *CampfireBlock) AddPiece(item types.BurnableItem) {
+func (campfire *CampfireBlock) AddPiece(item types.IBurnableItem) {
 	if campfire.pieces < 4 {
 		campfire.pieces++
 		campfire.parentChunk.MarkAsModified()
@@ -97,6 +97,10 @@ func (campfire *CampfireBlock) LightUp() bool {
 	campfire.burning = true
 	campfire.parentChunk.MarkAsModified()
 	return true
+}
+
+func (campfire *CampfireBlock) IsLitUp() bool {
+	return campfire.burning
 }
 
 func (campfire *CampfireBlock) State() interface{} {

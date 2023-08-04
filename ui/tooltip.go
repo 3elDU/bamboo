@@ -16,6 +16,7 @@ var tooltip_button TooltipTexture
 var tooltip_button_hover TooltipTexture
 var tooltip_input TooltipTexture
 var tooltip_input_focused TooltipTexture
+var tooltip_neutral TooltipTexture
 
 type TooltipTexture struct {
 	TopLeft  *ebiten.Image
@@ -91,6 +92,7 @@ func init() {
 	tooltip_button_hover = AssembleTooltipTexture(assets.Texture("tooltip_button_hover").Texture())
 	tooltip_input = AssembleTooltipTexture(assets.Texture("tooltip_input").Texture())
 	tooltip_input_focused = AssembleTooltipTexture(assets.Texture("tooltip_input_focused").Texture())
+	tooltip_neutral = AssembleTooltipTexture(assets.Texture("tooltip_neutral").Texture())
 }
 
 // Which side of the cursor to prefer for displaying the tooltip.
@@ -228,4 +230,9 @@ func DrawInputBackground(screen *ebiten.Image, focused bool, x, y, w, h float64)
 	} else {
 		draw_tooltip(screen, tooltip_input, x, y, w, h)
 	}
+}
+
+// Draws a tooltip with neutral (gray) background color
+func DrawNeutralTooltip(screen *ebiten.Image, x, y, w, h float64) {
+	draw_tooltip(screen, tooltip_neutral, x, y, w, h)
 }

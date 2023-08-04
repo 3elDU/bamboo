@@ -5,7 +5,6 @@ import (
 
 	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/types"
-	"github.com/MakeNowJust/heredoc"
 )
 
 type AvailableCraftsList struct {
@@ -59,31 +58,48 @@ func (craftList *AvailableCraftsList) SetSelectedCraft(selectedCraft int) {
 }
 
 type CraftDescription struct {
-	*LabelComponent
+	*StyledComponent
 
 	craft types.Craft
 }
 
-func NewCraftDescription(craft types.Craft) *CraftDescription {
+func NewCraftDescription() *CraftDescription {
 	craftDescription := &CraftDescription{
-		LabelComponent: ColoredLabel("", color.White),
-		craft:          types.Craft{},
+		StyledComponent: Styled(HStack()),
+		craft:           types.Craft{},
 	}
-	craftDescription.SetCraft(craft)
 	return craftDescription
 }
 
 func (craftDescription *CraftDescription) SetCraft(craft types.Craft) {
 	craftDescription.craft = craft
 
-	// Update label
-	craftDescription.SetText(heredoc.Docf(`
-		%v
-		%v
-		-- Ingredients
-		%v
-		-- Results
-		%v
-		`, craft.Name, craft.Description, craft.FormatIngredients(), craft.FormatResults(),
-	))
+	ingredientsStack := VStack().WithSpacing(0.2).WithChildren(
+		Label("Ingredients:"),
+	)
+	for _, ingredient := range craft.Ingredients {
+		ingredientsStack.AddChild(HStack(
+			Tooltip(Image(types.NewItem(ingredient.Type).Texture())).
+				WithNeutralColor(),
+			LabelF("%vx", ingredient.Amount),
+			Label(types.NewItem(ingredient.Type).Name()),
+		).WithSpacing(1).AlignChildren(AlignCenter))
+	}
+
+	craftDescription.StyledComponent = Styled(
+		Padding(0.3, VStack().WithSpacing(1.0).WithChildren(
+			// Header
+			HStack(
+				Tooltip(Image(types.NewItem(craft.Result.Type).Texture())).
+					WithNeutralColor(),
+				Label(types.NewItem(craft.Result.Type).Name()),
+			).WithSpacing(1).AlignChildren(AlignCenter),
+
+			// Description
+			Label(craft.Description),
+
+			// Ingredients
+			ingredientsStack,
+		)),
+	).WithTextColor(color.White)
 }

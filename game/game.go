@@ -244,6 +244,7 @@ func (game *Game) handleEvents() {
 }
 
 func (game *Game) Update() {
+	types.SetCurrentPlayer(game.player)
 	types.SetCurrentWorld(game.world)
 	game.processInput()
 	game.updateLogic()

@@ -905,7 +905,8 @@ func (i *InputComponent) SetInput(input string) {
 
 type TooltipComponent struct {
 	baseComponent
-	child Component
+	neutral bool
+	child   Component
 }
 
 func Tooltip(child Component) *TooltipComponent {
@@ -916,6 +917,13 @@ func Tooltip(child Component) *TooltipComponent {
 	child.SetParent(tooltip)
 	return tooltip
 }
+
+// Uses an alternative tooltip texture made from neutral gray colors
+func (tooltip *TooltipComponent) WithNeutralColor() *TooltipComponent {
+	tooltip.neutral = true
+	return tooltip
+}
+
 func (tooltip *TooltipComponent) MaxSize() (float64, float64) {
 	return tooltip.parent.MaxCapacityForChild(tooltip)
 }
@@ -940,7 +948,11 @@ func (tooltip *TooltipComponent) Update() error {
 }
 func (tooltip *TooltipComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	w, h := tooltip.child.ComputedSize()
-	DrawTooltipBackground(screen, x, y, w, h)
+	if tooltip.neutral {
+		DrawNeutralTooltip(screen, x, y, w, h)
+	} else {
+		DrawTooltipBackground(screen, x, y, w, h)
+	}
 	return tooltip.child.Draw(screen, x+3*config.UIScaling, y+3*config.UIScaling)
 }
 
@@ -1128,4 +1140,64 @@ func (styled *StyledComponent) Update() error {
 }
 func (styled *StyledComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	return styled.child.Draw(screen, x, y)
+}
+
+type ImageComponent struct {
+	baseComponent
+
+	image   *ebiten.Image
+	scaling bool
+
+	opts *ebiten.DrawImageOptions
+}
+
+// Scaling is enabled by default
+func Image(image *ebiten.Image) *ImageComponent {
+	return &ImageComponent{
+		baseComponent: newBaseComponent(),
+		image:         image,
+		scaling:       true,
+		opts:          &ebiten.DrawImageOptions{},
+	}
+}
+
+func (image *ImageComponent) DisableScaling() *ImageComponent {
+	image.scaling = false
+	return image
+}
+
+func (image *ImageComponent) MaxSize() (float64, float64) {
+	return image.ComputedSize()
+}
+func (image *ImageComponent) ComputedSize() (float64, float64) {
+	w, h := image.image.Size()
+	if image.scaling {
+		return float64(w) * config.UIScaling, float64(h) * config.UIScaling
+	} else {
+		return float64(w), float64(h)
+	}
+}
+func (image *ImageComponent) CapacityForChild(_ Component) (float64, float64) {
+	return 0, 0
+}
+func (image *ImageComponent) MaxCapacityForChild(_ Component) (float64, float64) {
+	return 0, 0
+}
+func (image *ImageComponent) Children() []Component {
+	return []Component{}
+}
+func (image *ImageComponent) Update() error {
+	return nil
+}
+func (image *ImageComponent) Draw(screen *ebiten.Image, x, y float64) error {
+	image.opts.GeoM.Reset()
+
+	if image.scaling {
+		image.opts.GeoM.Scale(config.UIScaling, config.UIScaling)
+	}
+	image.opts.GeoM.Translate(x, y)
+
+	screen.DrawImage(image.image, image.opts)
+
+	return nil
 }

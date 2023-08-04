@@ -1,11 +1,12 @@
 package player
 
 import (
-	"github.com/3elDU/bamboo/types"
-	"github.com/3elDU/bamboo/world"
 	"log"
 	"math/rand"
 	"time"
+
+	"github.com/3elDU/bamboo/types"
+	"github.com/3elDU/bamboo/world"
 )
 
 type Player struct {

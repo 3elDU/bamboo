@@ -23,8 +23,7 @@ type craftingMenu struct {
 func newCraftingMenu() *craftingMenu {
 	menu := &craftingMenu{selectedCraft: 0}
 	menu.craftList = ui.NewAvailableCraftsList(menu.availableCrafts, menu.selectedCraft)
-	menu.selectedCraftDescription = ui.NewCraftDescription(menu.SelectedCraft())
-	menu.UpdateAvailableRecipes()
+	menu.selectedCraftDescription = ui.NewCraftDescription()
 	return menu
 }
 
@@ -69,7 +68,9 @@ func (menu *craftingMenu) UpdateAvailableRecipes() {
 	})
 
 	menu.craftList.SetAvailableCrafts(menu.availableCrafts)
-	menu.setSelectedCraft(menu.selectedCraft)
+	if len(menu.availableCrafts) > 0 {
+		menu.setSelectedCraft(menu.selectedCraft)
+	}
 }
 
 func (menu *craftingMenu) Update() bool {
@@ -102,7 +103,7 @@ func (menu *craftingMenu) Draw(screen *ebiten.Image) {
 		view = ui.Screen(
 			ui.Padding(1.0, ui.VStack().WithSpacing(2.0).WithChildren(
 				ui.Background(colors.C("blue"),
-					ui.PaddingX(1.0, ui.CustomLabel("Crafting", colors.C("white"), 1.5)),
+					ui.PaddingXY(1.0, 0.3, ui.CustomLabel("Crafting", colors.C("white"), 1.5)),
 				),
 				ui.HStack().WithSpacing(2.0).WithChildren(
 					ui.VStack(

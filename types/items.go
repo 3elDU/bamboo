@@ -12,6 +12,7 @@ const (
 	FlintItem
 	BerryItem
 	ClayItem
+	WateringCanItem
 )
 
 func NewItem(id ItemType) Item {
@@ -26,6 +27,8 @@ func NewItem(id ItemType) Item {
 		return NewBerryItem()
 	case ClayItem:
 		return NewClayItem()
+	case WateringCanItem:
+		return NewWateringCanItem()
 	}
 
 	return nil
@@ -37,6 +40,7 @@ var (
 	NewFlintItem       func() Item
 	NewBerryItem       func() Item
 	NewClayItem        func() Item
+	NewWateringCanItem func() Item
 )
 
 type Item interface {
@@ -55,6 +59,6 @@ type Item interface {
 	Use(pos Vec2u)
 }
 
-type BurnableItem interface {
+type IBurnableItem interface {
 	BurningEnergy() float64
 }

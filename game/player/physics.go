@@ -139,6 +139,15 @@ func (player *Player) Velocity() types.Vec2f {
 	return types.Vec2f{X: player.xVelocity, Y: player.yVelocity}
 }
 
+func (player *Player) Position() types.Vec2f {
+	return types.Vec2f{X: player.X, Y: player.Y}
+}
+
+func (player *Player) SetPosition(pos types.Vec2f) {
+	player.X = pos.X
+	player.Y = pos.Y
+}
+
 func (player *Player) LookingAt() types.Vec2u {
 	lookingX, lookingY := uint64(player.X), uint64(player.Y)
 	switch player.MovementDirection {

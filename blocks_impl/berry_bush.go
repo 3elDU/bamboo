@@ -14,6 +14,9 @@ import (
 // Max amount of ticks that one berry can take to grow
 const BerryGrowthTime = 60 * 60 * 5
 
+// Max amount of berries the bush can grow, until it needs watering
+const MaxBerriesGrown = 10
+
 func init() {
 	gob.Register(BerryBushState{})
 	types.NewBerryBushBlock = NewBerryBushBlock
@@ -57,6 +60,18 @@ func NewBerryBushBlock(berries int) types.Block {
 	}
 }
 
+func (b *BerryBushBlock) NeedsWatering() bool {
+	return b.driedOut
+}
+
+func (b *BerryBushBlock) AddWater() {
+	b.driedOut = false
+	b.totalBerriesGrown = 0
+	b.ticksTillNextBerry = rand.Intn(BerryGrowthTime)
+	b.setBerries(0)
+	b.parentChunk.MarkAsModified()
+}
+
 func (b *BerryBushBlock) setBerries(berries int) {
 	b.berries = berries
 	if b.berries > 4 {
@@ -68,7 +83,7 @@ func (b *BerryBushBlock) setBerries(berries int) {
 }
 
 func (b *BerryBushBlock) Update(world types.World) {
-	if b.ticksTillNextBerry <= 0 && !b.driedOut {
+	if b.berries < 4 && b.ticksTillNextBerry <= 0 && !b.driedOut {
 		b.setBerries(b.berries + 1)
 		b.totalBerriesGrown += 1
 		log.Printf("Total berries grown: %v", b.totalBerriesGrown)
@@ -80,8 +95,8 @@ func (b *BerryBushBlock) Update(world types.World) {
 		b.parentChunk.MarkAsModified()
 	}
 
-	// Bush can grow 64 berries, after that it dries out
-	if b.totalBerriesGrown >= 5 && !b.driedOut {
+	// Bush can grow a fixed amount of berries, after which it dries out
+	if b.totalBerriesGrown >= MaxBerriesGrown && !b.driedOut {
 		b.driedOut = true
 		b.parentChunk.MarkAsModified()
 	}

@@ -169,7 +169,10 @@ func (inv *Inventory) Render(screen *ebiten.Image) {
 
 		screen.DrawImage(itemTex, itemTexOpts)
 
-		font.RenderFont(screen, fmt.Sprintf("%v", slot.Quantity), itemTexPos.X, itemTexPos.Y, colors.C("black"))
+		// Render label with item amount only if there is more than 1 of that item
+		if slot.Quantity > 1 {
+			font.RenderFont(screen, fmt.Sprintf("%v", slot.Quantity), itemTexPos.X, itemTexPos.Y, colors.C("black"))
+		}
 	}
 
 	selectedSlotTex := assets.Texture("selected_slot").Texture()

@@ -149,7 +149,14 @@ type BreakableBlock interface {
 	Break()
 }
 
-type CampfireBlockI interface {
-	AddPiece(item BurnableItem)
+type ICampfireBlock interface {
+	AddPiece(item IBurnableItem)
 	LightUp() bool
+	IsLitUp() bool
+}
+
+// A generic crop block that can run out of water, and can be watered
+type ICropBlock interface {
+	NeedsWatering() bool
+	AddWater()
 }
