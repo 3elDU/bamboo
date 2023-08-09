@@ -56,7 +56,7 @@ func (inv *Inventory) RemoveItem(item types.ItemSlot) bool {
 			continue
 		}
 
-		if slot.Item.Hash() == item.Item.Hash() && slot.Quantity >= item.Quantity {
+		if slot.Item.Stackable() && item.Item.Type() == slot.Item.Type() && slot.Quantity >= item.Quantity {
 			slot.RemoveItem(item.Quantity)
 			if slot.Quantity == 0 {
 				inv.Slots[i] = new(types.ItemSlot)
@@ -99,11 +99,21 @@ func (inv *Inventory) CanAddItem(item types.ItemSlot) bool {
 }
 
 func (inv *Inventory) AddItem(item types.ItemSlot) bool {
+	// Try to find a slot that already holds item with the same type
+	for _, slot := range inv.Slots {
+		if !slot.Empty && slot.Item.Type() == item.Item.Type() && slot.Item.Stackable() {
+			if slot.AddItem(item) {
+				return true
+			}
+		}
+	}
+
 	for _, slot := range inv.Slots {
 		if slot.AddItem(item) {
 			return true
 		}
 	}
+
 	return false
 }
 

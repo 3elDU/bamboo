@@ -30,6 +30,12 @@ func NewSandWithStonesBlock() types.Block {
 	}
 }
 
+func (b *SandWithStonesBlock) ToolRequiredToBreak() types.ToolFamily {
+	return types.ToolFamilyNone
+}
+func (b *SandWithStonesBlock) ToolStrengthRequired() types.ToolStrength {
+	return types.ToolStrengthBareHand
+}
 func (b *SandWithStonesBlock) Break() {
 	if types.GetInventory().AddItem(types.ItemSlot{
 		Item:     types.NewFlintItem(),

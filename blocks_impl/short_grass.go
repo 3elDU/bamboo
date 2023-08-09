@@ -36,6 +36,16 @@ func NewShortGrassBlock() types.Block {
 	}
 }
 
+func (b *ShortGrassBlock) ToolRequiredToBreak() types.ToolFamily {
+	return types.ToolFamilyNone
+}
+func (b *ShortGrassBlock) ToolStrengthRequired() types.ToolStrength {
+	return types.ToolStrengthBareHand
+}
+func (b *ShortGrassBlock) Break() {
+	types.GetCurrentWorld().SetBlock(uint64(b.x), uint64(b.y), types.NewGrassBlock())
+}
+
 func (b *ShortGrassBlock) State() interface{} {
 	return ShortGrassState{
 		BaseBlockState: b.baseBlock.State().(BaseBlockState),

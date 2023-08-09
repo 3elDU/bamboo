@@ -35,6 +35,16 @@ func NewFlowersBlock() types.Block {
 	}
 }
 
+func (b *FlowersBlock) ToolRequiredToBreak() types.ToolFamily {
+	return types.ToolFamilyNone
+}
+func (b *FlowersBlock) ToolStrengthRequired() types.ToolStrength {
+	return types.ToolStrengthBareHand
+}
+func (b *FlowersBlock) Break() {
+	types.GetCurrentWorld().SetBlock(uint64(b.x), uint64(b.y), types.NewGrassBlock())
+}
+
 func (b *FlowersBlock) State() interface{} {
 	return FlowersState{
 		BaseBlockState:     b.baseBlock.State().(BaseBlockState),

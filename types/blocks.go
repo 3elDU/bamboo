@@ -29,6 +29,7 @@ const (
 	BerryBushBlock
 	SandWithStonesBlock
 	SandWithClayBlock
+	PitBlock
 )
 
 func NewBlock(id BlockType) Block {
@@ -75,6 +76,8 @@ func NewBlock(id BlockType) Block {
 		return NewSandWithStonesBlock()
 	case SandWithClayBlock:
 		return NewSandWithClayBlock()
+	case PitBlock:
+		return NewPitBlock()
 	}
 
 	return NewEmptyBlock()
@@ -102,14 +105,16 @@ var (
 	NewBerryBushBlock      func(berries int) Block
 	NewSandWithStonesBlock func() Block
 	NewSandWithClayBlock   func() Block
+	NewPitBlock            func() Block
 )
 
 type Block interface {
+	Type() BlockType
+
 	Coords() Vec2u
 	SetCoords(coords Vec2u)
 	ParentChunk() Chunk
 	SetParentChunk(chunk Chunk)
-	Type() BlockType
 
 	Update(world World)
 
@@ -137,20 +142,27 @@ type DrawableBlock interface {
 }
 
 // A block that reacts to player colliding with it
-type InteractiveBlock interface {
+type CollisionReactiveBlock interface {
 	Block
 	// Called when player collides(touches) with the block
-	Interact(world World, playerPosition Vec2f)
+	Collide(world World, playerPosition Vec2f)
+}
+
+// A block that the player can interact with
+type InteractiveBlock interface {
+	Interact()
 }
 
 // A block that can be broken. Does not necessarily mean that block drops an item.
 type BreakableBlock interface {
 	Block
+	ToolRequiredToBreak() ToolFamily
+	ToolStrengthRequired() ToolStrength
 	Break()
 }
 
 type ICampfireBlock interface {
-	AddPiece(item IBurnableItem)
+	AddPiece(item IBurnableItem) bool
 	LightUp() bool
 	IsLitUp() bool
 }

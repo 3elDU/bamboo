@@ -138,19 +138,32 @@ func (game *Game) processInput() {
 			break
 		}
 
-		block.Break()
+		// Check if the tool can break the block
+		tool, isTool := game.inventory.ItemInHand().(types.Tool)
 
-	// Use the item in hand
-	case inpututil.IsKeyJustPressed(ebiten.KeyF):
-		itemInHand := game.inventory.Slots[game.inventory.SelectedSlot].Item
-		if itemInHand == nil {
+		// Check if block can be broken with the bare hand
+		if block.ToolStrengthRequired() == types.ToolStrengthBareHand {
+			block.Break()
 			break
 		}
+
+		if isTool && tool.Family() == block.ToolRequiredToBreak() && tool.Strength() >= block.ToolStrengthRequired() {
+			block.Break()
+		}
+
+	// Use the item in hand / Interact with the block
+	case inpututil.IsKeyJustPressed(ebiten.KeyF):
 		lookingAt := game.player.LookingAt()
-		itemInHand.Use(types.Vec2u{
-			X: lookingAt.X,
-			Y: lookingAt.Y,
-		})
+		tool, itemIsTool := game.inventory.ItemInHand().(types.Tool)
+
+		if itemIsTool {
+			tool.Use(lookingAt)
+		} else {
+			// If there is no item in hand / item in hand is not a tool, then interact with a block
+			if block, ok := game.world.BlockAt(lookingAt.X, lookingAt.Y).(types.InteractiveBlock); ok {
+				block.Interact()
+			}
+		}
 
 	// Inventory slots selection
 	case ebiten.IsKeyPressed(ebiten.KeyDigit1):

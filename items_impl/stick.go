@@ -52,13 +52,20 @@ func (item *StickItem) Hash() uint64 {
 	return uint64(item.id)
 }
 
+func (item *StickItem) Family() types.ToolFamily {
+	return types.ToolFamilyNone
+}
+func (item *StickItem) Strength() types.ToolStrength {
+	return types.ToolStrengthBareHand
+}
 func (item *StickItem) Use(pos types.Vec2u) {
 	b, ok := types.GetCurrentWorld().BlockAt(pos.X, pos.Y).(types.ICampfireBlock)
 	if ok {
 		// if used on campfire block, add a piece to it
-		b.AddPiece(item)
-		types.GetInventory().RemoveItem(types.ItemSlot{Item: item, Quantity: 1})
-		return
+		if b.AddPiece(item) {
+			types.GetInventory().RemoveItemByType(item.Type(), 1)
+			return
+		}
 	}
 
 	// campfire can only be placed on empty grass block

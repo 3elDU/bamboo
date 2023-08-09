@@ -61,9 +61,6 @@ func (b *baseBlock) Update(_ types.World) {
 
 func (b *baseBlock) State() interface{} {
 	return BaseBlockState{
-		// Collidable:      b.collidable,
-		// CollisionPoints: b.collisionPoints,
-		// PlayerSpeed:     b.playerSpeed,
 		BlockType: b.blockType,
 	}
 }

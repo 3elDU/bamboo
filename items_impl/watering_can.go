@@ -34,6 +34,9 @@ func NewWateringCanItem() types.Item {
 	}
 }
 
+func (item *WateringCanItem) Stackable() bool {
+	return false
+}
 func (item *WateringCanItem) Name() string {
 	return "Watering can"
 }
@@ -49,6 +52,12 @@ func (item *WateringCanItem) Texture() *ebiten.Image {
 	}
 }
 
+func (item *WateringCanItem) Family() types.ToolFamily {
+	return types.ToolFamilyNone
+}
+func (item *WateringCanItem) Strength() types.ToolStrength {
+	return types.ToolStrengthClay
+}
 func (item *WateringCanItem) Use(pos types.Vec2u) {
 	switch types.GetCurrentWorld().BlockAt(pos.X, pos.Y).Type() {
 	case types.WaterBlock:

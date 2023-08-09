@@ -43,10 +43,6 @@ func (berry *BerryItem) Texture() *ebiten.Image {
 	return berry.texture.Texture()
 }
 
-func (berry *BerryItem) Use(pos types.Vec2u) {
-
-}
-
 func (berry *BerryItem) State() interface{} {
 	return BerryItemState{
 		BaseItemState: berry.baseItem.State().(BaseItemState),

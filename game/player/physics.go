@@ -95,10 +95,10 @@ func interactWithBlocks(origin types.Vec2f, world types.World) {
 		{X: origin.X + .25, Y: origin.Y + .4},
 	}
 
-	collisions := make(map[types.Vec2u]types.InteractiveBlock)
+	collisions := make(map[types.Vec2u]types.CollisionReactiveBlock)
 
 	for _, point := range playerCollisionPoints {
-		block, interactive := world.BlockAt(uint64(point.X), uint64(point.Y)).(types.InteractiveBlock)
+		block, interactive := world.BlockAt(uint64(point.X), uint64(point.Y)).(types.CollisionReactiveBlock)
 		if !interactive {
 			continue
 		}
@@ -107,7 +107,7 @@ func interactWithBlocks(origin types.Vec2f, world types.World) {
 	}
 
 	for _, block := range collisions {
-		block.Interact(world, origin)
+		block.Collide(world, origin)
 	}
 }
 

@@ -22,8 +22,8 @@ func (i *baseItem) Type() types.ItemType {
 	return i.id
 }
 
-func (i *baseItem) Hash() uint64 {
-	return uint64(i.id)
+func (i *baseItem) Stackable() bool {
+	return true
 }
 
 func (i *baseItem) State() interface{} {

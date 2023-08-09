@@ -39,20 +39,38 @@ func NewPineSaplingBlock() types.Block {
 	}
 }
 
+func (block *PineSaplingBlock) setStage(stage int) {
+	block.stage = stage
+	if block.stage == 5 {
+		types.GetCurrentWorld().SetBlock(uint64(block.x), uint64(block.y), types.NewPineTreeBlock())
+	} else {
+		block.tex = assets.Texture(fmt.Sprintf("sapling_block%v", block.stage))
+	}
+}
+
 func (block *PineSaplingBlock) Update(world types.World) {
 	// every 1800 ticks (30 seconds) sapling has 50% chance to grow to next stage
 	// each stage will take ~60 seconds, so full tree would grow in ~3.5 minutes
 	if scene_manager.Ticks()%180 == 0 && rand.Intn(20) == 0 {
-		block.stage++
-		if block.stage == 5 {
-			world.SetBlock(uint64(block.x), uint64(block.y), types.NewPineTreeBlock())
-		} else {
-			block.tex = assets.Texture(fmt.Sprintf("sapling_block%v", block.stage))
-		}
+		block.setStage(block.stage + 1)
 		block.parentChunk.MarkAsModified()
 	}
 }
 
+func (block *PineSaplingBlock) NeedsWatering() bool {
+	return true
+}
+func (block *PineSaplingBlock) AddWater() {
+	block.setStage(block.stage + 1)
+	block.parentChunk.MarkAsModified()
+}
+
+func (block *PineSaplingBlock) ToolRequiredToBreak() types.ToolFamily {
+	return types.ToolFamilyAxe
+}
+func (blok *PineSaplingBlock) ToolStrengthRequired() types.ToolStrength {
+	return types.ToolStrengthBareHand
+}
 func (block *PineSaplingBlock) Break() {
 	types.GetInventory().AddItem(types.ItemSlot{
 		Item:     types.NewPineSaplingItem(),

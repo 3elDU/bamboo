@@ -24,7 +24,7 @@ func (slot *ItemSlot) AddItem(other ItemSlot) bool {
 		return true
 	}
 
-	if other.Item.Hash() != slot.Item.Hash() {
+	if other.Item.Type() != slot.Item.Type() {
 		return false
 	}
 

@@ -70,6 +70,12 @@ func (campfire *CampfireBlock) TextureName() string {
 	}
 }
 
+func (campfire *CampfireBlock) ToolRequiredToBreak() types.ToolFamily {
+	return types.ToolFamilyAxe
+}
+func (campfire *CampfireBlock) ToolStrengthRequired() types.ToolStrength {
+	return types.ToolStrengthBareHand
+}
 func (campfire *CampfireBlock) Break() {
 	added := types.GetInventory().AddItem(types.ItemSlot{
 		Item:     types.NewStickItem(),
@@ -80,13 +86,17 @@ func (campfire *CampfireBlock) Break() {
 	}
 }
 
-func (campfire *CampfireBlock) AddPiece(item types.IBurnableItem) {
+func (campfire *CampfireBlock) AddPiece(item types.IBurnableItem) bool {
 	if campfire.pieces < 4 {
 		campfire.pieces++
 		campfire.parentChunk.MarkAsModified()
+		return true
 	}
-
-	campfire.energy += item.BurningEnergy()
+	if campfire.burning {
+		campfire.energy += item.BurningEnergy()
+		return true
+	}
+	return false
 }
 
 func (campfire *CampfireBlock) LightUp() bool {
@@ -95,6 +105,7 @@ func (campfire *CampfireBlock) LightUp() bool {
 	}
 
 	campfire.burning = true
+	campfire.energy = 1
 	campfire.parentChunk.MarkAsModified()
 	return true
 }

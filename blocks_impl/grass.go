@@ -34,9 +34,20 @@ func NewGrassBlock() types.Block {
 				types.StoneBlock,
 				types.CaveEntranceBlock,
 				types.CampfireBlock,
+				types.PitBlock,
 			},
 		},
 	}
+}
+
+func (b *GrassBlock) ToolRequiredToBreak() types.ToolFamily {
+	return types.ToolFamilyShovel
+}
+func (b *GrassBlock) ToolStrengthRequired() types.ToolStrength {
+	return types.ToolStrengthGold
+}
+func (b *GrassBlock) Break() {
+	types.GetCurrentWorld().SetBlock(uint64(b.x), uint64(b.y), types.NewPitBlock())
 }
 
 func (b *GrassBlock) State() interface{} {

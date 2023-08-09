@@ -38,7 +38,12 @@ func NewPineTreeBlock() types.Block {
 		},
 	}
 }
-
+func (block *PineTreeBlock) ToolRequiredToBreak() types.ToolFamily {
+	return types.ToolFamilyAxe
+}
+func (blok *PineTreeBlock) ToolStrengthRequired() types.ToolStrength {
+	return types.ToolStrengthBareHand
+}
 func (b *PineTreeBlock) Break() {
 	addedSaplingItem := types.GetInventory().AddItem(types.ItemSlot{
 		Item:     types.NewPineSaplingItem(),

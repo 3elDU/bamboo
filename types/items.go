@@ -2,6 +2,34 @@ package types
 
 import "github.com/hajimehoshi/ebiten/v2"
 
+// The tool family that the item belongs to
+type ToolFamily int
+
+const (
+	ToolFamilyNone ToolFamily = iota
+	ToolFamilySword
+	ToolFamilyPickaxe
+	ToolFamilyAxe
+	ToolFamilyShovel
+	ToolFamilyScissors
+)
+
+// Represents "Hardness" of a material
+type ToolStrength int
+
+const (
+	ToolStrengthBareHand ToolStrength = iota
+	ToolStrengthGold
+	ToolStrengthTin
+	ToolStrengthWood
+	ToolStrengthClay
+	ToolStrengthCopper
+	ToolStrengthBronze
+	ToolStrengthIron
+	ToolStrengthAluminium
+	ToolStrengthSteel
+)
+
 type ItemType uint
 
 const (
@@ -13,6 +41,7 @@ const (
 	BerryItem
 	ClayItem
 	WateringCanItem
+	ClayShovelItem
 )
 
 func NewItem(id ItemType) Item {
@@ -29,6 +58,8 @@ func NewItem(id ItemType) Item {
 		return NewClayItem()
 	case WateringCanItem:
 		return NewWateringCanItem()
+	case ClayShovelItem:
+		return NewClayShovelItem()
 	}
 
 	return nil
@@ -41,6 +72,7 @@ var (
 	NewBerryItem       func() Item
 	NewClayItem        func() Item
 	NewWateringCanItem func() Item
+	NewClayShovelItem  func() Item
 )
 
 type Item interface {
@@ -49,13 +81,15 @@ type Item interface {
 
 	Texture() *ebiten.Image
 	Type() ItemType
-	// Item's hash is calculated from Item's state.
-	// As long as two items with the same type have different hashes, they won't stack.
-	Hash() uint64
+	Stackable() bool
 
 	State() interface{}
 	LoadState(interface{})
+}
 
+type Tool interface {
+	Family() ToolFamily
+	Strength() ToolStrength
 	Use(pos Vec2u)
 }
 

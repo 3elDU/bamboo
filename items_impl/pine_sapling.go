@@ -53,6 +53,12 @@ func (item *PineSaplingItem) Hash() uint64 {
 	return uint64(item.id)
 }
 
+func (item *PineSaplingItem) Family() types.ToolFamily {
+	return types.ToolFamilyNone
+}
+func (item *PineSaplingItem) Strength() types.ToolStrength {
+	return types.ToolStrengthBareHand
+}
 func (item *PineSaplingItem) Use(pos types.Vec2u) {
 	// sapling can only be planted on grass and it's derivatives
 	if !slices.Contains([]types.BlockType{types.GrassBlock, types.ShortGrassBlock, types.FlowersBlock}, types.GetCurrentWorld().BlockAt(pos.X, pos.Y).Type()) {

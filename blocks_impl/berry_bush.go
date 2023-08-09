@@ -112,6 +112,12 @@ func (b *BerryBushBlock) Update(world types.World) {
 	b.ticksTillNextBerry -= 1
 }
 
+func (b *BerryBushBlock) ToolRequiredToBreak() types.ToolFamily {
+	return types.ToolFamilyNone
+}
+func (b *BerryBushBlock) ToolStrengthRequired() types.ToolStrength {
+	return types.ToolStrengthBareHand
+}
 func (b *BerryBushBlock) Break() {
 	if b.berries == 0 {
 		return
