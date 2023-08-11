@@ -94,6 +94,18 @@ func (world *World) Update() {
 	}
 }
 
+func (world *World) AllLoadedChunks() []types.Chunk {
+	chunks := make([]types.Chunk, len(world.chunks))
+
+	i := 0
+	for _, chunk := range world.chunks {
+		chunks[i] = chunk
+		i++
+	}
+
+	return chunks
+}
+
 func (world *World) ChunkAt(cx, cy uint64) types.Chunk {
 	return world.ChunkAtB(cx*16, cy*16)
 }
@@ -222,6 +234,15 @@ func (world *World) BlockNeighboringWith(bx, by uint64, types []types.BlockType)
 		}
 	}
 	return false
+}
+
+func (world *World) SetPlayerSpawnPoint(bx, by uint64) {
+	world.metadata.SpawnPoint = types.Vec2u{
+		X: bx, Y: by,
+	}
+}
+func (world *World) PlayerSpawnPoint() types.Vec2u {
+	return world.metadata.SpawnPoint
 }
 
 func (world *World) Seed() int64 {

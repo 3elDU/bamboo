@@ -19,6 +19,11 @@ func GetCurrentWorld() World {
 }
 
 type World interface {
+	// Set the player's spawn point
+	SetPlayerSpawnPoint(bx, by uint64)
+	// Get the player's spawn point
+	PlayerSpawnPoint() Vec2u
+
 	// There is no B suffix, because it's trivial that this function accepts block coordinates
 	BlockAt(bx uint64, by uint64) Block
 	SetBlock(bx, by uint64, block Block)
@@ -57,4 +62,6 @@ type Save struct {
 	// Size of the world in blocks
 	Size      Vec2u
 	WorldType world_type.WorldType
+	// Player's spawn point
+	SpawnPoint Vec2u
 }

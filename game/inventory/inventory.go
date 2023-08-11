@@ -8,6 +8,7 @@ import (
 	"github.com/3elDU/bamboo/config"
 	"github.com/3elDU/bamboo/font"
 	"github.com/3elDU/bamboo/types"
+	"github.com/3elDU/bamboo/ui"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -185,6 +186,7 @@ func (inv *Inventory) Render(screen *ebiten.Image) {
 		}
 	}
 
+	// Draw an outline around the selected slot
 	selectedSlotTex := assets.Texture("selected_slot").Texture()
 	selectedSlotTexOpts := &ebiten.DrawImageOptions{}
 	selectedSlotTexOpts.GeoM.Scale(config.UIScaling, config.UIScaling)
@@ -194,7 +196,29 @@ func (inv *Inventory) Render(screen *ebiten.Image) {
 	)
 	screen.DrawImage(selectedSlotTex, selectedSlotTexOpts)
 
-	// draw inventory badges on top of everything, so they will be always visible
+	// Draw inventory badges on top of everything, so they will be always visible
 	inventoryBadgesTex := assets.Texture("inventory_badges").Texture()
 	screen.DrawImage(inventoryBadgesTex, inventoryDrawOpts)
+
+	// Check if cursor hovers over one of the items in inventory, and render item's tooltip
+	for i := 0; i < inv.Length(); i++ {
+		slot := inv.At(i)
+		if slot.Empty {
+			continue
+		}
+
+		if inv.MouseOverSlot(screen, i) {
+			item := slot.Item
+
+			var tooltipText string
+			if item.Description() == "" {
+				tooltipText = item.Name()
+			} else {
+				tooltipText = fmt.Sprintf("%v\n------\n%v", item.Name(), item.Description())
+			}
+
+			cx, cy := ebiten.CursorPosition()
+			ui.DrawTextTooltip(screen, cx, cy, ui.TopRight, tooltipText)
+		}
+	}
 }

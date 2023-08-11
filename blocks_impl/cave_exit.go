@@ -47,7 +47,7 @@ func (cave *CaveExitBlock) LoadState(s interface{}) {
 	cave.texturedBlock.LoadState(state.TexturedBlockState)
 }
 
-func (cave *CaveExitBlock) Interact(_ types.World, _ types.Vec2f) {
+func (cave *CaveExitBlock) Collide(_ types.World, _ types.Vec2f) {
 	event.FireEvent(event.NewEvent(
 		event.CaveExit, nil,
 	))

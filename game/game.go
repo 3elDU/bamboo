@@ -32,6 +32,11 @@ type Game struct {
 	player      *player.Player
 	playerStack *player.Stack
 	inventory   *inventory.Inventory
+
+	compass *ui.CompassComponent
+
+	// debug switches
+	superSpeed bool
 }
 
 func newGame(gameWorld *world.World, playerStack *player.Stack, inventory *inventory.Inventory) *Game {
@@ -42,6 +47,8 @@ func newGame(gameWorld *world.World, playerStack *player.Stack, inventory *inven
 		world:       gameWorld,
 		playerStack: playerStack,
 		inventory:   inventory,
+
+		compass: ui.NewCompassComponent(),
 	}
 	game.player = playerStack.Top()
 
@@ -178,6 +185,20 @@ func (game *Game) processInput() {
 		game.inventory.SelectSlot(4)
 	}
 
+	// Debug-mode only keybinds
+	if config.DebugMode {
+		switch {
+		// Re-generate all loaded chunks on F4+G
+		case ebiten.IsKeyPressed(ebiten.KeyF4) && inpututil.IsKeyJustPressed(ebiten.KeyG):
+			for _, chunk := range game.world.AllLoadedChunks() {
+				game.world.Generator().GenerateImmediately(chunk)
+			}
+		// Make the player go faaaaaaaast
+		case ebiten.IsKeyPressed(ebiten.KeyF4) && inpututil.IsKeyJustPressed(ebiten.KeyS):
+			game.superSpeed = !game.superSpeed
+		}
+	}
+
 	_, yoff := ebiten.Wheel()
 	if yoff < 0 {
 		game.inventory.SelectSlot(game.inventory.SelectedSlot + 1)
@@ -192,7 +213,8 @@ func (game *Game) updateLogic() {
 	}
 
 	game.world.Update()
-	game.player.Update()
+	game.player.Update(game.superSpeed)
+	game.compass.Update()
 
 	// perform autosave each N ticks
 	if scene_manager.Ticks()%config.WorldAutosaveDelay == 0 {
@@ -279,27 +301,10 @@ func (game *Game) Draw(screen *ebiten.Image) {
 
 	game.inventory.Render(screen)
 
-	// Check if cursor hovers over one of the items in inventory, and render item's tooltip
-	for i := 0; i < game.inventory.Length(); i++ {
-		slot := game.inventory.At(i)
-		if slot.Empty {
-			continue
-		}
-
-		if game.inventory.MouseOverSlot(screen, i) {
-			item := slot.Item
-
-			var tooltipText string
-			if item.Description() == "" {
-				tooltipText = item.Name()
-			} else {
-				tooltipText = fmt.Sprintf("%v\n------\n%v", item.Name(), item.Description())
-			}
-
-			cx, cy := ebiten.CursorPosition()
-			ui.DrawTextTooltip(screen, cx, cy, ui.TopRight, tooltipText)
-		}
-	}
+	ui.ImmediateDraw(screen,
+		ui.PositionSelf(ui.PositionTopRight, ui.Padding(0.5,
+			game.compass,
+		)))
 
 	if config.DebugMode {
 		font.RenderFont(screen,

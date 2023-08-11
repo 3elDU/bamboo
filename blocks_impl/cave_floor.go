@@ -1,29 +1,30 @@
 package blocks_impl
 
 import (
-	"encoding/gob"
-
 	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/types"
 )
 
 func init() {
-	gob.Register(CaveFloorState{})
 	types.NewCaveFloorBlock = NewCaveFloorBlock
-}
-
-type CaveFloorState struct {
-	BaseBlockState
-	TexturedBlockState
 }
 
 type CaveFloorBlock struct {
 	baseBlock
 	texturedBlock
+	hasGrass bool
 }
 
-func NewCaveFloorBlock() types.Block {
-	return &CaveFloorBlock{
+func (b *CaveFloorBlock) updateTexture() {
+	if b.hasGrass {
+		b.tex = assets.Texture("cave_floor_grass")
+	} else {
+		b.tex = assets.Texture("cave_floor")
+	}
+}
+
+func NewCaveFloorBlock(hasGrass bool) types.Block {
+	block := &CaveFloorBlock{
 		baseBlock: baseBlock{
 			blockType: types.CaveFloorBlock,
 		},
@@ -31,18 +32,18 @@ func NewCaveFloorBlock() types.Block {
 			tex:      assets.Texture("cave_floor"),
 			rotation: 0,
 		},
+		hasGrass: hasGrass,
 	}
+	block.updateTexture()
+	return block
 }
 
 func (b *CaveFloorBlock) State() interface{} {
-	return CaveFloorState{
-		BaseBlockState:     b.baseBlock.State().(BaseBlockState),
-		TexturedBlockState: b.texturedBlock.State().(TexturedBlockState),
-	}
+	return b.hasGrass
 }
 
 func (b *CaveFloorBlock) LoadState(s interface{}) {
-	state := s.(CaveFloorState)
-	b.baseBlock.LoadState(state.BaseBlockState)
-	b.texturedBlock.LoadState(state.TexturedBlockState)
+	hasGrass := s.(bool)
+	b.hasGrass = hasGrass
+	b.updateTexture()
 }

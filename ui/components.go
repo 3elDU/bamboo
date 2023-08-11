@@ -1064,7 +1064,7 @@ func (position *PositionComponent) Draw(screen *ebiten.Image, x, y float64) erro
 	case PositionTop:
 		return position.child.Draw(screen, x+w/2-cw/2, 0)
 	case PositionTopRight:
-		return position.child.Draw(screen, x-cw, 0)
+		return position.child.Draw(screen, w-cw, 0)
 
 	case PositionLeft:
 		return position.child.Draw(screen, 0, h/2-ch/2)

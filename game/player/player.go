@@ -96,6 +96,7 @@ func NewPlayer(w types.World) *Player {
 		it++
 	}
 	log.Printf("picked spawn point (%v, %v), took %v iterations", x, y, it)
+	w.SetPlayerSpawnPoint(uint64(x), uint64(y))
 
 	return &Player{X: float64(x), Y: float64(y), SelectedWorld: w.Metadata()}
 }

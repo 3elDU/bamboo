@@ -1,21 +1,13 @@
 package blocks_impl
 
 import (
-	"encoding/gob"
-
 	"github.com/3elDU/bamboo/types"
 
 	"github.com/3elDU/bamboo/assets"
 )
 
 func init() {
-	gob.Register(CaveWallState{})
 	types.NewCaveWallBlock = NewCaveWallBlock
-}
-
-type CaveWallState struct {
-	ConnectedBlockState
-	CollidableBlockState
 }
 
 type CaveWallBlock struct {
@@ -40,14 +32,9 @@ func NewCaveWallBlock() types.Block {
 }
 
 func (b *CaveWallBlock) State() interface{} {
-	return CaveWallState{
-		ConnectedBlockState:  b.connectedBlock.State().(ConnectedBlockState),
-		CollidableBlockState: b.collidableBlock.State().(CollidableBlockState),
-	}
+	return nil
 }
 
 func (b *CaveWallBlock) LoadState(s interface{}) {
-	state := s.(CaveWallState)
-	b.connectedBlock.LoadState(state.ConnectedBlockState)
-	b.collidableBlock.LoadState(state.CollidableBlockState)
+
 }

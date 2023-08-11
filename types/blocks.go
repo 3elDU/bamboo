@@ -30,6 +30,7 @@ const (
 	SandWithStonesBlock
 	SandWithClayBlock
 	PitBlock
+	IronOreBlock
 )
 
 func NewBlock(id BlockType) Block {
@@ -63,7 +64,7 @@ func NewBlock(id BlockType) Block {
 	case CaveWallBlock:
 		return NewCaveWallBlock()
 	case CaveFloorBlock:
-		return NewCaveFloorBlock()
+		return NewCaveFloorBlock(false)
 	case CaveExitBlock:
 		return NewCaveExitBlock()
 	case PineSaplingBlock:
@@ -78,6 +79,8 @@ func NewBlock(id BlockType) Block {
 		return NewSandWithClayBlock()
 	case PitBlock:
 		return NewPitBlock()
+	case IronOreBlock:
+		return NewIronOreBlock()
 	}
 
 	return NewEmptyBlock()
@@ -98,7 +101,7 @@ var (
 	NewWhiteMushroomBlock  func() Block
 	NewCaveEntranceBlock   func(uuid uuid.UUID) Block
 	NewCaveWallBlock       func() Block
-	NewCaveFloorBlock      func() Block
+	NewCaveFloorBlock      func(hasGrass bool) Block
 	NewCaveExitBlock       func() Block
 	NewPineSaplingBlock    func() Block
 	NewCampfireBlock       func() Block
@@ -106,6 +109,7 @@ var (
 	NewSandWithStonesBlock func() Block
 	NewSandWithClayBlock   func() Block
 	NewPitBlock            func() Block
+	NewIronOreBlock        func() Block
 )
 
 type Block interface {

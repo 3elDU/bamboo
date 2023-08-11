@@ -54,7 +54,7 @@ func (cave *CaveEntranceBlock) LoadState(s interface{}) {
 	cave.id = state.ID
 }
 
-func (cave *CaveEntranceBlock) Interact(_ types.World, _ types.Vec2f) {
+func (cave *CaveEntranceBlock) Collide(_ types.World, _ types.Vec2f) {
 	event.FireEvent(event.NewEvent(
 		event.CaveEnter,
 		event.CaveEnteredArgs{

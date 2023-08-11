@@ -169,7 +169,7 @@ func (player *Player) UpdateInput(movement MovementVector) {
 	player.input = movement
 }
 
-func (player *Player) Update() {
+func (player *Player) Update(superSpeed bool) {
 	world := types.GetCurrentWorld()
 	dx, dy := player.input.ToFloat()
 
@@ -196,7 +196,9 @@ func (player *Player) Update() {
 
 	// multiply velocity by block speed modifier
 	speedModifier := 1.0
-	if block, ok := world.BlockAt(uint64(player.X), uint64(player.Y)).(types.CollidableBlock); ok {
+	if superSpeed {
+		speedModifier = 5.0
+	} else if block, ok := world.BlockAt(uint64(player.X), uint64(player.Y)).(types.CollidableBlock); ok {
 		speedModifier = block.PlayerSpeed()
 	}
 
