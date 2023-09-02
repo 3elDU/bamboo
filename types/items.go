@@ -18,16 +18,12 @@ const (
 type ToolStrength int
 
 const (
-	ToolStrengthBareHand ToolStrength = iota
-	ToolStrengthGold
-	ToolStrengthTin
-	ToolStrengthWood
-	ToolStrengthClay
-	ToolStrengthCopper
-	ToolStrengthBronze
-	ToolStrengthIron
-	ToolStrengthAluminium
-	ToolStrengthSteel
+	ToolStrengthBareHand ToolStrength = iota // 1
+	ToolStrengthWood                         // 4
+	ToolStrengthClay                         // 8
+	ToolStrengthGold                         // 16
+	ToolStrengthCopper                       // 32
+	ToolStrengthIron                         // 128
 )
 
 type ItemType uint
@@ -42,6 +38,9 @@ const (
 	ClayItem
 	WateringCanItem
 	ClayShovelItem
+	RawIronItem
+	IronIngotItem
+	ClayPickaxeItem
 )
 
 func NewItem(id ItemType) Item {
@@ -60,6 +59,12 @@ func NewItem(id ItemType) Item {
 		return NewWateringCanItem()
 	case ClayShovelItem:
 		return NewClayShovelItem()
+	case RawIronItem:
+		return NewRawIronItem()
+	case IronIngotItem:
+		return NewIronIngotItem()
+	case ClayPickaxeItem:
+		return NewClayPickaxeItem()
 	}
 
 	return nil
@@ -73,6 +78,9 @@ var (
 	NewClayItem        func() Item
 	NewWateringCanItem func() Item
 	NewClayShovelItem  func() Item
+	NewRawIronItem     func() Item
+	NewIronIngotItem   func() Item
+	NewClayPickaxeItem func() Item
 )
 
 type Item interface {
@@ -87,12 +95,22 @@ type Item interface {
 	LoadState(interface{})
 }
 
-type Tool interface {
-	Family() ToolFamily
-	Strength() ToolStrength
-	Use(pos Vec2u)
+// An interactive item, such as pickaxe, sword, or any other tool
+type IToolItem interface {
+	ToolFamily() ToolFamily
+	ToolStrength() ToolStrength
+	UseTool(pos Vec2u)
 }
 
+// An item that produces energy by burning
 type IBurnableItem interface {
 	BurningEnergy() float64
+}
+
+// An item that can be smelted in a furnace
+type ISmeltableItem interface {
+	SmeltingEnergyRequired() float64
+	// This function will be called when the smelting process has ended.
+	// It should return the result of the smelting process
+	Smelt() Item
 }

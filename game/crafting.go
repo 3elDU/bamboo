@@ -5,6 +5,7 @@ import (
 
 	"github.com/3elDU/bamboo/colors"
 	"github.com/3elDU/bamboo/crafting"
+	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/types"
 	"github.com/3elDU/bamboo/ui"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -73,18 +74,22 @@ func (menu *craftingMenu) UpdateAvailableRecipes() {
 	}
 }
 
-func (menu *craftingMenu) Update() bool {
+func (menu *craftingMenu) Update() {
 	switch {
 	case inpututil.IsKeyJustPressed(ebiten.KeyEnter):
 		menu.SelectedCraft().Craft()
 		menu.UpdateAvailableRecipes()
-		return !ebiten.IsKeyPressed(ebiten.KeyShift)
+
+		// If crafting with a shift key, do not close the crafting menu
+		if !ebiten.IsKeyPressed(ebiten.KeyShift) {
+			scene_manager.HideOverlay()
+		}
 	}
 
 	// Return early if there are no available crafts.
 	// Handling up/down arrow keys makes no sense, when there is no items to choose from
 	if len(menu.availableCrafts) == 0 {
-		return false
+		scene_manager.HideOverlay()
 	}
 
 	switch {
@@ -93,7 +98,6 @@ func (menu *craftingMenu) Update() bool {
 	case inpututil.IsKeyJustPressed(ebiten.KeyUp):
 		menu.setSelectedCraft(menu.selectedCraft - 1)
 	}
-	return false
 }
 
 func (menu *craftingMenu) Draw(screen *ebiten.Image) {
@@ -126,4 +130,8 @@ func (menu *craftingMenu) Draw(screen *ebiten.Image) {
 	}
 
 	view.Draw(screen, 0, 0)
+}
+
+func (menu *craftingMenu) Destroy() {
+
 }

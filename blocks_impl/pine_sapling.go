@@ -72,7 +72,7 @@ func (blok *PineSaplingBlock) ToolStrengthRequired() types.ToolStrength {
 	return types.ToolStrengthBareHand
 }
 func (block *PineSaplingBlock) Break() {
-	types.GetInventory().AddItem(types.ItemSlot{
+	types.GetPlayerInventory().AddItem(types.ItemSlot{
 		Item:     types.NewPineSaplingItem(),
 		Quantity: 1,
 	})

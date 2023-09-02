@@ -12,13 +12,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type SavedSlot struct {
-	Empty    bool
-	Quantity uint8
-	ItemType types.ItemType
-	State    interface{}
-}
-
 func LoadInventory(baseUUID uuid.UUID) *Inventory {
 	path := filepath.Join(config.WorldSaveDirectory, baseUUID.String(), config.InventoryFile)
 
@@ -28,7 +21,7 @@ func LoadInventory(baseUUID uuid.UUID) *Inventory {
 		return NewInventory()
 	}
 
-	loadedInventory := make([]SavedSlot, Size)
+	loadedInventory := make([]types.SavedSlot, Size)
 	if err := gob.NewDecoder(bytes.NewReader(data)).Decode(&loadedInventory); err != nil {
 		log.Printf("failed to decode inventory: %v", err)
 		return NewInventory()
@@ -60,19 +53,14 @@ func (inv *Inventory) Save(metadata types.Save) {
 	}
 	defer file.Close()
 
-	savedInventory := make([]SavedSlot, Size)
+	savedInventory := make([]types.SavedSlot, Size)
 	for i := 0; i < Size; i++ {
 		if inv.Slots[i].Empty {
-			savedInventory[i] = SavedSlot{
+			savedInventory[i] = types.SavedSlot{
 				Empty: true,
 			}
 		} else {
-			savedInventory[i] = SavedSlot{
-				Empty:    inv.Slots[i].Empty,
-				Quantity: inv.Slots[i].Quantity,
-				ItemType: inv.Slots[i].Item.Type(),
-				State:    inv.Slots[i].Item.State(),
-			}
+			savedInventory[i] = inv.Slots[i].Save()
 		}
 	}
 

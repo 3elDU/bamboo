@@ -37,12 +37,12 @@ func (shovel *ClayShovelItem) Texture() *ebiten.Image {
 	return assets.Texture("clay_shovel").Texture()
 }
 
-func (shovel *ClayShovelItem) Family() types.ToolFamily {
+func (shovel *ClayShovelItem) ToolFamily() types.ToolFamily {
 	return types.ToolFamilyShovel
 }
-func (shovel *ClayShovelItem) Strength() types.ToolStrength {
+func (shovel *ClayShovelItem) ToolStrength() types.ToolStrength {
 	return types.ToolStrengthClay
 }
-func (shovel *ClayShovelItem) Use(pos types.Vec2u) {
-
+func (shovel *ClayShovelItem) UseTool(pos types.Vec2u) {
+	types.GetCurrentWorld().SetBlock(pos.X, pos.Y, types.NewPitBlock())
 }

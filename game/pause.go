@@ -7,21 +7,11 @@ import (
 	"log"
 
 	"github.com/3elDU/bamboo/colors"
+	"github.com/3elDU/bamboo/scene_manager"
 	"github.com/3elDU/bamboo/ui"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-type buttonPressedEvent int
-
-const (
-	noButtonPressed buttonPressedEvent = iota
-	continueButtonPressed
-	exitButtonPressed
-)
-
-// Pause menu is not a scene
-// It is displayed ON TOP of existing game scene
 type pauseMenu struct {
 	view ui.Component
 
@@ -69,7 +59,7 @@ func newPauseMenu() *pauseMenu {
 	}
 }
 
-func (p *pauseMenu) Draw(screen *ebiten.Image) error {
+func (p *pauseMenu) Draw(screen *ebiten.Image) {
 	// Dim the background with translucent black texture
 	p.opts.GeoM.Reset()
 	w, h := screen.Bounds().Dx(), screen.Bounds().Dy()
@@ -77,31 +67,28 @@ func (p *pauseMenu) Draw(screen *ebiten.Image) error {
 	p.opts.GeoM.Scale(float64(w)+2, float64(h)+2)
 	screen.DrawImage(p.tex, p.opts)
 
-	err := p.view.Draw(screen, 0, 0)
-	if err != nil {
-		return err
+	if err := p.view.Draw(screen, 0, 0); err != nil {
+		log.Panic(err)
 	}
-
-	return nil
 }
 
-func (p *pauseMenu) ButtonPressed() buttonPressedEvent {
+func (p *pauseMenu) Update() {
 	if err := p.view.Update(); err != nil {
 		log.Panicf("pauseMenu.ButtonPressed() - %v", err)
-	}
-
-	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		return continueButtonPressed
 	}
 
 	select {
 	case <-p.continueBtn:
 		log.Println("pauseMenu - \"Continue\" button pressed")
-		return continueButtonPressed
+		scene_manager.HideOverlay()
 	case <-p.exitBtn:
 		log.Println("pauseMenu - \"Exit to main menu\" button pressed")
-		return exitButtonPressed
+		scene_manager.HideOverlay()
+		scene_manager.Pop()
 	default:
-		return noButtonPressed
 	}
+}
+
+func (p *pauseMenu) Destroy() {
+
 }

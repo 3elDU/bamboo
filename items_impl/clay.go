@@ -33,20 +33,20 @@ func (item *ClayItem) Texture() *ebiten.Image {
 	return assets.Texture("clay").Texture()
 }
 
-func (item *ClayItem) Family() types.ToolFamily {
+func (item *ClayItem) ToolFamily() types.ToolFamily {
 	return types.ToolFamilyNone
 }
-func (item *ClayItem) Strength() types.ToolStrength {
+func (item *ClayItem) ToolStrength() types.ToolStrength {
 	return types.ToolStrengthBareHand
 }
-func (item *ClayItem) Use(pos types.Vec2u) {
+func (item *ClayItem) UseTool(pos types.Vec2u) {
 	// Clay can be placed back on sand
 	if types.GetCurrentWorld().BlockAt(pos.X, pos.Y).Type() == types.SandBlock {
 		types.GetCurrentWorld().SetBlock(
 			pos.X, pos.Y,
 			types.NewSandWithClayBlock(),
 		)
-		types.GetInventory().RemoveItemByType(item.Type(), 1)
+		types.GetPlayerInventory().RemoveItemByType(item.Type(), 1)
 	}
 }
 

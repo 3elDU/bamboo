@@ -9,6 +9,18 @@ type ItemSlot struct {
 	Empty    bool
 }
 
+func (slot *ItemSlot) CanAddItem(other ItemSlot) bool {
+	if slot.Empty || other.Empty {
+		return true
+	}
+
+	if slot.Item.Type() != other.Item.Type() {
+		return false
+	}
+
+	return slot.Quantity+other.Quantity <= config.SlotSize
+}
+
 // Returns true if item has been successfully added
 // False if there is no space, or item is of different type
 func (slot *ItemSlot) AddItem(other ItemSlot) bool {
@@ -41,5 +53,25 @@ func (slot *ItemSlot) RemoveItem(count uint8) {
 		slot.Quantity = 0
 	} else {
 		slot.Quantity -= count
+	}
+
+	if slot.Quantity == 0 {
+		slot.Empty = true
+	}
+}
+
+func (slot *ItemSlot) Save() SavedSlot {
+	var itemType ItemType
+	var itemState interface{}
+	if !slot.Empty {
+		itemType = slot.Item.Type()
+		itemState = slot.Item.State()
+	}
+
+	return SavedSlot{
+		Empty:    slot.Empty,
+		Quantity: slot.Quantity,
+		ItemType: itemType,
+		State:    itemState,
 	}
 }

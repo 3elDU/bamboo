@@ -123,7 +123,7 @@ func (b *BerryBushBlock) Break() {
 		return
 	}
 
-	if types.GetInventory().AddItem(types.ItemSlot{
+	if types.GetPlayerInventory().AddItem(types.ItemSlot{
 		Item:     types.NewBerryItem(),
 		Quantity: 1,
 	}) {

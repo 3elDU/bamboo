@@ -31,6 +31,7 @@ const (
 	SandWithClayBlock
 	PitBlock
 	IronOreBlock
+	FurnaceBlock
 )
 
 func NewBlock(id BlockType) Block {
@@ -81,6 +82,8 @@ func NewBlock(id BlockType) Block {
 		return NewPitBlock()
 	case IronOreBlock:
 		return NewIronOreBlock()
+	case FurnaceBlock:
+		return NewFurnaceBlock()
 	}
 
 	return NewEmptyBlock()
@@ -110,6 +113,7 @@ var (
 	NewSandWithClayBlock   func() Block
 	NewPitBlock            func() Block
 	NewIronOreBlock        func() Block
+	NewFurnaceBlock        func() Block
 )
 
 type Block interface {
@@ -168,6 +172,7 @@ type BreakableBlock interface {
 type ICampfireBlock interface {
 	AddPiece(item IBurnableItem) bool
 	LightUp() bool
+	ExtinguishCampfire()
 	IsLitUp() bool
 }
 

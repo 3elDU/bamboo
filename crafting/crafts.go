@@ -25,11 +25,33 @@ var Crafts []types.Craft = []types.Craft{
 		Ingredients: []types.CraftIngredient{
 			{
 				Type:   types.ClayItem,
-				Amount: 3,
+				Amount: 1,
+			},
+			{
+				Type:   types.StickItem,
+				Amount: 1,
 			},
 		},
 		Result: types.CraftIngredient{
 			Type:   types.ClayShovelItem,
+			Amount: 1,
+		},
+	},
+	{
+		Name:       "Clay pickaxe",
+		Conditions: []types.CraftCondition{PlayerMustBeNearCampfire},
+		Ingredients: []types.CraftIngredient{
+			{
+				Type:   types.ClayItem,
+				Amount: 3,
+			},
+			{
+				Type:   types.StickItem,
+				Amount: 1,
+			},
+		},
+		Result: types.CraftIngredient{
+			Type:   types.ClayPickaxeItem,
 			Amount: 1,
 		},
 	},

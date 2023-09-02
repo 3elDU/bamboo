@@ -37,7 +37,7 @@ func (b *SandWithClayBlock) ToolStrengthRequired() types.ToolStrength {
 	return types.ToolStrengthBareHand
 }
 func (b *SandWithClayBlock) Break() {
-	if types.GetInventory().AddItem(types.ItemSlot{
+	if types.GetPlayerInventory().AddItem(types.ItemSlot{
 		Item:     types.NewClayItem(),
 		Quantity: 1,
 	}) {

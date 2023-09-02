@@ -976,7 +976,19 @@ func (overlay *OverlayComponent) MaxSize() (float64, float64) {
 	return overlay.parent.MaxCapacityForChild(overlay)
 }
 func (overlay *OverlayComponent) ComputedSize() (float64, float64) {
-	return 0, 0
+	var maxW, maxH = 0.0, 0.0
+
+	for _, child := range overlay.children {
+		w, h := child.ComputedSize()
+		if w > maxW {
+			maxW = w
+		}
+		if h > maxH {
+			maxH = h
+		}
+	}
+
+	return maxW, maxH
 }
 func (overlay *OverlayComponent) CapacityForChild(_ Component) (float64, float64) {
 	return overlay.parent.CapacityForChild(overlay)
@@ -1040,10 +1052,10 @@ func (position *PositionComponent) MaxSize() (float64, float64) {
 	return position.parent.MaxCapacityForChild(position)
 }
 func (position *PositionComponent) ComputedSize() (float64, float64) {
-	return position.MaxSize()
+	return position.child.ComputedSize()
 }
 func (position *PositionComponent) CapacityForChild(_ Component) (float64, float64) {
-	return position.parent.MaxCapacityForChild(position)
+	return position.parent.CapacityForChild(position)
 }
 func (position *PositionComponent) MaxCapacityForChild(_ Component) (float64, float64) {
 	return position.parent.MaxCapacityForChild(position)
@@ -1056,29 +1068,29 @@ func (position *PositionComponent) Update() error {
 }
 func (position *PositionComponent) Draw(screen *ebiten.Image, x, y float64) error {
 	cw, ch := position.child.ComputedSize()
-	w, h := position.parent.MaxCapacityForChild(position)
+	w, h := position.parent.ComputedSize()
 
 	switch position.position {
 	case PositionTopLeft:
 		return position.child.Draw(screen, x, y)
 	case PositionTop:
-		return position.child.Draw(screen, x+w/2-cw/2, 0)
+		return position.child.Draw(screen, x+w/2-cw/2, y)
 	case PositionTopRight:
-		return position.child.Draw(screen, w-cw, 0)
+		return position.child.Draw(screen, x+w-cw, y)
 
 	case PositionLeft:
-		return position.child.Draw(screen, 0, h/2-ch/2)
+		return position.child.Draw(screen, x, y+h/2-ch/2)
 	case PositionCenter:
-		return position.child.Draw(screen, w/2-cw/2, h/2-ch/2)
+		return position.child.Draw(screen, x+w/2-cw/2, y+h/2-ch/2)
 	case PositionRight:
-		return position.child.Draw(screen, w-cw, h/2-ch/2)
+		return position.child.Draw(screen, x+w-cw, y+h/2-ch/2)
 
 	case PositionBottomLeft:
-		return position.child.Draw(screen, 0, h-ch)
+		return position.child.Draw(screen, x, y+h-ch)
 	case PositionBottom:
-		return position.child.Draw(screen, w/2-cw/2, h-ch)
+		return position.child.Draw(screen, x+w/2-cw/2, y+h-ch)
 	case PositionBottomRight:
-		return position.child.Draw(screen, w-cw, h-ch)
+		return position.child.Draw(screen, x+w-cw, y+h-ch)
 	}
 
 	return nil

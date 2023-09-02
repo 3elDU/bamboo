@@ -52,18 +52,18 @@ func (item *StickItem) Hash() uint64 {
 	return uint64(item.id)
 }
 
-func (item *StickItem) Family() types.ToolFamily {
+func (item *StickItem) ToolFamily() types.ToolFamily {
 	return types.ToolFamilyNone
 }
-func (item *StickItem) Strength() types.ToolStrength {
+func (item *StickItem) ToolStrength() types.ToolStrength {
 	return types.ToolStrengthBareHand
 }
-func (item *StickItem) Use(pos types.Vec2u) {
+func (item *StickItem) UseTool(pos types.Vec2u) {
 	b, ok := types.GetCurrentWorld().BlockAt(pos.X, pos.Y).(types.ICampfireBlock)
 	if ok {
 		// if used on campfire block, add a piece to it
 		if b.AddPiece(item) {
-			types.GetInventory().RemoveItemByType(item.Type(), 1)
+			types.GetPlayerInventory().RemoveItemByType(item.Type(), 1)
 			return
 		}
 	}
@@ -79,7 +79,7 @@ func (item *StickItem) Use(pos types.Vec2u) {
 	}
 
 	types.GetCurrentWorld().SetBlock(pos.X, pos.Y, types.NewCampfireBlock())
-	types.GetInventory().RemoveItem(types.ItemSlot{Item: item, Quantity: 1})
+	types.GetPlayerInventory().RemoveItem(types.ItemSlot{Item: item, Quantity: 1})
 }
 
 func (item *StickItem) State() interface{} {

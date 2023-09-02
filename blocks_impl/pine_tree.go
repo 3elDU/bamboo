@@ -45,14 +45,14 @@ func (blok *PineTreeBlock) ToolStrengthRequired() types.ToolStrength {
 	return types.ToolStrengthBareHand
 }
 func (b *PineTreeBlock) Break() {
-	addedSaplingItem := types.GetInventory().AddItem(types.ItemSlot{
+	addedSaplingItem := types.GetPlayerInventory().AddItem(types.ItemSlot{
 		Item:     types.NewPineSaplingItem(),
 		Quantity: uint8(1 + rand.Intn(2)),
 	})
 
 	// add a stick to inventory with 50% chance
 	if rand.Float64() > 0.5 {
-		types.GetInventory().AddItem(types.ItemSlot{
+		types.GetPlayerInventory().AddItem(types.ItemSlot{
 			Item:     types.NewStickItem(),
 			Quantity: 1,
 		})

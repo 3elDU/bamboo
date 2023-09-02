@@ -45,13 +45,13 @@ func (flint *FlintItem) Texture() *ebiten.Image {
 	return assets.Texture("flint").Texture()
 }
 
-func (item *FlintItem) Family() types.ToolFamily {
+func (item *FlintItem) ToolFamily() types.ToolFamily {
 	return types.ToolFamilyNone
 }
-func (item *FlintItem) Strength() types.ToolStrength {
+func (item *FlintItem) ToolStrength() types.ToolStrength {
 	return types.ToolStrengthBareHand
 }
-func (flint *FlintItem) Use(pos types.Vec2u) {
+func (flint *FlintItem) UseTool(pos types.Vec2u) {
 	block := types.GetCurrentWorld().BlockAt(pos.X, pos.Y)
 	switch block.Type() {
 	case types.CampfireBlock:
@@ -61,11 +61,11 @@ func (flint *FlintItem) Use(pos types.Vec2u) {
 
 		campfire := block.(types.ICampfireBlock)
 		if campfire.LightUp() {
-			types.GetInventory().RemoveItemByType(flint.Type(), 1)
+			types.GetPlayerInventory().RemoveItemByType(flint.Type(), 1)
 		}
 	case types.SandBlock:
 		// Flint can be placed back on sand
 		types.GetCurrentWorld().SetBlock(pos.X, pos.Y, types.NewSandWithStonesBlock())
-		types.GetInventory().RemoveItemByType(flint.Type(), 1)
+		types.GetPlayerInventory().RemoveItemByType(flint.Type(), 1)
 	}
 }

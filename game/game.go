@@ -25,15 +25,13 @@ type Game struct {
 	paused    bool
 	pauseMenu *pauseMenu
 
-	isCrafting   bool
-	craftingMenu *craftingMenu
-
 	world       *world.World
 	player      *player.Player
 	playerStack *player.Stack
 	inventory   *inventory.Inventory
 
-	compass *ui.CompassComponent
+	craftingMenu *craftingMenu
+	compass      *ui.CompassComponent
 
 	// debug switches
 	superSpeed bool
@@ -88,22 +86,6 @@ func (game *Game) Save() {
 }
 
 func (game *Game) processInput() {
-	// "Escape" key is handled by the pause menu itself,
-	// because our code that handles escape key is unreachable
-	if game.paused {
-		switch game.pauseMenu.ButtonPressed() {
-		case continueButtonPressed:
-			game.paused = false
-		case exitButtonPressed:
-			game.Save()
-			scene_manager.Pop()
-		}
-		return
-	} else if game.isCrafting {
-		toExit := game.craftingMenu.Update()
-		game.isCrafting = !toExit
-	}
-
 	game.player.UpdateInput(player.MovementVector{
 		Left:  ebiten.IsKeyPressed(ebiten.KeyA),
 		Right: ebiten.IsKeyPressed(ebiten.KeyD),
@@ -111,42 +93,36 @@ func (game *Game) processInput() {
 		Down:  ebiten.IsKeyPressed(ebiten.KeyS),
 	})
 
+	lookingAt := game.player.LookingAt()
 	// Check for key presses
 	switch {
 	// Escape key
-	// If pause or crafting menu is opened, close it
 	case inpututil.IsKeyJustPressed(ebiten.KeyEscape):
-		if game.isCrafting {
-			// Exit crafting menu
-			log.Println("Exiting crafting menu")
-			game.isCrafting = false
+		// If an overlay is being shown, hide it
+		if scene_manager.DisplayingOverlay() {
+			scene_manager.HideOverlay()
+			game.paused = false
 		} else {
-			// Open pause menu with escape, if neither pause menu nor crafting menu is opened
-			log.Println("Entering pause menu")
+			// Otherwise, open the pause menu
+			scene_manager.ShowOverlay(newPauseMenu())
 			game.paused = true
-
-			// trigger a world save when entering pause menu
-			if game.paused {
-				game.Save()
-			}
 		}
 
 	// Open crafting menu
 	case inpututil.IsKeyJustPressed(ebiten.KeyC):
 		log.Println("Entering crafting menu")
-		game.isCrafting = true
 		game.craftingMenu.UpdateAvailableRecipes()
+		scene_manager.ShowOverlay(game.craftingMenu)
 
 	// Break the block
 	case inpututil.IsKeyJustPressed(ebiten.KeyR):
-		lookingAt := game.player.LookingAt()
 		block, breakable := game.world.BlockAt(lookingAt.X, lookingAt.Y).(types.BreakableBlock)
 		if !breakable {
 			break
 		}
 
 		// Check if the tool can break the block
-		tool, isTool := game.inventory.ItemInHand().(types.Tool)
+		tool, isTool := game.inventory.ItemInHand().(types.IToolItem)
 
 		// Check if block can be broken with the bare hand
 		if block.ToolStrengthRequired() == types.ToolStrengthBareHand {
@@ -154,22 +130,18 @@ func (game *Game) processInput() {
 			break
 		}
 
-		if isTool && tool.Family() == block.ToolRequiredToBreak() && tool.Strength() >= block.ToolStrengthRequired() {
+		if isTool && tool.ToolFamily() == block.ToolRequiredToBreak() && tool.ToolStrength() >= block.ToolStrengthRequired() {
 			block.Break()
 		}
 
 	// Use the item in hand / Interact with the block
 	case inpututil.IsKeyJustPressed(ebiten.KeyF):
-		lookingAt := game.player.LookingAt()
-		tool, itemIsTool := game.inventory.ItemInHand().(types.Tool)
-
-		if itemIsTool {
-			tool.Use(lookingAt)
-		} else {
-			// If there is no item in hand / item in hand is not a tool, then interact with a block
-			if block, ok := game.world.BlockAt(lookingAt.X, lookingAt.Y).(types.InteractiveBlock); ok {
-				block.Interact()
-			}
+		// If the block is interactive, interact with it
+		if block, ok := game.world.BlockAt(lookingAt.X, lookingAt.Y).(types.InteractiveBlock); ok {
+			block.Interact()
+		} else if tool, itemIsTool := game.inventory.ItemInHand().(types.IToolItem); itemIsTool {
+			// Otherwise, use the item in hand
+			tool.UseTool(lookingAt)
 		}
 
 	// Inventory slots selection
@@ -196,14 +168,17 @@ func (game *Game) processInput() {
 		// Make the player go faaaaaaaast
 		case ebiten.IsKeyPressed(ebiten.KeyF4) && inpututil.IsKeyJustPressed(ebiten.KeyS):
 			game.superSpeed = !game.superSpeed
+
+		case inpututil.IsKeyJustPressed(ebiten.KeyF6):
+			game.world.SetBlock(lookingAt.X, lookingAt.Y, types.NewFurnaceBlock())
 		}
 	}
 
 	_, yoff := ebiten.Wheel()
 	if yoff < 0 {
-		game.inventory.SelectSlot(game.inventory.SelectedSlot + 1)
+		game.inventory.SelectSlot(game.inventory.SelectedSlotIndex() + 1)
 	} else if yoff > 0 {
-		game.inventory.SelectSlot(game.inventory.SelectedSlot - 1)
+		game.inventory.SelectSlot(game.inventory.SelectedSlotIndex() - 1)
 	}
 }
 
@@ -289,7 +264,7 @@ func (game *Game) Update() {
 func (game *Game) Draw(screen *ebiten.Image) {
 	game.world.Render(screen, game.player.X, game.player.Y, config.UIScaling)
 
-	if !game.inventory.Slots[game.inventory.SelectedSlot].Empty {
+	if !game.inventory.SelectedSlot().Empty {
 		screenPos := world.BlockToScreen(screen, types.Vec2f{X: game.player.X, Y: game.player.Y}, game.player.LookingAt(), config.UIScaling)
 		tex := assets.Texture("outline1").Texture()
 		opts := &ebiten.DrawImageOptions{}
@@ -322,16 +297,6 @@ func (game *Game) Draw(screen *ebiten.Image) {
 			0, 0, colors.C("black"),
 		)
 
-	}
-
-	// draw pause menu
-	if game.paused {
-		err := game.pauseMenu.Draw(screen)
-		if err != nil {
-			log.Panicf("error while rendering pause menu - %v", err)
-		}
-	} else if game.isCrafting {
-		game.craftingMenu.Draw(screen)
 	}
 }
 

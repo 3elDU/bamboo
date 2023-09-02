@@ -77,7 +77,7 @@ func (campfire *CampfireBlock) ToolStrengthRequired() types.ToolStrength {
 	return types.ToolStrengthBareHand
 }
 func (campfire *CampfireBlock) Break() {
-	added := types.GetInventory().AddItem(types.ItemSlot{
+	added := types.GetPlayerInventory().AddItem(types.ItemSlot{
 		Item:     types.NewStickItem(),
 		Quantity: uint8(campfire.pieces),
 	})
@@ -108,6 +108,11 @@ func (campfire *CampfireBlock) LightUp() bool {
 	campfire.energy = 1
 	campfire.parentChunk.MarkAsModified()
 	return true
+}
+
+func (campfire *CampfireBlock) ExtinguishCampfire() {
+	campfire.burning = false
+	campfire.parentChunk.MarkAsModified()
 }
 
 func (campfire *CampfireBlock) IsLitUp() bool {

@@ -53,13 +53,13 @@ func (item *PineSaplingItem) Hash() uint64 {
 	return uint64(item.id)
 }
 
-func (item *PineSaplingItem) Family() types.ToolFamily {
+func (item *PineSaplingItem) ToolFamily() types.ToolFamily {
 	return types.ToolFamilyNone
 }
-func (item *PineSaplingItem) Strength() types.ToolStrength {
+func (item *PineSaplingItem) ToolStrength() types.ToolStrength {
 	return types.ToolStrengthBareHand
 }
-func (item *PineSaplingItem) Use(pos types.Vec2u) {
+func (item *PineSaplingItem) UseTool(pos types.Vec2u) {
 	// sapling can only be planted on grass and it's derivatives
 	if !slices.Contains([]types.BlockType{types.GrassBlock, types.ShortGrassBlock, types.FlowersBlock}, types.GetCurrentWorld().BlockAt(pos.X, pos.Y).Type()) {
 		return
@@ -71,7 +71,7 @@ func (item *PineSaplingItem) Use(pos types.Vec2u) {
 	}
 
 	types.GetCurrentWorld().SetBlock(pos.X, pos.Y, types.NewPineSaplingBlock())
-	types.GetInventory().RemoveItem(types.ItemSlot{
+	types.GetPlayerInventory().RemoveItem(types.ItemSlot{
 		Item:     item,
 		Quantity: 1,
 	})

@@ -32,7 +32,11 @@ var Colors map[string]color.Color = map[string]color.Color{
 
 // Get a color by the name. Casing does not matter
 func C(name string) color.Color {
-	return Colors[strings.ToLower(name)]
+	if clr, exists := Colors[strings.ToLower(name)]; exists {
+		return clr
+	} else {
+		return color.RGBA{R: 255, G: 0, B: 255, A: 255}
+	}
 }
 
 func Complementary(clr color.Color) color.Color {

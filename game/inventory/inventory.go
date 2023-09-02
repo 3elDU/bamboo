@@ -16,7 +16,7 @@ const Size = 5
 
 type Inventory struct {
 	Slots        [Size]*types.ItemSlot
-	SelectedSlot int
+	selectedSlot int
 }
 
 func NewInventory() *Inventory {
@@ -26,7 +26,7 @@ func NewInventory() *Inventory {
 		inv.Slots[i].Empty = true
 	}
 
-	types.SetInventory(inv)
+	types.SetPlayerInventory(inv)
 	return inv
 }
 
@@ -34,8 +34,8 @@ func (inv *Inventory) Length() int {
 	return Size
 }
 
-func (inv *Inventory) At(i int) types.ItemSlot {
-	return *inv.Slots[i]
+func (inv *Inventory) At(i int) *types.ItemSlot {
+	return inv.Slots[i]
 }
 
 func (inv *Inventory) HasItemOfType(itemType types.ItemType, amount int) bool {
@@ -125,11 +125,17 @@ func (inv *Inventory) SelectSlot(slot int) {
 		slot = Size - 1
 	}
 
-	inv.SelectedSlot = slot
+	inv.selectedSlot = slot
 }
 
 func (inv *Inventory) ItemInHand() types.Item {
-	return inv.Slots[inv.SelectedSlot].Item
+	return inv.Slots[inv.selectedSlot].Item
+}
+func (inv *Inventory) SelectedSlot() *types.ItemSlot {
+	return inv.Slots[inv.selectedSlot]
+}
+func (inv *Inventory) SelectedSlotIndex() int {
+	return inv.selectedSlot
 }
 
 // Returns a position of inventory slot on the screen
@@ -182,7 +188,7 @@ func (inv *Inventory) Render(screen *ebiten.Image) {
 
 		// Render label with item amount only if there is more than 1 of that item
 		if slot.Quantity > 1 {
-			font.RenderFont(screen, fmt.Sprintf("%v", slot.Quantity), itemTexPos.X, itemTexPos.Y, colors.C("black"))
+			font.RenderFont(screen, fmt.Sprintf("%v", slot.Quantity), itemTexPos.X, itemTexPos.Y, colors.C("white"))
 		}
 	}
 
@@ -191,7 +197,7 @@ func (inv *Inventory) Render(screen *ebiten.Image) {
 	selectedSlotTexOpts := &ebiten.DrawImageOptions{}
 	selectedSlotTexOpts.GeoM.Scale(config.UIScaling, config.UIScaling)
 	selectedSlotTexOpts.GeoM.Translate(
-		ix+config.UIScaling+(20*float64(inv.SelectedSlot)*config.UIScaling),
+		ix+config.UIScaling+(20*float64(inv.selectedSlot)*config.UIScaling),
 		iy,
 	)
 	screen.DrawImage(selectedSlotTex, selectedSlotTexOpts)

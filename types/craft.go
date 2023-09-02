@@ -28,19 +28,15 @@ func (craft Craft) AbleToCraft() bool {
 
 	// Check if player has all the necessary ingredients
 	for _, item := range craft.Ingredients {
-		if !GetInventory().HasItemOfType(item.Type, item.Amount) {
+		if !GetPlayerInventory().HasItemOfType(item.Type, item.Amount) {
 			return false
 		}
 	}
-	// Check if player has space in inventory to store the craft result
-	if !GetInventory().CanAddItem(ItemSlot{
+
+	return GetPlayerInventory().CanAddItem(ItemSlot{
 		Item:     NewItem(craft.Result.Type),
 		Quantity: uint8(craft.Result.Amount),
-	}) {
-		return false
-	}
-
-	return true
+	})
 }
 
 // Returns true if the item was successfully crafted
@@ -50,13 +46,13 @@ func (craft Craft) Craft() bool {
 	}
 
 	for _, ingredient := range craft.Ingredients {
-		removed := GetInventory().RemoveItemByType(ingredient.Type, ingredient.Amount)
+		removed := GetPlayerInventory().RemoveItemByType(ingredient.Type, ingredient.Amount)
 		if !removed {
 			return false
 		}
 	}
 
-	GetInventory().AddItem(ItemSlot{
+	GetPlayerInventory().AddItem(ItemSlot{
 		Item:     NewItem(craft.Result.Type),
 		Quantity: uint8(craft.Result.Amount),
 	})

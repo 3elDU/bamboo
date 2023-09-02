@@ -52,13 +52,13 @@ func (item *WateringCanItem) Texture() *ebiten.Image {
 	}
 }
 
-func (item *WateringCanItem) Family() types.ToolFamily {
+func (item *WateringCanItem) ToolFamily() types.ToolFamily {
 	return types.ToolFamilyNone
 }
-func (item *WateringCanItem) Strength() types.ToolStrength {
+func (item *WateringCanItem) ToolStrength() types.ToolStrength {
 	return types.ToolStrengthClay
 }
-func (item *WateringCanItem) Use(pos types.Vec2u) {
+func (item *WateringCanItem) UseTool(pos types.Vec2u) {
 	switch types.GetCurrentWorld().BlockAt(pos.X, pos.Y).Type() {
 	case types.WaterBlock:
 		item.waterAmount = 5
@@ -68,6 +68,9 @@ func (item *WateringCanItem) Use(pos types.Vec2u) {
 				block.AddWater()
 				item.waterAmount -= 1
 			}
+		} else if campfire, ok := types.GetCurrentWorld().BlockAt(pos.X, pos.Y).(types.ICampfireBlock); ok {
+			campfire.ExtinguishCampfire()
+			item.waterAmount -= 1
 		}
 	}
 }

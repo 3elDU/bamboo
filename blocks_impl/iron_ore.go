@@ -35,7 +35,9 @@ func NewIronOreBlock() types.Block {
 }
 
 func (block *IronOreBlock) Break() {
-	types.GetCurrentWorld().SetBlock(uint64(block.x), uint64(block.y), types.NewCaveFloorBlock(false))
+	if types.GetPlayerInventory().AddItem(types.ItemSlot{Item: types.NewRawIronItem(), Quantity: 1}) {
+		types.GetCurrentWorld().SetBlock(uint64(block.x), uint64(block.y), types.NewCaveFloorBlock(false))
+	}
 }
 
 // Dummy methods for saving/loading state

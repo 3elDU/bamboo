@@ -29,11 +29,12 @@ type Scene interface {
 
 type sceneManager struct {
 	currentScene Scene
+	overlay      Scene
 	stack        []Scene
 
 	// tick counter
 	// can be retrieved through Ticks() function
-	counter uint64
+	tickCounter uint64
 
 	// special flag, that is set in SceneManager.Exit()
 	terminated bool
@@ -50,7 +51,7 @@ func init() {
 // Ticks Returns internal tick counter that is incremented on each Update() call
 // Can be used for different timing purposes
 func Ticks() uint64 {
-	return manager.counter
+	return manager.tickCounter
 }
 
 // Pop must be called from Scene.Update()
@@ -111,6 +112,22 @@ func Push(sc Scene) {
 	manager.printQueue("Push")
 }
 
+// Show an overlay scene on top of the current one.
+// Both scenes are drawn, and updated
+func ShowOverlay(sc Scene) {
+	manager.overlay = sc
+}
+
+// Removes the overlay scene
+func HideOverlay() {
+	manager.overlay = nil
+}
+
+// Returns whether the overlay scene is currently being shown
+func DisplayingOverlay() bool {
+	return manager.overlay != nil
+}
+
 func (manager *sceneManager) Update() error {
 	if manager.terminated {
 		return fmt.Errorf("exit")
@@ -150,8 +167,11 @@ func (manager *sceneManager) Update() error {
 	}
 
 	manager.currentScene.Update()
+	if manager.overlay != nil {
+		manager.overlay.Update()
+	}
 
-	manager.counter++
+	manager.tickCounter++
 
 	return nil
 }
@@ -159,6 +179,9 @@ func (manager *sceneManager) Update() error {
 func (manager *sceneManager) Draw(screen *ebiten.Image) {
 	if manager.currentScene != nil {
 		manager.currentScene.Draw(screen)
+	}
+	if manager.overlay != nil {
+		manager.overlay.Draw(screen)
 	}
 }
 
