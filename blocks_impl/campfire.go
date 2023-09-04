@@ -6,7 +6,6 @@ import (
 
 	"github.com/3elDU/bamboo/assets"
 	"github.com/3elDU/bamboo/types"
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
 func init() {
@@ -24,6 +23,9 @@ type CampfireBlockState struct {
 
 type CampfireBlock struct {
 	baseBlock
+	texturedBlock
+	collidableBlock
+
 	pieces   int
 	burning  bool
 	energy   float64
@@ -31,14 +33,29 @@ type CampfireBlock struct {
 }
 
 func NewCampfireBlock() types.Block {
-	return &CampfireBlock{
+	campfire := &CampfireBlock{
 		baseBlock: baseBlock{
 			blockType: types.CampfireBlock,
 		},
+		texturedBlock:   texturedBlock{},
+		collidableBlock: collidableBlock{collidable: true},
+
 		pieces:   1,
 		burning:  false,
 		energy:   1,
 		burntOut: false,
+	}
+	campfire.updateTexture()
+	return campfire
+}
+
+func (campfire *CampfireBlock) updateTexture() {
+	if campfire.burning {
+		campfire.tex = assets.Texture("campfire_burning")
+	} else if campfire.burntOut {
+		campfire.tex = assets.Texture("campfire_ash")
+	} else {
+		campfire.tex = assets.Texture(fmt.Sprintf("campfire%v", campfire.pieces))
 	}
 }
 
@@ -50,23 +67,9 @@ func (campfire *CampfireBlock) Update(world types.World) {
 		if campfire.energy < 0 {
 			campfire.burning = false
 			campfire.burntOut = true
+			campfire.updateTexture()
+			campfire.parentChunk.MarkAsModified()
 		}
-	}
-}
-
-func (campfire *CampfireBlock) Render(_ types.World, screen *ebiten.Image, pos types.Vec2f, _ bool) {
-	opts := &ebiten.DrawImageOptions{}
-	opts.GeoM.Translate(pos.X, pos.Y)
-	screen.DrawImage(assets.Texture(campfire.TextureName()).Texture(), opts)
-}
-
-func (campfire *CampfireBlock) TextureName() string {
-	if campfire.burning {
-		return "campfire_burning"
-	} else if campfire.burntOut {
-		return "campfire_ash"
-	} else {
-		return fmt.Sprintf("campfire%v", campfire.pieces)
 	}
 }
 
@@ -89,11 +92,13 @@ func (campfire *CampfireBlock) Break() {
 func (campfire *CampfireBlock) AddPiece(item types.IBurnableItem) bool {
 	if campfire.pieces < 4 {
 		campfire.pieces++
+		campfire.updateTexture()
 		campfire.parentChunk.MarkAsModified()
 		return true
 	}
 	if campfire.burning {
 		campfire.energy += item.BurningEnergy()
+		campfire.parentChunk.MarkAsModified()
 		return true
 	}
 	return false
@@ -106,6 +111,7 @@ func (campfire *CampfireBlock) LightUp() bool {
 
 	campfire.burning = true
 	campfire.energy = 1
+	campfire.updateTexture()
 	campfire.parentChunk.MarkAsModified()
 	return true
 }
@@ -136,4 +142,5 @@ func (campfire *CampfireBlock) LoadState(s interface{}) {
 	campfire.burning = state.Burning
 	campfire.energy = state.Energy
 	campfire.burntOut = state.BurntOut
+	campfire.updateTexture()
 }

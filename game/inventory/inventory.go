@@ -87,7 +87,20 @@ func (inv *Inventory) RemoveItemByType(itemType types.ItemType, amount int) bool
 	return false
 }
 
+func (inv *Inventory) CanAddItems(items ...types.ItemSlot) bool {
+	for _, item := range items {
+		if !inv.CanAddItem(item) {
+			return false
+		}
+	}
+	return true
+}
 func (inv *Inventory) CanAddItem(item types.ItemSlot) bool {
+	// Skip the check if this is an empty slot
+	if item.Empty {
+		return true
+	}
+
 	for _, slot := range inv.Slots {
 		if slot.Empty {
 			return true
@@ -100,6 +113,11 @@ func (inv *Inventory) CanAddItem(item types.ItemSlot) bool {
 }
 
 func (inv *Inventory) AddItem(item types.ItemSlot) bool {
+	// Skip the check if this is an empty slot
+	if item.Empty {
+		return true
+	}
+
 	// Try to find a slot that already holds item with the same type
 	for _, slot := range inv.Slots {
 		if !slot.Empty && slot.Item.Type() == item.Item.Type() && slot.Item.Stackable() {
@@ -116,6 +134,17 @@ func (inv *Inventory) AddItem(item types.ItemSlot) bool {
 	}
 
 	return false
+}
+func (inv *Inventory) AddItems(items ...types.ItemSlot) bool {
+	// First check if all the items can be added to the inventory
+	if !inv.CanAddItems(items...) {
+		return false
+	}
+
+	for _, item := range items {
+		inv.AddItem(item)
+	}
+	return true
 }
 
 func (inv *Inventory) SelectSlot(slot int) {

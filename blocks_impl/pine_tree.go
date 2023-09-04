@@ -45,24 +45,14 @@ func (blok *PineTreeBlock) ToolStrengthRequired() types.ToolStrength {
 	return types.ToolStrengthBareHand
 }
 func (b *PineTreeBlock) Break() {
-	addedSaplingItem := types.GetPlayerInventory().AddItem(types.ItemSlot{
-		Item:     types.NewPineSaplingItem(),
-		Quantity: uint8(1 + rand.Intn(2)),
-	})
-
-	// add a stick to inventory with 50% chance
-	if rand.Float64() > 0.5 {
-		types.GetPlayerInventory().AddItem(types.ItemSlot{
-			Item:     types.NewStickItem(),
-			Quantity: 1,
-		})
+	if types.GetPlayerInventory().AddItems(
+		// 1-2 saplings
+		types.NewItemSlot(types.NewPineSaplingItem(), uint8(1+rand.Intn(2))),
+		// 1-2 sticks
+		types.NewItemSlot(types.NewStickItem(), uint8(1+rand.Intn(2))),
+	) {
+		types.GetCurrentWorld().SetBlock(uint64(b.x), uint64(b.y), types.NewGrassBlock())
 	}
-
-	// if inventory is full, do not do anything
-	if !addedSaplingItem {
-		return
-	}
-	types.GetCurrentWorld().SetBlock(uint64(b.x), uint64(b.y), types.NewGrassBlock())
 }
 
 func (b *PineTreeBlock) State() interface{} {

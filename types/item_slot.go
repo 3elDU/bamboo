@@ -9,6 +9,18 @@ type ItemSlot struct {
 	Empty    bool
 }
 
+func NewItemSlot(item Item, quantity uint8) ItemSlot {
+	var empty bool = false
+	if quantity == 0 {
+		empty = true
+	}
+	return ItemSlot{
+		Item:     item,
+		Quantity: quantity,
+		Empty:    empty,
+	}
+}
+
 func (slot *ItemSlot) CanAddItem(other ItemSlot) bool {
 	if slot.Empty || other.Empty {
 		return true

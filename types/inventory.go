@@ -20,8 +20,12 @@ type Inventory interface {
 
 	// Checks if there is enough space in the inventory to add this item
 	CanAddItem(item ItemSlot) bool
+	CanAddItems(items ...ItemSlot) bool
+
 	// AddItem returns false if there is no space
 	AddItem(item ItemSlot) bool
+	AddItems(items ...ItemSlot) bool
+
 	RemoveItem(item ItemSlot) bool
 	RemoveItemByType(itemType ItemType, amount int) bool
 

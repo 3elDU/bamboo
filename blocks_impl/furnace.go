@@ -29,6 +29,7 @@ type FurnaceBlockState struct {
 
 type FurnaceBlock struct {
 	baseBlock
+	collidableBlock
 	texturedBlock
 
 	inputInventory  types.ItemSlot
@@ -55,7 +56,8 @@ func NewFurnaceBlock() types.Block {
 		baseBlock: baseBlock{
 			blockType: types.FurnaceBlock,
 		},
-		texturedBlock: texturedBlock{},
+		collidableBlock: collidableBlock{collidable: true},
+		texturedBlock:   texturedBlock{},
 
 		inputInventory:  types.ItemSlot{Empty: true},
 		outputInventory: types.ItemSlot{Empty: true},
